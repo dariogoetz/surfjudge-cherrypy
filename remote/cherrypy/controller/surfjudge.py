@@ -12,7 +12,8 @@ class SurfJudgeWebInterface(object):
         context = {}
         context['title'] = 'Cool Jinja2-rendered file'
         context['description'] = 'Some description of this awesome file'
-        context['message'] =  cherrypy.request.query_string #'Why, you again...?'
+        context['message'] = 'Why, you again...?'
         return context
+
 
 

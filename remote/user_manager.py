@@ -78,7 +78,7 @@ class UserManager(object):
 
     def login_user(self, username, password):
         '''
-        Register user at UserManager object.
+        Login user at UserManager object.
 
         Checks credentials and if they are correct,
         stores the user's current roles.
@@ -104,7 +104,7 @@ class UserManager(object):
 
     def logout_user(self, username):
         '''
-        Unregister user at UserManager object.
+        Logout user at UserManager object.
         '''
         username = username.encode(self.encoding)
 
