@@ -1,0 +1,11 @@
+<!doctype html>
+<html>
+  <body>
+  <form method="post" action="{{ post_action }}">
+    <input type="hidden" name="from_page" value="{{ from_page }}" />
+    {{ message }} <br />
+    Username: <input type="text" name="username" value="{{ username if  none }}" /><br />
+    Password: <input type="password" name="password" /><br />
+    <input type="submit" value="Log in" />
+</body>
+</html>

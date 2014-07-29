@@ -1,0 +1,39 @@
+import cherrypy
+
+KEY_ROLE_ADMIN = 'ac_admin'
+KEY_ROLES = 'roles'
+
+
+def require(*conditions):
+    '''
+    A decorator that appends conditions to the "auth.require"
+    field of the request's config variable.
+
+
+    Plays together with the UserAuthenticationTool which checks
+    for "auth.require" and then checks the provided conditions.
+    '''
+    def decorate(f):
+        if not hasattr(f, '_cp_config'):
+            f._cp_config = dict()
+        f._cp_config.setdefault('auth.require', []).extend(conditions)
+        return f
+    return decorate
+
+
+
+def has_roles(*roles):
+    def check():
+        is_okay = True
+        for role in roles:
+            if role not in cherrypy.request.user_info.get(KEY_ROLES, []):
+                is_okay = False
+                break
+        return is_okay
+    return check
+
+
+def is_admin():
+    def check():
+        return KEY_ROLE_ADMIN in cherrypy.request.user_info.get(KEY_ROLES, [])
+    return check

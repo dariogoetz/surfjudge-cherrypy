@@ -1,0 +1,4 @@
+[admin]
+password = $2a$12$qRfmVsuNxUiBzEumuWyqWO2OXNRTNXbhnhOHOFh2YTN0wxga7jTlS
+[dg]
+password = $2a$12$C.ge9gx5rgezSZy7mNKz8.ifeCD7AMnCsxrjvZMXenpS4SJ6cNRV2
