@@ -2,3 +2,5 @@
 password = $2a$12$qRfmVsuNxUiBzEumuWyqWO2OXNRTNXbhnhOHOFh2YTN0wxga7jTlS
 [dg]
 password = $2a$12$C.ge9gx5rgezSZy7mNKz8.ifeCD7AMnCsxrjvZMXenpS4SJ6cNRV2
+[jcr]
+password = $2a$12$3miV/zXF4NB4ER844M80s.WAhcL0BeuRuv8R1Fjg2e9uxmiyJ3ZLW

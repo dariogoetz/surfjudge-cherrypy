@@ -6,6 +6,7 @@ from ..lib.access_conditions import *
 KEY_ENGINE_USER_LOGIN = 'login-user'
 KEY_ENGINE_USER_LOGOUT = 'logout-user'
 KEY_ENGINE_USER_REGISTER = 'register-user'
+KEY_ENGINE_USER_INFO = 'lookup-user-info'
 KEY_USERNAME = '_cp_username'
 
 class AuthenticationController(object):
@@ -37,34 +38,49 @@ class AuthenticationController(object):
         else:
             raise cherrypy.HTTPRedirect( os.path.join(self.mount_location, 'login?from_page={}&msg={}'.format(from_page, 'Wrong credentials.')) )
 
+
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/logged_out.html')
+    def logout(self, msg = None):
+        env = {}
+        env['message'] = msg
+        return env
+
+    @cherrypy.expose
     def do_logout(self):
         username = cherrypy.session.get(KEY_USERNAME)
-        print 'loggin out', username
-        if username is not None:
+        if not username:
+            msg = 'Not logged in!'
+        else:
+            print 'loggin out', username
             res = cherrypy.engine.publish(KEY_ENGINE_USER_LOGOUT, username).pop()
             cherrypy.request.login = None
+            cherrypy.session[KEY_USERNAME] = None
+            msg = 'Logged out user "{}"!'.format(username)
 
-        cherrypy.session[KEY_USERNAME] = None
-        return {}
+        raise cherrypy.HTTPRedirect( os.path.join(self.mount_location, 'logout?msg={}'.format(msg)) )
 
 
     @cherrypy.expose
     @require(is_admin())
-    @cherrypy.tools.render(template = 'authentication/logged_out.html')
+#    @cherrypy.tools.render(template = 'authentication/logged_out.html')
     def do_logout_user(self, username = None):
         if username is None:
-            return {}
+            msg = 'No user specified.'
+        else:
+            res = cherrypy.engine.publish(KEY_ENGINE_USER_LOGOUT, username).pop()
+            # If the user to be logged out is of this session,
+            # log out session as well
+            session_user = cherrypy.session.get(KEY_USERNAME, None)
+            if username == session_user:
+                cherrypy.session[KEY_USERNAME] = None
+                if session_user:
+                    cherrypy.request.login = None
+                msg = 'Logged out user "{}".'.format(username)
+            else:
+                msg = 'User "{}" was not logged in!'.format(username)
+        raise cherrypy.HTTPRedirect( os.path.join(self.mount_location, 'logout?msg={}'.format(msg)) )
 
-        res = cherrypy.engine.publish(KEY_ENGINE_USER_LOGOUT, username).pop()
-        # If the user to be logged out is of this session,
-        # log out session as well
-        session_user = cherrypy.session.get(KEY_USERNAME, None)
-        if username == session_user:
-            cherrypy.session[KEY_USERNAME] = None
-            if session_user:
-                cherrypy.request.login = None
         return {}
 
     @cherrypy.expose
@@ -82,6 +98,14 @@ class AuthenticationController(object):
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/login_form.html')
     def login(self, username = None, from_page = '/', msg = None):
+
+        if len(cherrypy.session) > 0:
+            username = cherrypy.session.get(KEY_USERNAME)
+            user_info = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
+            if user_info:
+                msg = 'Already logged in!'
+                raise cherrypy.HTTPRedirect('/simple_message?msg={}'.format(msg) )
+
         message = ''
         if msg is not None:
             message += ' ({})'.format(msg)
@@ -91,3 +115,4 @@ class AuthenticationController(object):
         env['from_page']   = from_page
         env['post_action'] = os.path.join(self.mount_location, 'do_login')
         return env
+

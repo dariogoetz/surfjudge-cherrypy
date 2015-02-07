@@ -2,7 +2,7 @@ import cherrypy
 
 from cherrypy.process import plugins
 
-KEY_ENGINE_ROLE_LOOKUP = 'lookup-user-info'
+KEY_ENGINE_USER_INFO = 'lookup-user-info'
 KEY_ENGINE_USER_LOGIN  = 'login-user'
 KEY_ENGINE_USER_LOGOUT = 'logout-user'
 KEY_ENGINE_USER_REGISTER = 'register-user'
@@ -21,7 +21,7 @@ class UserAuthenticationPlugin(plugins.SimplePlugin):
 
     def start(self):
         self.bus.log('Setting up user management resources')
-        self.bus.subscribe(KEY_ENGINE_ROLE_LOOKUP, self.get_user_info)
+        self.bus.subscribe(KEY_ENGINE_USER_INFO, self.get_user_info)
         self.bus.subscribe(KEY_ENGINE_USER_LOGIN,  self.login_user)
         self.bus.subscribe(KEY_ENGINE_USER_LOGOUT, self.logout_user)
         self.bus.subscribe(KEY_ENGINE_USER_REGISTER, self.register_user)
@@ -29,7 +29,7 @@ class UserAuthenticationPlugin(plugins.SimplePlugin):
 
     def stop(self):
         self.bus.log('Freeing user management resources')
-        self.bus.unsubscribe(KEY_ENGINE_ROLE_LOOKUP, self.get_user_info)
+        self.bus.unsubscribe(KEY_ENGINE_USER_INFO, self.get_user_info)
         self.bus.unsubscribe(KEY_ENGINE_USER_LOGIN,  self.login_user)
         self.bus.unsubscribe(KEY_ENGINE_USER_LOGOUT, self.logout_user)
         self.bus.unsubscribe(KEY_ENGINE_USER_REGISTER, self.register_user)
