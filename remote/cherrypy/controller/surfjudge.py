@@ -16,4 +16,22 @@ class SurfJudgeWebInterface(object):
         return context
 
 
+    @cherrypy.expose
+    @cherrypy.tools.render(template='judge_panel.html')
+    def judge_panel(self):
+        data = {}
+        data['judge_name'] = 'Christian'
+        data['judge_number'] = '1234'
+        data['surfer_colors'] = ['red', 'blue']
+        data['n_surfers'] = len(data['surfer_colors'])
+        return data
 
+
+    @cherrypy.expose
+    #@require(is_admin())
+    def javascript_request(self, parameter = None):
+        #database request
+        #store in some variable
+        #return the variable
+        result = 'hallo'
+        return result
