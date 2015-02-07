@@ -56,6 +56,9 @@ class UserManager(object):
         Returns True if password is correct and False otherwise.
         '''
 
+        if not username or not password:
+            return False
+
         username = username.encode(self.encoding)
         password = password.encode(self.encoding)
 
@@ -71,7 +74,8 @@ class UserManager(object):
         Get the currently active roles for a user.
         If the user is not logged in, "None" is returned.
         '''
-
+        if not username:
+            return None
         username = username.encode(self.encoding)
         return self.active_users.get(username)
 
@@ -83,6 +87,9 @@ class UserManager(object):
         Checks credentials and if they are correct,
         stores the user's current roles.
         '''
+
+        if not username or not password:
+            return False
 
         # Refresh list of registered users
         self._init_users(refresh = True)
@@ -106,6 +113,9 @@ class UserManager(object):
         '''
         Logout user at UserManager object.
         '''
+
+        if not username:
+            return False
         username = username.encode(self.encoding)
 
         if username in self.__active_users:
@@ -119,6 +129,9 @@ class UserManager(object):
         Generates a hashed password and stores
         the username with the hashed password.
         '''
+
+        if not username or not password:
+            return False
 
         username = username.encode(self.encoding)
         password = password.encode(self.encoding)
@@ -143,6 +156,9 @@ class UserManager(object):
         Information is gathered from state object in state manager.
         '''
 
+        if not username:
+            return []
+
         username = username.encode(self.encoding)
         # TODO: get roles from state object
         return [KEY_ROLE_ADMIN]
@@ -153,6 +169,9 @@ class UserManager(object):
         '''
         Get the hashed password from users file.
         '''
+
+        if not username:
+            return None
 
         username = username.encode(self.encoding)
 

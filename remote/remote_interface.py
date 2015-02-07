@@ -3,7 +3,7 @@ import threading
 #from remote.cherrypy.server import Server
 
 
-from remote.user_manager import UserManager
+from .user_manager import UserManager
 
 class RemoteInterface(object):
     '''

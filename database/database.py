@@ -1,5 +1,5 @@
 from config import Config #path relative to main path
-from database.sql_adapter import PythonSQLAdapter
+from .sql_adapter import PythonSQLAdapter
 
 
 _CONFIG = Config(__name__)

@@ -1,7 +1,7 @@
 import os
 import cherrypy
 
-from remote.cherrypy.lib.access_conditions import *
+from ..lib.access_conditions import *
 
 KEY_ENGINE_USER_LOGIN = 'login-user'
 KEY_ENGINE_USER_LOGOUT = 'logout-user'
@@ -20,6 +20,9 @@ class AuthenticationController(object):
 
     @cherrypy.expose
     def do_login(self, username = None, password = None, from_page = '/'):
+        if username is None or password is None:
+            raise cherrypy.HTTPRedirect( os.path.join(self.mount_location, 'login?from_page={}&msg={}'.format(from_page, 'Missing information.')) )
+
         check_okay = cherrypy.engine.publish(KEY_ENGINE_USER_LOGIN, username, password).pop(0)
         if check_okay:
             # Regenerate session cookie against session fixation attacks.
@@ -79,7 +82,7 @@ class AuthenticationController(object):
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/login_form.html')
     def login(self, username = None, from_page = '/', msg = None):
-        message = 'Please login!'
+        message = ''
         if msg is not None:
             message += ' ({})'.format(msg)
         env = {}

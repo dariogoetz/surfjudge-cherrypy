@@ -1,5 +1,5 @@
 import cherrypy
-from remote.cherrypy.lib.access_conditions import *
+from ..lib.access_conditions import *
 
 class SurfJudgeWebInterface(object):
     def __init__(self):
