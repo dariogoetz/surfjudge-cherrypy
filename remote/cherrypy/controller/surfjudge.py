@@ -17,6 +17,7 @@ class SurfJudgeWebInterface(object):
 
 
     @cherrypy.expose
+    @require(is_admin()) # at the moment, everyone is admin
     @cherrypy.tools.render(template='judge_panel.html')
     def judge_panel(self):
         data = {}
@@ -35,3 +36,11 @@ class SurfJudgeWebInterface(object):
         #return the variable
         result = 'hallo'
         return result
+
+
+    @cherrypy.expose
+    @cherrypy.tools.render(template = 'simple_message.html')
+    def simple_message(self, msg = None):
+        env = {}
+        env['message'] = msg
+        return env
