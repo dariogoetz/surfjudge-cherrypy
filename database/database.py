@@ -56,7 +56,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         self._register_converter_adapter(sql)
         try:
             con = sql.connect(db_name, detect_types=sql.PARSE_DECLTYPES)
-        except sql.Error, e:
+        except sql.Error as e:
             print('Error {}'.format(e.args[0]))
             return None
 
