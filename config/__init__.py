@@ -23,7 +23,14 @@ class Config(ConfigObj):
             raise ValidateError('Config parser: Could not parse int "{}"'.format(to_check))
         return res
 
-
+    @staticmethod
+    def _path_check(to_check):
+        import os
+        try:
+            res = os.path.normpath(to_check)
+        except:
+            raise ValidateError('Config parser: Could not parse path "{}"'.format(to_check))
+        return res
 
     MODULE_SEPARATOR = '.'
     def __init__(self, module = None, config = None, configspec = None, **kwargs):
@@ -37,7 +44,8 @@ class Config(ConfigObj):
         self.config_filename = config
 
         additional_checks = {'eval': self._eval_check,
-                             'int':  self._int_check}
+                             'int':  self._int_check,
+                             'path': self._path_check}
 
         validator = Validator(additional_checks)
         self.validate(validator)
@@ -46,5 +54,6 @@ class Config(ConfigObj):
 
 
     def _module_to_path(self, module):
-        return module.replace(self.MODULE_SEPARATOR, '/') + '.ini'
+        import os
+        return module.replace(self.MODULE_SEPARATOR, os.path.sep) + '.ini'
 
