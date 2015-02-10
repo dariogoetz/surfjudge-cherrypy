@@ -51,11 +51,15 @@
 
     <div class="container">
       <form class="form-signin" method="post" action="{{ post_action }}">
-        <h2 class="form-signin-heading">Please log in! {{ message }}</h2>
-        <input type="hidden" name="from_page" value="{{ from_page }}" />
+        <h2 class="form-signin-heading">Register User: {{ message }}</h2>
         <input type="text" class="input-block-level" placeholder="Username" name="username" value="{{ username if username != None }}" />
         <input type="password" class="input-block-level" placeholder="Password" name="password" value="{{ password if password != None }}">
-        <button class="btn btn-large btn-primary" type="submit">Log in</button>
+        <button class="btn btn-large btn-primary" type="submit">Register</button>
+        {% if global_is_admin %}
+        <label class="checkbox">
+          <input type="checkbox" value="global_is_admin" name="is_admin"> Register as admin
+        </label>
+        {% endif %}
       </form>
 
     </div>

@@ -2,7 +2,7 @@
 import cherrypy
 
 KEY_USERNAME = '_cp_username'
-KEY_ENGINE_ROLE_LOOKUP = 'lookup-user-info'
+KEY_ENGINE_USER_INFO = 'lookup-user-info'
 
 LOGIN_PAGE = '/auth/login'
 
@@ -43,7 +43,6 @@ class UserAuthenticationTool(cherrypy.Tool):
         # one could check for cherrypy.request.login or the like
         username = cherrypy.session.get(KEY_USERNAME)
 
-
         ## The following could maybe be used if the standard
         ## authentication method would be used. Then the field
         ## cherrypy.request.login is populated with the username.
@@ -62,7 +61,7 @@ class UserAuthenticationTool(cherrypy.Tool):
             raise cherrypy.HTTPRedirect(LOGIN_PAGE + '?' + from_page)
 
         uname_str = 'username={}'.format(username)
-        user_info = cherrypy.engine.publish(KEY_ENGINE_ROLE_LOOKUP, username).pop()
+        user_info = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
 
         # Check if the user is logged in at the user manager.
         if user_info is None:
