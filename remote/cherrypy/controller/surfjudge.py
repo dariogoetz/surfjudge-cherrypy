@@ -44,8 +44,8 @@ class SurfJudgeWebInterface(object):
 
 
     @cherrypy.expose
-    @require(is_admin()) # at the moment, everyone is admin
-    @cherrypy.tools.render(template='judge_panel.html')
+    #@require(is_admin()) # at the moment, everyone is admin
+    @cherrypy.tools.render(template='keypad.html')
     def judge_panel(self):
         data = {}
         data['judge_name'] = 'Christian'
