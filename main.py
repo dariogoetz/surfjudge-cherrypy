@@ -39,7 +39,6 @@ class SurfJudge(object):
 
 def doit(args):
     surfjudge = SurfJudge()
-    print 'Starting database thread'
     db_thread = threading.Thread(target=surfjudge.database.run)
     db_thread.start()
 

@@ -51,16 +51,17 @@ class _DatabaseHandler(object):
         return res
 
     def shutdown(self):
+        print 'Stopping database'
         self.__access_queue.put( (KEY_SHUTDOWN, None), block=True)
         return
 
     def run(self):
         self._init_db()
+        print 'Starting database'
         while True:
             #print 'waiting for db commands'
             task, data, pipe_conn = self.__access_queue.get()
             if task == KEY_INSERT_SCORE:
-                #print 'inserting score to database'
                 self._insert_score(data)
             elif task == KEY_GET_SCORES:
                 scores = self._get_scores(data)

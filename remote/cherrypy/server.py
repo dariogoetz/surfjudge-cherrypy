@@ -35,7 +35,7 @@ class Server(object):
         # Tools
         self._load_tools()
 
-        # Mount applications
+        # Mount applications (websites)
         self._load_applications()
 
         return
@@ -54,7 +54,6 @@ class Server(object):
         engine.start()
         engine.block()
         return
-
 
 
     def _load_tools(self):
@@ -96,6 +95,9 @@ class Server(object):
             from remote.cherrypy.lib.plugin.db_access import DBAccessPlugin
             engine.database = DBAccessPlugin(engine, db)
             engine.database.subscribe()
+
+            # the following makes sure the db thread is restarted when cherrypy restarts
+            engine.subscribe('exit', db.shutdown)
         else:
             raise Exception("Database plugin is not initialized!")
         return
