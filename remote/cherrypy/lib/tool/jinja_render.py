@@ -1,6 +1,6 @@
 import cherrypy
 
-KEY_ENGINE_LOOKUP_TEMPLATE = 'lookup-template'
+from keys import *
 
 class JinjaRenderTool(cherrypy.Tool):
     '''

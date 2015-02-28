@@ -2,15 +2,7 @@ import cherrypy
 import json
 from ..lib.access_conditions import *
 
-KEY_ENGINE_DB_RETRIEVE_SCORES = 'db_retrieve_scores'
-KEY_ENGINE_DB_INSERT_SCORE = 'db_insert_score'
-
-KEY_ENGINE_USER_LOGIN = 'login-user'
-KEY_ENGINE_USER_LOGOUT = 'logout-user'
-KEY_ENGINE_USER_REGISTER = 'register-user'
-KEY_ENGINE_USER_INFO = 'lookup-user-info'
-KEY_USERNAME = '_cp_username'
-
+from keys import *
 
 class SurfJudgeWebInterface(object):
     def __init__(self):
@@ -22,9 +14,9 @@ class SurfJudgeWebInterface(object):
         username = cherrypy.session.get(KEY_USERNAME)
         env['global_username'] = username
 
+        # TODO: if only normal user, dont check for ui to enhance performance
         ui = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
         env['global_is_admin'] = ui and KEY_ROLE_ADMIN in ui.get(KEY_ROLES)
-
         env['global_logged_in'] = True if username else False
         return env
 
@@ -60,13 +52,14 @@ class SurfJudgeWebInterface(object):
 
 
     @cherrypy.expose
-    def query_scores(self):
+    @require(has_roles(KEY_ROLE_JUDGE))
+    def do_query_scores(self):
         query_info = {}
         scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
         return json.dumps(scores)
 
     @cherrypy.expose
-    def insert_score(self):
+    def do_insert_score(self):
         score = {'wave': 1,
                  'score': 5,
                  'color': 'blue',

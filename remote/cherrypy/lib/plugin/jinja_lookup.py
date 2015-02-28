@@ -2,10 +2,9 @@ import tempfile
 
 import cherrypy
 from cherrypy.process import plugins
+from keys import *
 
 import jinja2
-
-KEY_ENGINE_LOOKUP_TEMPLATE = 'lookup-template'
 
 
 class JinjaTemplatePlugin(plugins.SimplePlugin):

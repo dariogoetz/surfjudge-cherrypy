@@ -19,7 +19,11 @@
             {% else %}
             <li><a href="/auth/logout">Logout</a></li>
             {% endif %}
+            {% if global_is_admin %}
+            <li><a href="/auth/register">Register User</a></li>
+            {% else %}
             <li><a href="/auth/register">Register</a></li>
+            {% endif %}}
             <!--<li><a href="#contact">Contact</a></li>-->
           </ul>
         </div><!--/.nav-collapse -->

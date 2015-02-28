@@ -1,9 +1,7 @@
 import cherrypy
 
 from cherrypy.process import plugins
-
-KEY_ENGINE_DB_RETRIEVE_SCORES = 'db_retrieve_scores'
-KEY_ENGINE_DB_INSERT_SCORE = 'db_insert_score'
+from keys import *
 
 class DBAccessPlugin(plugins.SimplePlugin):
     '''

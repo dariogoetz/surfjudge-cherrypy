@@ -1,8 +1,6 @@
-
 import cherrypy
 
-KEY_USERNAME = '_cp_username'
-KEY_ENGINE_USER_INFO = 'lookup-user-info'
+from keys import *
 
 LOGIN_PAGE = '/auth/login'
 

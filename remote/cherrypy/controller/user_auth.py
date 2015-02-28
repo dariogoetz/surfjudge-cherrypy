@@ -2,13 +2,9 @@ import os
 import cherrypy
 
 from ..lib.access_conditions import *
+from keys import *
 
-KEY_ENGINE_USER_LOGIN = 'login-user'
-KEY_ENGINE_USER_LOGOUT = 'logout-user'
-KEY_ENGINE_USER_REGISTER = 'register-user'
-KEY_ENGINE_USER_INFO = 'lookup-user-info'
-KEY_USERNAME = '_cp_username'
-
+ENCODING = 'utf-8'
 
 class AuthenticationController(object):
     '''
@@ -28,6 +24,8 @@ class AuthenticationController(object):
         if username is None or password is None:
             return False
 
+        username = username.encode(ENCODING)
+        password = password.encode(ENCODING)
         check_okay = cherrypy.engine.publish(KEY_ENGINE_USER_LOGIN, username, password).pop(0)
         if check_okay:
             # Regenerate session cookie against session fixation attacks.
@@ -49,6 +47,7 @@ class AuthenticationController(object):
         if not username:
             return True
         else:
+            username = username.encode(ENCODING)
             res = cherrypy.engine.publish(KEY_ENGINE_USER_LOGOUT, username).pop()
             cherrypy.request.login = None
             del cherrypy.session[KEY_USERNAME]
@@ -61,6 +60,7 @@ class AuthenticationController(object):
         if username is None:
             return True
         else:
+            username = username.encode(ENCODING)
             res = cherrypy.engine.publish(KEY_ENGINE_USER_LOGOUT, username).pop()
             # If the user to be logged out is of this session,
             # log out session as well
@@ -77,10 +77,12 @@ class AuthenticationController(object):
 
     @cherrypy.expose
     @require(is_admin())
-    def do_register(self, username = None, password = None):
+    def do_register(self, username = None, password = None, roles = None):
         if username is None or password is None:
             return False
-        successful = cherrypy.engine.publish(KEY_ENGINE_USER_REGISTER, username, password).pop()
+        username = username.encode(ENCODING)
+        password = password.encode(ENCODING)
+        successful = cherrypy.engine.publish(KEY_ENGINE_USER_REGISTER, username, password, roles).pop()
         return successful
 
 
@@ -96,12 +98,14 @@ class AuthenticationController(object):
         env['global_username'] = username
         ui = None
         if username:
+            username = username.encode(ENCODING)
             ui = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
         env['global_is_admin'] = ui and KEY_ROLE_ADMIN in ui.get(KEY_ROLES)
         env['global_logged_in'] = True if username else False
         return env
 
 
+    # functions as website as well as POST request leading to website, if unsuccessful
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/login_form.html')
     def login(self, username = None, password = None, from_page = '/'):
@@ -121,9 +125,10 @@ class AuthenticationController(object):
 
 
 
+    # functions as website as well as POST request leading to website, if unsuccessful
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/register.html')
-    def register(self, username = None, as_admin = False):
+    def register(self, username = None, password = None, as_admin = False):
         env = self._populate_standard_env()
 
         logged_in = env['global_logged_in']
@@ -134,7 +139,11 @@ class AuthenticationController(object):
             if as_admin and not is_admin:
                 message = 'Only admins can register admins.'
             else:
-                successful = self.do_register(username, as_admin)
+                roles = []
+                if as_admin:
+                    roles.append(KEY_ROLE_ADMIN)
+
+                successful = self.do_register(username, password, roles)
                 if successful:
                     msg = 'User "{}" registered successfully!'.format(username)
                     raise cherrypy.HTTPRedirect('/simple_message?msg={}'.format(msg) )

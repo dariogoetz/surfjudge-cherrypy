@@ -1,8 +1,6 @@
 import cherrypy
 
-KEY_ROLE_ADMIN = 'ac_admin'
-KEY_ROLES = 'roles'
-
+from keys import *
 
 def require(*conditions):
     '''

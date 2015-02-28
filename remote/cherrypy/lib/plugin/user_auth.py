@@ -1,11 +1,7 @@
 import cherrypy
 
 from cherrypy.process import plugins
-
-KEY_ENGINE_USER_INFO = 'lookup-user-info'
-KEY_ENGINE_USER_LOGIN  = 'login-user'
-KEY_ENGINE_USER_LOGOUT = 'logout-user'
-KEY_ENGINE_USER_REGISTER = 'register-user'
+from keys import *
 
 class UserAuthenticationPlugin(plugins.SimplePlugin):
     '''
@@ -46,5 +42,5 @@ class UserAuthenticationPlugin(plugins.SimplePlugin):
     def logout_user(self, username):
         return self.user_manager.logout_user(username)
 
-    def register_user(self, username, password):
-        return self.user_manager.register_user(username, password)
+    def register_user(self, username, password, roles):
+        return self.user_manager.register_user(username, password, roles)

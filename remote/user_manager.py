@@ -1,17 +1,10 @@
 import bcrypt
 import threading
 
+from keys import *
+
 from config import Config
 _CONFIG = Config(__name__)
-
-
-KEY_PASSWORD = 'password'
-KEY_ROLES = 'roles'
-
-KEY_ROLE_ADMIN = 'ac_admin'
-KEY_ROLE_JUDGE = 'ac_judge'
-KEY_ROLE_HEADJUDGE = 'ac_headjudge'
-KEY_ROLE_OBSERVER = 'ac_observer'
 
 
 
@@ -30,14 +23,14 @@ class UserManager(object):
         self.__registered_users = None
         self._init_users()
 
-        self.__encoding = 'utf-8'
+        #self.__encoding = 'utf-8'
 
         return
 
 
-    @property
-    def encoding(self):
-        return self.__encoding
+    #@property
+    #def encoding(self):
+    #    return self.__encoding
 
     @property
     def active_users(self):
@@ -59,8 +52,8 @@ class UserManager(object):
         if not username or not password:
             return False
 
-        username = username.encode(self.encoding)
-        password = password.encode(self.encoding)
+        #username = username.encode(self.encoding)
+        #password = password.encode(self.encoding)
 
         hashed_pw = self._get_hashed_pw(username)
         if hashed_pw is None:
@@ -76,7 +69,7 @@ class UserManager(object):
         '''
         if not username:
             return None
-        username = username.encode(self.encoding)
+        #username = username.encode(self.encoding)
         return self.active_users.get(username)
 
 
@@ -94,8 +87,8 @@ class UserManager(object):
         # Refresh list of registered users
         self._init_users(refresh = True)
 
-        username = username.encode(self.encoding)
-        password = password.encode(self.encoding)
+        #username = username.encode(self.encoding)
+        #password = password.encode(self.encoding)
 
         if username in self.__active_users:
             return True
@@ -116,7 +109,7 @@ class UserManager(object):
 
         if not username:
             return False
-        username = username.encode(self.encoding)
+        #username = username.encode(self.encoding)
 
         if username in self.__active_users:
             with self._critical_section:
@@ -124,7 +117,7 @@ class UserManager(object):
         return True
 
 
-    def register_user(self, username, password):
+    def register_user(self, username, password, roles = None):
         '''
         Generates a hashed password and stores
         the username with the hashed password.
@@ -133,8 +126,14 @@ class UserManager(object):
         if not username or not password:
             return False
 
-        username = username.encode(self.encoding)
-        password = password.encode(self.encoding)
+        #username = username.encode(self.encoding)
+        #password = password.encode(self.encoding)
+
+        if roles is None:
+            roles = []
+
+        with self._critical_section:
+            self.__registered_users.setdefault(username, {})[KEY_ROLES] = roles
 
         hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
         self._set_hashed_pw(username, hashed_pw)
@@ -159,9 +158,9 @@ class UserManager(object):
         if not username:
             return []
 
-        username = username.encode(self.encoding)
+        #username = username.encode(self.encoding)
         # TODO: get roles from state object
-        return [KEY_ROLE_ADMIN]
+        return self.__registered_users.get(username, {}).get(KEY_ROLES, [])
 
 
 
@@ -173,7 +172,7 @@ class UserManager(object):
         if not username:
             return None
 
-        username = username.encode(self.encoding)
+        #username = username.encode(self.encoding)
 
         self._init_users()
         return self.__registered_users.get(username, {}).get(KEY_PASSWORD)
