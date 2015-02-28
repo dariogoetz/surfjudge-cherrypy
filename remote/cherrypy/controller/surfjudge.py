@@ -1,5 +1,9 @@
 import cherrypy
+import json
 from ..lib.access_conditions import *
+
+KEY_ENGINE_DB_RETRIEVE_SCORES = 'db_retrieve_scores'
+KEY_ENGINE_DB_INSERT_SCORE = 'db_insert_score'
 
 KEY_ENGINE_USER_LOGIN = 'login-user'
 KEY_ENGINE_USER_LOGOUT = 'logout-user'
@@ -54,6 +58,21 @@ class SurfJudgeWebInterface(object):
         data['n_surfers'] = len(data['surfer_colors'])
         return data
 
+
+    @cherrypy.expose
+    def query_scores(self):
+        query_info = {}
+        scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
+        return json.dumps(scores)
+
+    @cherrypy.expose
+    def insert_score(self):
+        score = {'wave': 1,
+                 'score': 5,
+                 'color': 'blue',
+                 'judge_id': '1'}
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SCORE, score).pop()
+        return res
 
     @cherrypy.expose
     #@require(is_admin())

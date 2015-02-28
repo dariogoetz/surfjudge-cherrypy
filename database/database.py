@@ -1,8 +1,13 @@
 from config import Config #path relative to main path
 from .sql_adapter import PythonSQLAdapter
 
+from Queue import Queue
 
 _CONFIG = Config(__name__)
+
+KEY_GET_SCORES = 'get_scores'
+KEY_INSERT_SCORE = 'insert_score'
+KEY_SHUTDOWN = 'shutdown'
 
 class _DatabaseHandler(object):
     '''
@@ -10,20 +15,62 @@ class _DatabaseHandler(object):
     '''
 
     def __init__(self):
-        self.__db = None
+        self.__access_queue = Queue(maxsize=1)
+        self.__result_queue = Queue(maxsize=1)
         return
 
-    def insert_score(self, score):
+
+    def _insert_score(self, score):
         '''
         Push a score to the database
         '''
         pass
 
-    def get_scores(self, score):
+    def _get_scores(self, query_info):
         '''
         Retrieve a score from the database
         '''
         return
+
+    def _init_db(self):
+        '''
+        Connect to database
+        '''
+        pass
+
+    def insert_score(self, score):
+        self.__access_queue.put( (KEY_INSERT_SCORE, score), block=True)
+        return
+
+    def get_scores(self, query_info):
+        self.__access_queue.put( (KEY_GET_SCORES, query_info), block=True)
+        #print 'scheduled query command, waiting for result'
+        res = self.__result_queue.get()
+        #print 'result arrived'
+        self.__result_queue.task_done()
+        return res
+
+    def shutdown(self):
+        self.__access_queue.put( (KEY_SHUTDOWN, None), block=True)
+        return
+
+    def run(self):
+        self._init_db()
+        while True:
+            #print 'waiting for db commands'
+            task, data = self.__access_queue.get()
+            if task == KEY_INSERT_SCORE:
+                #print 'inserting score to database'
+                self._insert_score(data)
+            elif task == KEY_GET_SCORES:
+                scores = self._get_scores(data)
+                #print 'retrieved score, putting to result queue'
+                #print scores
+                self.__result_queue.put(scores, block=True)
+            elif task == KEY_SHUTDOWN:
+                self.__access_queue.task_done()
+                break
+            self.__access_queue.task_done()
 
 
 class SQLiteDatabaseHandler(_DatabaseHandler):
@@ -32,16 +79,18 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
     '''
 
     def __init__(self, db_name = _CONFIG['sqlite_db']['default_name']):
+        _DatabaseHandler.__init__(self)
         self._pysql_adapt = PythonSQLAdapter()
 
-        self.__db = self._connect_db(db_name)
+        self._db_name = db_name
+        return
+
+
+    def _init_db(self):
+        self._db = self._connect_db(self._db_name)
         self._initialize_tables()
         self._table_info = self._get_tables_info()
         return
-
-    @property
-    def _db(self):
-        return self.__db
 
     def _register_converter_adapter(self, sql):
         for t, adapter in self._pysql_adapt.adapter.items():
@@ -82,7 +131,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         return where_str
 
 
-    def get_scores(self, query_info, cols = None):
+    def _get_scores(self, query_info, cols = None):
         target_table = 'scores'
         if cols is None:
             cols_str = '*'
@@ -96,12 +145,19 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         common_cols = set(query_info.keys()).intersection(set(col_info.keys()))
         where_str = self._where_str(target_table, common_cols, query_info)
 
-        sql_command = 'SELECT {cols} FROM {tables} WHERE {cond}'.format(cols = cols_str, tables = tables_str, cond = where_str)
+        sql_command = 'SELECT {cols} FROM {tables}'.format(cols = cols_str, tables = tables_str)
+        if len(where_str) > 0:
+            sql_command.append(' WHERE {cond}'.format(cond = where_str))
+
         cursor = self._db.cursor()
-        return cursor.execute(sql_command)
+        try:
+            res = [x for x in cursor.execute(sql_command)]
+        except Exception as e:
+            print 'Error executing sql command: {}'.format(e)
+            res = []
+        return res
 
-
-    def insert_score(self, score):
+    def _insert_score(self, score):
         target_table = 'scores'
         col_info = self._table_info.get(target_table, {})
         vals = []

@@ -5,6 +5,7 @@ from remote.remote_interface import RemoteInterface
 from database.database import SQLiteDatabaseHandler
 
 from remote.cherrypy.server import Server as CherryPyServer
+import threading
 
 class SurfJudge(object):
     '''Base SurfJudge Object
@@ -38,9 +39,12 @@ class SurfJudge(object):
 
 def doit(args):
     surfjudge = SurfJudge()
+    print 'Starting database thread'
+    db_thread = threading.Thread(target=surfjudge.database.run)
+    db_thread.start()
 
     if args.webserver:
-        cpserver = CherryPyServer(user_manager = surfjudge.interface.user_manager)
+        cpserver = CherryPyServer(user_manager = surfjudge.interface.user_manager, database = surfjudge.database)
         surfjudge.interface.add_server(cpserver)
 
     # start console
@@ -52,6 +56,7 @@ def doit(args):
             time.sleep(0.1)
         except KeyboardInterrupt:
             surfjudge.shutdown()
+            surfjudge.database.shutdown()
             break
 
 

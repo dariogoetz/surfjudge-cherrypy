@@ -89,6 +89,15 @@ class Server(object):
             engine.user_auth.subscribe()
         else:
             raise Exception("User manager is not initialized!")
+
+        # database connect plugin
+        db = params.get('database')
+        if db is not None:
+            from remote.cherrypy.lib.plugin.db_access import DBAccessPlugin
+            engine.database = DBAccessPlugin(engine, db)
+            engine.database.subscribe()
+        else:
+            raise Exception("Database plugin is not initialized!")
         return
 
 
