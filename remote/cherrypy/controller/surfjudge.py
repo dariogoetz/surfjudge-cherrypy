@@ -44,7 +44,7 @@ class SurfJudgeWebInterface(object):
     #@require(is_admin()) # later ask for judge or similar
     @cherrypy.tools.render(template='judge_panel.html')
     def judge_panel(self):
-        data = {}
+        data = self._populate_standard_env()
         data['judge_name'] = 'Christian'
         data['judge_number'] = '1234'
         data['surfer_colors'] = ['red', 'blue']

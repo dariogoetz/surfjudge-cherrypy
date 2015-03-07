@@ -117,6 +117,7 @@ class AuthenticationController(object):
                 raise cherrypy.HTTPRedirect(from_page)
             else:
                 message = 'Login unsuccessful!'
+            return
 
         env['message']     = message
         env['from_page']   = from_page
@@ -149,6 +150,7 @@ class AuthenticationController(object):
                     raise cherrypy.HTTPRedirect('/simple_message?msg={}'.format(msg) )
                 else:
                     message = 'Register unsuccessful!'
+            return
 
         env['message']     = message
         env['post_action'] = os.path.join(self.mount_location, 'register')
@@ -160,15 +162,13 @@ class AuthenticationController(object):
     @cherrypy.tools.render(template = 'authentication/logged_out.html')
     def logout(self):
         message = ''
-        if cherrypy.request.method == 'POST':
-            successful = self.do_logout()
-            if successful:
-                message = 'Logout successful!'
-            else:
-                message = 'Logout unsuccessful!'
-
         successful = self.do_logout()
+        if successful:
+            message = 'Logout successful!'
+        else:
+            message = 'Logout unsuccessful!'
 
         env = self._populate_standard_env()
+        print message
         env['message'] = message
         return env
