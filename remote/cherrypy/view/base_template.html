@@ -25,16 +25,50 @@
   </head>
 
   <body>
-    {% block navbar %}
-    {% include "navbar.html" %}
-    {% endblock navbar %}
-
+    <!-- Navigation bar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container-fluid">
+            <!-- The following gives three lines if navbar is collapsed -->
+            <div class="navbar-header">
+                {% block navbar_header %}
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                {% endblock navbar_header %}
+                <a class="navbar-brand" href="/">Surfjudge 3000</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li id='nav_item_home'><a href="/">Home</a></li>
+                    <li id='nav_item_judge_panel'><a href="/judge_panel">Judge Panel</a></li>
+                    {% if not global_logged_in %}
+                    <li id='nav_item_login'><a href="/auth/login">Login</a></li>
+                    {% else %}
+                    <li><a href="/auth/logout">Logout</a></li>
+                    {% endif %}
+                    {% if global_is_admin %}
+                    <li><a href="/auth/register">Register User</a></li>
+                    {% else %}
+                    <li><a href="/auth/register">Register</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    
+    {% block content_layout %}
     <div class="container">
+
         {% block content %}
         <h1> {{ message }} </h1>
         <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
         {% endblock content %}
     </div>
+    {% endblock content_layout %}
     
     {% block javascript %}
     <!-- Bootstrap core JavaScript
@@ -42,6 +76,13 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <!-- The following sets the current navigation item as active -->
+    <script>
+        $(document).ready(function() {
+            var elem_id = "#{% block nav_item %}nav_item_home{% endblock nav_item %}";
+            $(elem_id).addClass("active");
+            });
+    </script>
     {% endblock javascript %}
     
   </body>
