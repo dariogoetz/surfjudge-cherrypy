@@ -1,5 +1,8 @@
 {% extends "authentication/login_form.html" %}
 
+{% block nav_items %}['#nav_item_register']{% endblock nav_items %}
+
+
 {% block content %}
 <form class="form-signin" method="post" action="{{ post_action }}">
     <h2 class="form-signin-heading">Register User: {{ message }}</h2>
