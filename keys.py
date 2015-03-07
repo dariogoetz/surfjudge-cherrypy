@@ -48,3 +48,12 @@ KEY_ENGINE_DB_INSERT_SCORE = 'db_insert_score'
 ###################################
 
 KEY_ENGINE_LOOKUP_TEMPLATE = 'lookup-template'
+
+
+############
+# database #
+############
+
+KEY_GET_SCORES = 'get_scores'
+KEY_INSERT_SCORE = 'insert_score'
+KEY_SHUTDOWN = 'shutdown'

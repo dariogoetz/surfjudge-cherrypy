@@ -1,13 +1,12 @@
 from config import Config #path relative to main path
 from .sql_adapter import PythonSQLAdapter
 
+from keys import *
+
 from Queue import Queue
+import multiprocessing
 
 _CONFIG = Config(__name__)
-
-KEY_GET_SCORES = 'get_scores'
-KEY_INSERT_SCORE = 'insert_score'
-KEY_SHUTDOWN = 'shutdown'
 
 class _DatabaseHandler(object):
     '''
@@ -15,64 +14,26 @@ class _DatabaseHandler(object):
     '''
 
     def __init__(self):
-        self.__access_queue = Queue()
-        return
+        pass
 
 
-    def _insert_score(self, score):
+    def insert_score(self, score):
         '''
         Push a score to the database
         '''
         pass
 
-    def _get_scores(self, query_info):
+    def get_scores(self, query_info):
         '''
         Retrieve a score from the database
         '''
-        return
-
-    def _init_db(self):
-        '''
-        Connect to database
-        '''
         pass
 
-    def insert_score(self, score):
-        self.__access_queue.put( (KEY_INSERT_SCORE, score, None), block=True)
-        return
-
-    def get_scores(self, query_info):
-        res_recv, res_send = multiprocessing.Pipe(False)
-        self.__access_queue.put( (KEY_GET_SCORES, query_info, res_send), block=True)
-        print 'scheduled query command, waiting for result'
-        res = res_recv.recv()
-        print 'result arrived'
-        self.__result_queue.task_done()
-        return res
-
     def shutdown(self):
-        print 'Stopping database'
-        self.__access_queue.put( (KEY_SHUTDOWN, None), block=True)
-        return
-
-    def run(self):
-        self._init_db()
-        print 'Starting database'
-        while True:
-            #print 'waiting for db commands'
-            task, data, pipe_conn = self.__access_queue.get()
-            if task == KEY_INSERT_SCORE:
-                self._insert_score(data)
-            elif task == KEY_GET_SCORES:
-                scores = self._get_scores(data)
-                print 'retrieved score, sending results through pipe'
-                #print scores
-                pipe_conn.send(scores)
-                pipe_conn.close()
-            elif task == KEY_SHUTDOWN:
-                self.__access_queue.task_done()
-                break
-            self.__access_queue.task_done()
+        '''
+        Shutdown database
+        '''
+        pass
 
 
 class SQLiteDatabaseHandler(_DatabaseHandler):
@@ -84,7 +45,34 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         _DatabaseHandler.__init__(self)
         self._pysql_adapt = PythonSQLAdapter()
 
+        self.__access_queue = Queue()
         self._db_name = db_name
+
+        import threading
+        self._thread = threading.Thread(target=self._run)
+        self._thread.start()
+        return
+
+
+    def insert_score(self, score):
+        self.__access_queue.put( (KEY_INSERT_SCORE, score, None), block=True)
+        return
+
+
+    def get_scores(self, query_info):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (KEY_GET_SCORES, query_info, pipe_send), block=True)
+        #print 'scheduled query command, waiting for result'
+        res = pipe_recv.recv()
+        #print 'result arrived'
+        return res
+
+
+    def shutdown(self):
+        if not self._thread.isAlive():
+            return
+        print 'Stopping database thread'
+        self.__access_queue.put( (KEY_SHUTDOWN, None, None), block=True)
         return
 
 
@@ -93,6 +81,27 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         self._initialize_tables()
         self._table_info = self._get_tables_info()
         return
+
+
+    def _run(self):
+        self._init_db()
+        print 'Starting database'
+        while True:
+            #print 'waiting for db commands'
+            task, data, pipe_conn = self.__access_queue.get()
+            if task == KEY_INSERT_SCORE:
+                self._insert_score(data)
+            elif task == KEY_GET_SCORES:
+                scores = self._get_scores(data)
+                #print 'retrieved score, sending results through pipe'
+                #print scores
+                pipe_conn.send(scores)
+                pipe_conn.close()
+            elif task == KEY_SHUTDOWN:
+                self.__access_queue.task_done()
+                break
+            self.__access_queue.task_done()
+
 
     def _register_converter_adapter(self, sql):
         for t, adapter in self._pysql_adapt.adapter.items():
