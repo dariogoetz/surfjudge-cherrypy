@@ -15,8 +15,7 @@ class _DatabaseHandler(object):
     '''
 
     def __init__(self):
-        self.__access_queue = Queue(maxsize=1)
-        self.__result_queue = Queue(maxsize=1)
+        self.__access_queue = Queue()
         return
 
 
@@ -39,14 +38,15 @@ class _DatabaseHandler(object):
         pass
 
     def insert_score(self, score):
-        self.__access_queue.put( (KEY_INSERT_SCORE, score), block=True)
+        self.__access_queue.put( (KEY_INSERT_SCORE, score, None), block=True)
         return
 
     def get_scores(self, query_info):
-        self.__access_queue.put( (KEY_GET_SCORES, query_info), block=True)
-        #print 'scheduled query command, waiting for result'
-        res = self.__result_queue.get()
-        #print 'result arrived'
+        res_recv, res_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (KEY_GET_SCORES, query_info, res_send), block=True)
+        print 'scheduled query command, waiting for result'
+        res = res_recv.recv()
+        print 'result arrived'
         self.__result_queue.task_done()
         return res
 
@@ -58,15 +58,16 @@ class _DatabaseHandler(object):
         self._init_db()
         while True:
             #print 'waiting for db commands'
-            task, data = self.__access_queue.get()
+            task, data, pipe_conn = self.__access_queue.get()
             if task == KEY_INSERT_SCORE:
                 #print 'inserting score to database'
                 self._insert_score(data)
             elif task == KEY_GET_SCORES:
                 scores = self._get_scores(data)
-                #print 'retrieved score, putting to result queue'
+                print 'retrieved score, sending results through pipe'
                 #print scores
-                self.__result_queue.put(scores, block=True)
+                pipe_conn.send(scores)
+                pipe_conn.close()
             elif task == KEY_SHUTDOWN:
                 self.__access_queue.task_done()
                 break
