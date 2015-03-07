@@ -1,0 +1,21 @@
+{% extends "base_template.html" %}
+
+{% block css %}
+{{ super() }}
+<link href="/static/bootstrap/css/dashboard.css" rel="stylesheet">
+{% endblock css %}
+
+{% block content %}
+<div class="row">
+    {% block sidebar %}
+    <div class="col-sm-3 col-md-2 sidebar">
+        {% include "sidebar.html" %}
+    </div>
+    {% endblock sidebar %}
+    
+     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        {{ super() }}
+     </div>    
+</div>
+
+{% endblock content %}

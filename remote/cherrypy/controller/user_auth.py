@@ -11,7 +11,7 @@ class AuthenticationController(object):
     Manages the login of users.
     '''
 
-    def __init__(self, mount_location):
+    def __init__(self, mount_location='/'):
         self.mount_location = mount_location
         pass
 

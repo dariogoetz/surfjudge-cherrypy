@@ -5,8 +5,9 @@ from ..lib.access_conditions import *
 from keys import *
 
 class SurfJudgeWebInterface(object):
-    def __init__(self):
-        pass
+    def __init__(self, mount_location = '/'):
+        self.mount_location = mount_location
+        return
 
 
     def _populate_standard_env(self):
@@ -17,14 +18,14 @@ class SurfJudgeWebInterface(object):
         # TODO: if only normal user, dont check for ui to enhance performance
         ui = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
         env['global_is_admin'] = ui and KEY_ROLE_ADMIN in ui.get(KEY_ROLES)
-        env['global_logged_in'] = True if username else False
+        env['global_logged_in'] = bool(username)
         return env
 
 
 
     @cherrypy.expose
     #@require(is_admin())
-    @cherrypy.tools.render(template = 'test_bootstrap_advanced.html')
+    @cherrypy.tools.render(template = 'base_template.html')
     def index(self):
         context = self._populate_standard_env()
 
@@ -40,14 +41,15 @@ class SurfJudgeWebInterface(object):
 
 
     @cherrypy.expose
-    #@require(is_admin()) # at the moment, everyone is admin
-    @cherrypy.tools.render(template='keypad.html')
+    #@require(is_admin()) # later ask for judge or similar
+    @cherrypy.tools.render(template='judge_panel.html')
     def judge_panel(self):
         data = {}
         data['judge_name'] = 'Christian'
         data['judge_number'] = '1234'
         data['surfer_colors'] = ['red', 'blue']
         data['n_surfers'] = len(data['surfer_colors'])
+        data['n_waves'] = 10
         return data
 
 

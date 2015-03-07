@@ -108,7 +108,7 @@ class Server(object):
         from remote.cherrypy.controller.surfjudge import SurfJudgeWebInterface
 
         mount_loc = '/'
-        sj_web_interface = SurfJudgeWebInterface()
+        sj_web_interface = SurfJudgeWebInterface(mount_loc)
         conf_path = os.path.join(self.conf_path, _CONFIG['config_files']['SurfJudgeWebInterface'])
         app = self.mount_app(sj_web_interface, mount_loc, conf_path)
         self.make_rotate_logger(app)
