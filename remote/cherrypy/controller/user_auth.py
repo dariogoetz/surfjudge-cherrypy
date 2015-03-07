@@ -117,7 +117,6 @@ class AuthenticationController(object):
                 raise cherrypy.HTTPRedirect(from_page)
             else:
                 message = 'Login unsuccessful!'
-            return
 
         env['message']     = message
         env['from_page']   = from_page
@@ -150,7 +149,6 @@ class AuthenticationController(object):
                     raise cherrypy.HTTPRedirect('/simple_message?msg={}'.format(msg) )
                 else:
                     message = 'Register unsuccessful!'
-            return
 
         env['message']     = message
         env['post_action'] = os.path.join(self.mount_location, 'register')
