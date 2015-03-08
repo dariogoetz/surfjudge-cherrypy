@@ -26,8 +26,8 @@ function transform_score_index_to_field_id(surfer_color_index,surfer_score_index
 
 function mark_field_as_best(field_id)
 {
-		//document.getElementById(field_id).style.backgroundColor = "#FFFFFF";
-		document.getElementById(field_id).style.border = "solid black 2px";
+		document.getElementById(field_id).style.backgroundColor = "#DDDDF1";
+		//document.getElementById(field_id).style.border = "solid black 2px";
 }
 
 function mark_field_as_active(field_id)
@@ -151,9 +151,20 @@ function cancel()
 		
 	}
 }
+
+function make_buttons_quadratic()
+{
+    var cw = $('.quadratic').width();
+    $('.quadratic').height(cw);
+}
 </script>
 <script>
-	$(document).ready(update_fields());
+	$(document).ready(function ()
+    {
+        update_fields();
+        make_buttons_quadratic();
+        $(window).resize(make_buttons_quadratic);
+    });
 </script>
 {% endblock javascript %}
 
@@ -231,12 +242,12 @@ function cancel()
     {% for surfer_color in surfer_color_names %}
     <tr>
         <td>
-            <button class="btn btn-primary btn-lg" style="width: 100%" onclick="set_input_field( {{ loop.index - 1 }} );"id="{{ surfer_color }}_enter">{{ surfer_color }}</button>
+            <button id="asdf" class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[loop.index-1] }}; border-color: #000000" onclick="set_input_field( {{ loop.index - 1 }} );"id="{{ surfer_color }}_enter">{{ surfer_color }}</button>
         </td>
         <td>
             <div class="form-inline">
                 <div class="form-group">
-                    <div class="input-group">
+                    <div class="input-group input-group-lg">
                             {% for wave_idx in range(  number_of_waves ) %}
                             <input class="form-control" style="width: 10%" type="text" id="{{ surfer_color }}_{{wave_idx}}" readonly />
                             {% endfor %}
@@ -253,13 +264,15 @@ function cancel()
 
 <br /><br />
 <div class="btn-toolbar" role="toolbar">
-{% for number_index in range(10) %}
-<button class="btn btn-default btn-lg" style="width: 9%; height: 9%" onclick="number_write({{ number_index }});">{{number_index}}</button>
-{% endfor %}
+    {% for number_index in range(10) %}
+    <button class="btn btn-default btn-lg quadratic" style="width: 8.5%" onclick="number_write({{ number_index }});">{{number_index}}</button>
+    {% endfor %}
 </div>
 <br /><br />
-<button class="btn btn-info btn-lg" style="width: 30%; height: 100px" onclick="number_clear();">Del</button>
-<button class="btn btn-success btn-lg" style="width: 30%; height: 100px" onclick="enter_score();">ENTER</button>
-<button class="btn btn-danger btn-lg" style="width: 30%; height: 100px" onclick="cancel();">Cancel</button>
+<div class="btn-toolbar" role="toolbar">
+    <button class="btn btn-info btn-lg" style="width: 31%; height: 100px" onclick="number_clear();">Del</button>
+    <button class="btn btn-success btn-lg" style="width: 31%; height: 100px" onclick="enter_score();">ENTER</button>
+    <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="cancel();">Cancel</button>
+</div>
 <!--<button class="enter_button" onclick="update_fields();">Update</button> -->
 {% endblock content %}
