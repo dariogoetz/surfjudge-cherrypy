@@ -5,5 +5,5 @@ roles = ac_admin,
 password = $2a$12$lJbHDGCtrQt2CnV9nFRgFOLVEm8fywQXuqjKjYcmTqYqH7DfpyYdy
 roles = ac_admin, ac_judge
 [jcr]
-password = $2a$12$3miV/zXF4NB4ER844M80s.WAhcL0BeuRuv8R1Fjg2e9uxmiyJ3ZLW
+password = $2a$12$If7O5tlYJE43LuAIv6r5GuyAc8wdOJ90RiZS0BSCMkSZ4v/2x6Ejy
 roles = ac_admin,

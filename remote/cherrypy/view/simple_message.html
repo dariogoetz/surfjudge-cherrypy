@@ -1,11 +1,5 @@
-<!doctype html>
-<html>
-  <head>
-  {% include "head.html" %}
-  </head>
+{% extends "base_template.html" %}
 
-  <body>
-    {% include "navbar.html" %}
-    {{ message }}
-  </body>
-</html>
+{% block content %}
+{{ message }}
+{% endblock content %}

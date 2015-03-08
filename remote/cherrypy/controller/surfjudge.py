@@ -47,9 +47,10 @@ class SurfJudgeWebInterface(object):
         data = self._populate_standard_env()
         data['judge_name'] = 'Christian'
         data['judge_number'] = '1234'
-        data['surfer_colors'] = ['red', 'blue']
-        data['n_surfers'] = len(data['surfer_colors'])
-        data['n_waves'] = 10
+        data['surfer_color_names'] = ['red', 'blue']
+        data['surfer_color_colors'] = ['#FF8888', '#8888FF']
+        data['n_surfers'] = len(data['surfer_color_names'])
+        data['number_of_waves'] = 10
         return data
 
 

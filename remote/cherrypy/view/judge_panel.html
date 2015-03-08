@@ -10,8 +10,9 @@
 
 <script type="text/javascript">
 //Variables that need to be defined by Contest Operators*****
-	var max_no_of_waves=10;
-	var surfer_colors=["red","green"];
+	var max_no_of_waves={{ number_of_waves }};
+	var surfer_colors={{ surfer_color_names }};
+    var surfer_colors_hex={{ surfer_color_colors }};
 	var current_surfer=NaN;
 	
 //Variables	that are needed to run the script, using variables from contest operator as parameters
@@ -25,34 +26,35 @@ function transform_score_index_to_field_id(surfer_color_index,surfer_score_index
 
 function mark_field_as_best(field_id)
 {
-		document.getElementById(field_id).style.backgroundColor = "FFFFFF";
+		//document.getElementById(field_id).style.backgroundColor = "#FFFFFF";
 		document.getElementById(field_id).style.border = "solid black 2px";
 }
 
 function mark_field_as_active(field_id)
 {
-	document.getElementById(field_id).style.backgroundColor = surfer_colors[current_surfer];
+	document.getElementById(field_id).style.backgroundColor = surfer_colors_hex[current_surfer];
 	// document.getElementById(field_id).style.border = "solid black 2px";
 }
 
 function mark_field_as_inactive(field_id)
 {
-	document.getElementById(field_id).style.backgroundColor = "FFFFFF"
+	document.getElementById(field_id).style.backgroundColor = "#FFFFFF";
 	document.getElementById(field_id).style.border = "solid black 1px";
 }
 function mark_best_field_of_surfer(surfer_color_index)
 {
 	var best_score=0;
+	var best_score_id="none";
 	for (surfer_score_index = 0; surfer_score_index < surfer_scores[surfer_color_index].length; surfer_score_index++)  
-		{
+	{
 			if (surfer_scores[surfer_color_index][surfer_score_index]>=best_score)
 			{
 				best_score=surfer_scores[surfer_color_index][surfer_score_index];
-				var best_score_id=transform_score_index_to_field_id(surfer_color_index,surfer_score_index);
+				best_score_id=transform_score_index_to_field_id(surfer_color_index,surfer_score_index);
 			}
 		var field_id=transform_score_index_to_field_id(surfer_color_index, surfer_score_index);	
 		mark_field_as_inactive(field_id);	
-		}
+	}
 	mark_field_as_best(best_score_id);	
 }
 function update_fields()
@@ -66,7 +68,7 @@ function update_fields()
 			var text_box = document.getElementById(field_id);
 			text_box.value=surfer_scores[surfer_color_index][surfer_score_index];
 		}
-	mark_best_field_of_surfer(surfer_color_index);	
+		mark_best_field_of_surfer(surfer_color_index);	
 	}
 }
 
@@ -115,7 +117,8 @@ function number_clear()
 
 function set_input_field(surfer_color_index)
 {
-	current_input_field= transform_score_index_to_field_id(surfer_color_index,surfer_scores[surfer_color_index].length);
+	cancel();
+    current_input_field= transform_score_index_to_field_id(surfer_color_index,surfer_scores[surfer_color_index].length);
 	current_surfer=surfer_color_index;
 	mark_field_as_active(current_input_field);
 }
@@ -149,16 +152,18 @@ function cancel()
 	}
 }
 </script>
+<script>
+	$(document).ready(update_fields());
+</script>
 {% endblock javascript %}
 
 {% block css %}
 {{ super()}}
-
 <style type="text/css">
 .main_panel
 {
 	width:100%;
-	height:470px;
+	height:100%;
 	background-color:#FFFFFF;
 	padding:20px;
 }
@@ -202,7 +207,7 @@ function cancel()
 	float:left;
 	background-color:#AAAAAA;
 
-	font-size:36px;
+	font-size:25px;
 	text-align:center;
 }
 
@@ -214,7 +219,7 @@ function cancel()
 	float:left;
 	background-color:#AAAAAA;
 
-	font-size:36px;
+	font-size:25px;
 	text-align:center;
 }
 </style>
@@ -222,47 +227,39 @@ function cancel()
 
 
 {% block content %}
-
-<button class="enter_wave" onclick="set_input_field(0);"id="red_enter">red</button>
-<input class="text_box_inactive" type="text" id="red_0" readonly />
-<input class="text_box_inactive" type="text" id="red_1"  readonly />
-<input class="text_box_inactive" type="text" id="red_2"  readonly />
-<input class="text_box_inactive" type="text" id="red_3"  readonly />
-<input class="text_box_inactive" type="text" id="red_4"  readonly />
-<input class="text_box_inactive" type="text" id="red_5"  readonly />
-<input class="text_box_inactive" type="text" id="red_6"  readonly />
-<input class="text_box_inactive" type="text" id="red_7"  readonly />
-<input class="text_box_inactive" type="text" id="red_8"  readonly />
-<input class="text_box_inactive" type="text" id="red_9"  readonly />
-	
+<table class="table">
+    {% for surfer_color in surfer_color_names %}
+    <tr>
+        <td>
+            <button class="btn btn-primary btn-lg" style="width: 100%" onclick="set_input_field( {{ loop.index - 1 }} );"id="{{ surfer_color }}_enter">{{ surfer_color }}</button>
+        </td>
+        <td>
+            <div class="form-inline">
+                <div class="form-group">
+                    <div class="input-group">
+                            {% for wave_idx in range(  number_of_waves ) %}
+                            <input class="form-control" style="width: 10%" type="text" id="{{ surfer_color }}_{{wave_idx}}" readonly />
+                            {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </td>
+    </tr>
+    <br />
+    {% endfor %}
+</table>
 <br />
-	
-<button class="enter_wave" onclick="set_input_field(1);" id="green_enter">Green</button>
-<input class="text_box_inactive" type="text" id="green_0" readonly />
-<input class="text_box_inactive" type="text" id="green_1" readonly />
-<input class="text_box_inactive" type="text" id="green_2" readonly />
-<input class="text_box_inactive" type="text" id="green_3" readonly />
-<input class="text_box_inactive" type="text" id="green_4" readonly />
-<input class="text_box_inactive" type="text" id="green_5" readonly />
-<input class="text_box_inactive" type="text" id="green_6" readonly />
-<input class="text_box_inactive" type="text" id="green_7" readonly />
-<input class="text_box_inactive" type="text" id="green_8" readonly />
-<input class="text_box_inactive" type="text" id="green_9" readonly />
+
 
 <br /><br />
-<button class="number_button" onclick="number_write(1);">1</button>
-<button class="number_button" onclick="number_write(2);">2</button>
-<button class="number_button" onclick="number_write(3);">3</button>
-<button class="number_button" onclick="number_write(4);">4</button>
-<button class="number_button" onclick="number_write(5);">5</button>
-<button class="number_button" onclick="number_write(6);">6</button>
-<button class="number_button" onclick="number_write(7);">7</button>
-<button class="number_button" onclick="number_write(8);">8</button>
-<button class="number_button" onclick="number_write(9);">9</button>
-<button class="number_button" onclick="number_write(0);">0</button>
-<button class="number_button" onclick="number_clear();">Clr</button>
-<button class="enter_button" onclick="enter_score();">ENTER</button>
-<button class="cancel_button" onclick="cancel();">CANCEL</button>
-<button class="enter_button" onclick="update_fields();">Update</button>
-
+<div class="btn-toolbar" role="toolbar">
+{% for number_index in range(10) %}
+<button class="btn btn-default btn-lg" style="width: 9%; height: 9%" onclick="number_write({{ number_index }});">{{number_index}}</button>
+{% endfor %}
+</div>
+<br /><br />
+<button class="btn btn-info btn-lg" style="width: 30%; height: 100px" onclick="number_clear();">Del</button>
+<button class="btn btn-success btn-lg" style="width: 30%; height: 100px" onclick="enter_score();">ENTER</button>
+<button class="btn btn-danger btn-lg" style="width: 30%; height: 100px" onclick="cancel();">Cancel</button>
+<!--<button class="enter_button" onclick="update_fields();">Update</button> -->
 {% endblock content %}
