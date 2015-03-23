@@ -42,6 +42,7 @@ class UserAuthenticationTool(cherrypy.Tool):
         username = cherrypy.session.get(KEY_USERNAME)
         user_info = cherrypy.session.get(KEY_USER_INFO)
 
+
         ## The following could maybe be used if the standard
         ## authentication method would be used. Then the field
         ## cherrypy.request.login is populated with the username.
@@ -54,13 +55,15 @@ class UserAuthenticationTool(cherrypy.Tool):
         # interprets the old parameters as new ones
         # in the page handler where it is redirected to.
         from_page = 'from_page={}'.format(cherrypy.lib.httputil.urllib.quote(cherrypy.request.path_info))
+        # try alternatively 
+        #from_page = 'from_page={}'.format(cherrypy.lib.httputil.urllib.quote(cherrypy.request.request_line.split()[1]))
 
         # Check if the user is logged in on the webserver.
         if username is None:
             raise cherrypy.HTTPRedirect(LOGIN_PAGE + '?' + from_page)
 
         uname_str = 'username={}'.format(username)
-        if user_info is None:
+        if user_info is None: # for whatever reason, the session has no user_info
             user_info = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
 
         # Check if the user is logged in at the user manager.
@@ -72,6 +75,7 @@ class UserAuthenticationTool(cherrypy.Tool):
 
         # User is still logged in, so credentials were okay.
         # Hence the request body gets the field "login" populated.
+        # -> will be read by access_conditions
         # Moreover, we add some information about the user on
         # which the conditions will work.
         cherrypy.request.login = username

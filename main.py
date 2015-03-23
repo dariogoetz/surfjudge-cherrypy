@@ -1,6 +1,7 @@
 import threading
 import time
 
+from statemanager import StateManager
 from remote.remote_interface import RemoteInterface
 from database.database import SQLiteDatabaseHandler
 
@@ -16,7 +17,7 @@ class SurfJudge(object):
 
         self.__database = SQLiteDatabaseHandler()
         self.__interface = RemoteInterface()
-        self.__statemanager = None
+        self.__statemanager = StateManager()
 
         return
 

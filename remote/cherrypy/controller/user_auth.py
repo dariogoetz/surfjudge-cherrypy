@@ -36,10 +36,9 @@ class AuthenticationController(object):
             # to it.
 
             user_info = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
-
             cherrypy.session[KEY_USERNAME] = username
             cherrypy.session[KEY_USER_INFO] = user_info
-            cherrypy.request.login = username
+
             return True
         else:
             return False
