@@ -34,7 +34,11 @@ class AuthenticationController(object):
             # field "login" gets populated. Moreover, the session
             # will be stored by writing some (here "KEY_USERNAME")
             # to it.
+
+            user_info = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
+
             cherrypy.session[KEY_USERNAME] = username
+            cherrypy.session[KEY_USER_INFO] = user_info
             cherrypy.request.login = username
             return True
         else:
@@ -44,19 +48,6 @@ class AuthenticationController(object):
     @cherrypy.expose
     def do_logout(self):
         username = cherrypy.session.get(KEY_USERNAME)
-        if not username:
-            return True
-        else:
-            username = username.encode(ENCODING)
-            res = cherrypy.engine.publish(KEY_ENGINE_USER_LOGOUT, username).pop()
-            cherrypy.request.login = None
-            del cherrypy.session[KEY_USERNAME]
-            return True
-
-
-    @cherrypy.expose
-    @require(is_admin())
-    def do_logout_user(self, username = None):
         if username is None:
             return True
         else:
@@ -67,6 +58,7 @@ class AuthenticationController(object):
             session_user = cherrypy.session.get(KEY_USERNAME)
             if username == session_user:
                 del cherrypy.session[KEY_USERNAME]
+                del cherrypy.session[KEY_USER_INFO]
                 if session_user:
                     cherrypy.request.login = None
                     cherrypy.request.user_info = None

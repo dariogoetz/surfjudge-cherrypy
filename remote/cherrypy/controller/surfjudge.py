@@ -13,10 +13,13 @@ class SurfJudgeWebInterface(object):
     def _populate_standard_env(self):
         env = {}
         username = cherrypy.session.get(KEY_USERNAME)
+        ui = cherrypy.session.get(KEY_USERNAME)
         env['global_username'] = username
 
         # TODO: if only normal user, dont check for ui to enhance performance
-        ui = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
+        if ui is None:
+            ui = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
+
         env['global_is_admin'] = ui and KEY_ROLE_ADMIN in ui.get(KEY_ROLES)
         env['global_logged_in'] = bool(username)
         return env

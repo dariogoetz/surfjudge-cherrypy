@@ -23,7 +23,7 @@ KEY_PASSWORD = 'password'
 ############
 
 KEY_USERNAME = '_cp_username'
-
+KEY_USER_INFO = '_cp_user_info'
 
 ################################
 # cherrypy plugins - user auth #

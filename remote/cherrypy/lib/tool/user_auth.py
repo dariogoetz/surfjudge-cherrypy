@@ -40,6 +40,7 @@ class UserAuthenticationTool(cherrypy.Tool):
         # alternatively, if sessions should not be used,
         # one could check for cherrypy.request.login or the like
         username = cherrypy.session.get(KEY_USERNAME)
+        user_info = cherrypy.session.get(KEY_USER_INFO)
 
         ## The following could maybe be used if the standard
         ## authentication method would be used. Then the field
@@ -59,7 +60,8 @@ class UserAuthenticationTool(cherrypy.Tool):
             raise cherrypy.HTTPRedirect(LOGIN_PAGE + '?' + from_page)
 
         uname_str = 'username={}'.format(username)
-        user_info = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
+        if user_info is None:
+            user_info = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
 
         # Check if the user is logged in at the user manager.
         if user_info is None:
