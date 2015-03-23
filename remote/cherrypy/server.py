@@ -28,6 +28,8 @@ class Server(object):
         conf_path = os.path.join(self.conf_path, _CONFIG['config_files']['server'])
         cherrypy.config.update(conf_path)
 
+        # set port
+        cherrypy.config['server.socket_port'] = params['port']
 
         # Load cherrypy plugins/tools
         self._load_plugins(params)

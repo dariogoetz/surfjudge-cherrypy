@@ -41,7 +41,7 @@ def doit(args):
     surfjudge = SurfJudge()
 
     if args.webserver:
-        cpserver = CherryPyServer(user_manager = surfjudge.interface.user_manager, database = surfjudge.database)
+        cpserver = CherryPyServer(user_manager = surfjudge.interface.user_manager, database = surfjudge.database, port = args.port)
         surfjudge.interface.add_server(cpserver)
 
     # start console
@@ -62,6 +62,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--webserver", action='store_true', help='Start webserver. (Default: True)')
+    parser.add_argument("--port", type=int, default=80, help="Port to be used by webserver")
     args = parser.parse_args()
 
 
