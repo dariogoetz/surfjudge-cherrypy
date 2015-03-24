@@ -122,6 +122,16 @@ class Server(object):
         auth_contoller = AuthenticationController(mount_loc)
         conf_path = os.path.join(self.conf_path, _CONFIG['config_files']['AuthenticationController'])
         app = self.mount_app(auth_contoller, mount_loc, conf_path)
+
+
+        # Tournament admin app
+        from remote.cherrypy.controller.tournament_admin import TournamentAdminWebInterface
+
+        mount_loc = '/tournament_admin/'
+        ta_interface = TournamentAdminWebInterface(mount_loc)
+        conf_path = os.path.join(self.conf_path, _CONFIG['config_files']['SurfJudgeWebInterface'])
+        app = self.mount_app(ta_interface, mount_loc, conf_path)
+
         return
 
 

@@ -1,36 +1,21 @@
 import cherrypy
 import json
 from ..lib.access_conditions import *
+from . import CherrypyWebInterface
 
 from keys import *
 
-class SurfJudgeWebInterface(object):
-    def __init__(self, mount_location = '/'):
-        self.mount_location = mount_location
-        return
-
-
-    def _populate_standard_env(self):
-        env = {}
-        username = cherrypy.session.get(KEY_USERNAME)
-        ui = cherrypy.session.get(KEY_USERNAME)
-        env['global_username'] = username
-
-        # TODO: if only normal user, dont check for ui to enhance performance
-        if ui is None:
-            ui = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
-
-        env['global_is_admin'] = ui and KEY_ROLE_ADMIN in ui.get(KEY_ROLES)
-        env['global_logged_in'] = bool(username)
-        return env
-
+class SurfJudgeWebInterface(CherrypyWebInterface):
+    #def __init__(self, *args, **kwargs):
+    #    CherrypyWebInterface.__init__(self, *args, **kwargs)
+    #    return
 
 
     @cherrypy.expose
     #@require(is_admin())
     @cherrypy.tools.render(template = 'base_template.html')
     def index(self):
-        context = self._populate_standard_env()
+        context = self._standard_env()
 
         if context['global_username']:
             message = 'Why, you again...? Welcome back, {}!'.format(context['global_username'])
@@ -47,7 +32,7 @@ class SurfJudgeWebInterface(object):
     #@require(is_admin()) # later ask for judge or similar
     @cherrypy.tools.render(template='judge_panel.html')
     def judge_panel(self):
-        data = self._populate_standard_env()
+        data = self._standard_env()
         data['judge_name'] = 'Christian'
         data['judge_number'] = '1234'
         data['surfer_color_names'] = ['red', 'blue', 'green']

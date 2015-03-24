@@ -14,11 +14,11 @@
 	var surfer_colors={{ surfer_color_names }};
     var surfer_colors_hex={{ surfer_color_colors }};
 	var current_surfer=NaN;
-	
+
 //Variables	that are needed to run the script, using variables from contest operator as parameters
 	var current_input_field="none"; //This variables is a state variable telling the key board where to write input
 	var surfer_scores=[[1.2, 5.4, 3],[2,5]];// This variable contains for each surfer an array with his scored waves
-		
+
 function transform_score_index_to_field_id(surfer_color_index,surfer_score_index)
 {
 	return surfer_colors[surfer_color_index] + "_" + surfer_score_index;
@@ -45,30 +45,30 @@ function mark_best_field_of_surfer(surfer_color_index)
 {
 	var best_score=0;
 	var best_score_id="none";
-	for (surfer_score_index = 0; surfer_score_index < surfer_scores[surfer_color_index].length; surfer_score_index++)  
+	for (surfer_score_index = 0; surfer_score_index < surfer_scores[surfer_color_index].length; surfer_score_index++)
 	{
 			if (surfer_scores[surfer_color_index][surfer_score_index]>=best_score)
 			{
 				best_score=surfer_scores[surfer_color_index][surfer_score_index];
 				best_score_id=transform_score_index_to_field_id(surfer_color_index,surfer_score_index);
 			}
-		var field_id=transform_score_index_to_field_id(surfer_color_index, surfer_score_index);	
-		mark_field_as_inactive(field_id);	
+		var field_id=transform_score_index_to_field_id(surfer_color_index, surfer_score_index);
+		mark_field_as_inactive(field_id);
 	}
-	mark_field_as_best(best_score_id);	
+	mark_field_as_best(best_score_id);
 }
 function update_fields()
 {
 	clear_fields();
-	for (surfer_color_index = 0; surfer_color_index < surfer_scores.length; surfer_color_index++) 
-	{ 
-		for (surfer_score_index = 0; surfer_score_index < surfer_scores[surfer_color_index].length; surfer_score_index++)  
+	for (surfer_color_index = 0; surfer_color_index < surfer_scores.length; surfer_color_index++)
+	{
+		for (surfer_score_index = 0; surfer_score_index < surfer_scores[surfer_color_index].length; surfer_score_index++)
 		{
 			var field_id = transform_score_index_to_field_id(surfer_color_index,surfer_score_index);
 			var text_box = document.getElementById(field_id);
 			text_box.value=surfer_scores[surfer_color_index][surfer_score_index];
 		}
-		mark_best_field_of_surfer(surfer_color_index);	
+		mark_best_field_of_surfer(surfer_color_index);
 	}
 }
 
@@ -84,7 +84,7 @@ function clear_fields()
 			text_box.value=null;
 		}
 	}
-	
+
 }
 
 function number_write(x)
@@ -138,7 +138,7 @@ function enter_score()
 			current_surfer=NaN;
 			current_input_field="none";
 		}
-	}	
+	}
 }
 function cancel()
 {
@@ -148,7 +148,7 @@ function cancel()
 		document.getElementById(current_input_field).value = null;
 		current_surfer=NaN;
 		current_input_field="none";
-		
+
 	}
 }
 

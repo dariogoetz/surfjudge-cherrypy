@@ -2,18 +2,17 @@ import os
 import cherrypy
 
 from ..lib.access_conditions import *
+from . import CherrypyWebInterface
+
 from keys import *
 
 ENCODING = 'utf-8'
 
-class AuthenticationController(object):
+class AuthenticationController(CherrypyWebInterface):
     '''
     Manages the login of users.
     '''
 
-    def __init__(self, mount_location='/'):
-        self.mount_location = mount_location
-        pass
 
     # TODO: HTML error messages
     # TODO: make available only by POST
@@ -30,10 +29,9 @@ class AuthenticationController(object):
         if check_okay:
             # Regenerate session cookie against session fixation attacks.
             cherrypy.session.regenerate()
-            # Since authentication was successful, the request
-            # field "login" gets populated. Moreover, the session
-            # will be stored by writing some (here "KEY_USERNAME")
-            # to it.
+            # Since authentication was successful, the session
+            # will be stored by writing the username and his information
+            # (roles etc.) to it.
 
             user_info = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
             cherrypy.session[KEY_USERNAME] = username
@@ -52,18 +50,11 @@ class AuthenticationController(object):
         else:
             username = username.encode(ENCODING)
             res = cherrypy.engine.publish(KEY_ENGINE_USER_LOGOUT, username).pop()
-            # If the user to be logged out is of this session,
-            # log out session as well
-            session_user = cherrypy.session.get(KEY_USERNAME)
-            if username == session_user:
-                del cherrypy.session[KEY_USERNAME]
-                del cherrypy.session[KEY_USER_INFO]
-                if session_user:
-                    cherrypy.request.login = None
-                    cherrypy.request.user_info = None
-                return True
-            else:
-                return True
+            del cherrypy.session[KEY_USERNAME]
+            del cherrypy.session[KEY_USER_INFO]
+            cherrypy.request.login = None
+            cherrypy.request.user_info = None
+            return res
 
 
     @cherrypy.expose
@@ -83,24 +74,12 @@ class AuthenticationController(object):
     #### HTML resources #########
     #######################################################################
 
-    def _populate_standard_env(self):
-        env = {}
-        username = cherrypy.session.get(KEY_USERNAME)
-        env['global_username'] = username
-        ui = None
-        if username:
-            username = username.encode(ENCODING)
-            ui = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
-        env['global_is_admin'] = ui and KEY_ROLE_ADMIN in ui.get(KEY_ROLES)
-        env['global_logged_in'] = True if username else False
-        return env
-
 
     # functions as website as well as POST request leading to website, if unsuccessful
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/login_form.html')
     def login(self, username = None, password = None, from_page = '/'):
-        env = self._populate_standard_env()
+        env = self._standard_env()
         message = ''
         if cherrypy.request.method == 'POST':
             successful = self.do_login(username, password)
@@ -120,7 +99,7 @@ class AuthenticationController(object):
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/register.html')
     def register(self, username = None, password = None, as_admin = False):
-        env = self._populate_standard_env()
+        env = self._standard_env()
 
         logged_in = env['global_logged_in']
         is_admin = env['global_is_admin']
@@ -157,7 +136,7 @@ class AuthenticationController(object):
         else:
             message = 'Logout unsuccessful!'
 
-        env = self._populate_standard_env()
+        env = self._standard_env()
         print message
         env['message'] = message
         return env

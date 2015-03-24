@@ -55,7 +55,7 @@ class UserAuthenticationTool(cherrypy.Tool):
         # interprets the old parameters as new ones
         # in the page handler where it is redirected to.
         from_page = 'from_page={}'.format(cherrypy.lib.httputil.urllib.quote(cherrypy.request.path_info))
-        # try alternatively 
+        # try alternatively
         #from_page = 'from_page={}'.format(cherrypy.lib.httputil.urllib.quote(cherrypy.request.request_line.split()[1]))
 
         # Check if the user is logged in on the webserver.
@@ -90,4 +90,3 @@ class UserAuthenticationTool(cherrypy.Tool):
 
         # Everything is okay.
         return
-
