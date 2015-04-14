@@ -242,7 +242,7 @@ function make_buttons_quadratic()
     {% for surfer_color in surfer_color_names %}
     <tr>
         <td>
-            <button id="asdf" class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[loop.index-1] }}; border-color: #000000" onclick="set_input_field( {{ loop.index - 1 }} );"id="{{ surfer_color }}_enter">{{ surfer_color }}</button>
+            <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[loop.index-1] }}; border-color: #000000" onclick="set_input_field( {{ loop.index - 1 }} );"id="{{ surfer_color }}_enter">{{ surfer_color }}</button>
         </td>
         <td>
             <div class="form-inline">

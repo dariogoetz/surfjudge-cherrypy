@@ -19,6 +19,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.log('Setting up database access resources')
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_SCORES, self.get_scores)
         self.bus.subscribe(KEY_ENGINE_DB_INSERT_SCORE, self.insert_score)
+        self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_TOURNAMENTS, self.get_tournaments)
+        self.bus.subscribe(KEY_ENGINE_DB_INSERT_TOURNAMENT, self.insert_tournament)
 
         #self.bus.subscribe(KEY_ENGINE_USER_LOGIN,  self.login_user)
         #self.bus.subscribe(KEY_ENGINE_USER_LOGOUT, self.logout_user)
@@ -29,6 +31,9 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.log('Freeing database access resources')
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_SCORES, self.get_scores)
         self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_SCORE, self.insert_score)
+        self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_TOURNAMENTS, self.get_tournaments)
+        self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_TOURNAMENT, self.insert_tournament)
+
         #self.bus.unsubscribe(KEY_ENGINE_USER_LOGIN,  self.login_user)
         #self.bus.unsubscribe(KEY_ENGINE_USER_LOGOUT, self.logout_user)
         #self.bus.unsubscribe(KEY_ENGINE_USER_REGISTER, self.register_user)
@@ -41,4 +46,12 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
     def insert_score(self, score):
         res = self.database.insert_score(score)
+        return res
+
+    def get_tournaments(self, query_info):
+        tournaments = self.database.get_tournaments(query_info)
+        return tournaments
+
+    def insert_tournament(self, tournament):
+        res = self.database.insert_tournament(tournament)
         return res

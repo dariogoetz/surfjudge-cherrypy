@@ -8,7 +8,177 @@
 {% include "tournament_admin/sidebar.html" %}
 {% endblock sidebar_content %}
 
+
+{% block css %}
+{{ super() }}
+
+<link href="/static/datepicker/css/datepicker.css" rel="stylesheet">
+
+{% endblock css %}
+
+
 {% block content %}
-test
+
+<!-- Edit tournaments modal -->
+<div class="modal fade" id="edit_tournament_modal">
+  <div class="modal-dialog">
+
+    <div class="modal-content">
+    <form method="post" action ="{{ mount_loc }}/submit">
+
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Edit Tournament</h4>
+      </div> <!-- /.modal-header -->
+
+      <div class="modal-body">
+
+
+          <div class="well">
+              <div class="form-horizontal">
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Tournament name</label>
+                      <div class="col-sm-10">
+                          <input type="text" id="modal_tournament_name" class="form-control" placeholder="Tournament name">
+                      </div>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Dates</label>
+                      <div class="col-sm-4">
+
+			              <div class="input-group date" id="modal_start_date_picker" data-date="" data-date-format="dd.mm.yyyy">
+				              <input class="form-control" id="modal_start_date_input" size="16" type="text" placeholder="Date start" readonly>
+				              <span class="input-group-addon add-on"><i class="glyphicon glyphicon-calendar"></i></span>
+			              </div>
+			              <div class="input-group date" id="modal_end_date_picker" data-date="" data-date-format="dd.mm.yyyy">
+				              <input class="form-control" id="modal_end_date_input" size="16" type="text" placeholder="Date end" readonly>
+				              <span class="input-group-addon add-on"><i class="glyphicon glyphicon-calendar"></i></span>
+			              </div>
+
+                      </div>
+                  </div>
+
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Other stuff</label>
+                      <div class="col-sm-10">
+                          <input type="text" id ="modal_additional_info" class="form-control" placeholder="Stuff">
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+
+      </div><!-- /.modal-body -->
+
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <form class="form" action="post" method="{{mount_loc}}/submit">
+        <button type="button" class="btn btn-primary" type="submit">Save changes</button>
+        </form>
+      </div>
+    </form>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+
+
+<div class="alert alert-success" id="alert_area">
+Here, results will appear.
+</div>
+
+<table class="table table-striped"
+       id="tournaments_table"
+       data-toggle="table"
+       data-url="{{ mount_loc }}/get_tournaments">
+    <thead>
+        <tr>
+            <th data-field="id">Tournament ID (for admin)</th>
+            <th data-field="name">Tournament Name</th>
+            <th data-field="start_date">Start Date</th>
+            <th data-field="end_date"> End Date</th>
+        </tr>
+    </thead>
+</table>
+
+<button type="button" id="new_tournament_btn" class="btn btn-primary btn-lg">New Tournament</button>
+
 {% endblock content %}
 
+{% block javascript %}
+{{ super() }}
+
+<script src="/static/datepicker/js/bootstrap-datepicker.js"></script>
+
+<script>
+function fill_modal(tournament_id, tournament_name, start_date, end_date, additional_info){
+
+  if (tournament_name.length > 0){
+    $('#modal_tournament_name')[0].value = tournament_name;
+    //$('#modal_tournament_name')[0].placeholder = tournament_name;
+  }
+
+  if (start_date.length > 0){
+    $('#modal_start_date_picker').data('datepicker').setValue(start_date);
+  }
+
+  if (end_date.length > 0){
+    $('#modal_end_date_picker').data('datepicker').setValue(end_date);
+    //$('#modal_end_date_input')[0].placeholder = end_date;
+    //$('#modal_end_date_input')[0].value = end_date;
+  }
+
+  if (additional_info.length > 0){
+    $('#modal_additional_info')[0].value = additional_info;
+    //$('#modal_additional_info')[0].placeholder = additional_info;
+  }
+}
+
+$(document).ready(function (){
+  fill_modal('test_id', 'test_name', '10.04.2015', '12.04.2015', 'Additional Info');
+});
+
+$('#new_tournament_btn').on('click', function(){
+  $('#edit_tournament_modal').modal('toggle');
+  fill_modal('', '', '', '', '');
+  });
+
+
+$('#tournaments_table').on('click-row.bs.table', function (e, row, $element) {
+  var start_date = new Date();
+  var end_date = new Date();
+
+  // TODO: get data from row and store in variables
+  // TODO: put data into modal window
+  fill_modal(tournament_id, tournament_name, start_date, end_date, additional_info);
+  $('#edit_tournament_modal').modal('toggle');
+});
+</script>
+
+
+
+<!-- enable datepickers in modal window -->
+<script>
+var nowTemp = new Date();
+var start_date = new Date(nowTemp.getFullYear(), nowTemp.getMonth(), nowTemp.getDate(), 0,0,0,0);
+
+$('#modal_start_date_picker').datepicker()
+  .on('changeDate', function(ev){
+    start_date = ev.date;
+    end_date.setValue(start_date);
+    $('#modal_start_date_picker').datepicker('hide');
+  });
+
+var end_date = $('#modal_end_date_picker').datepicker()
+  .on('changeDate', function(ev){
+    if (ev.date.valueOf() < start_date.valueOf()){
+      $('#alert_area').show().text('The end date of the tournament can not be before its start date.')
+    }
+    $('#modal_end_date_picker').datepicker('hide');
+  }).data('datepicker');
+
+</script>
+
+{% endblock javascript %}

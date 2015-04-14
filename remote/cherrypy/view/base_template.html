@@ -14,7 +14,8 @@
     {% block css %}
     <!-- Bootstrap core CSS -->
     <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/bootstrap-responsive.css" rel="stylesheet">
+    <!-- <link href="../assets/css/bootstrap-responsive.css" rel="stylesheet"> -->
+    <link href="/static/bootstrap_table/bootstrap-table.min.css" rel="stylesheet">
     <style>
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -58,8 +59,8 @@
             </div>
         </div>
     </nav>
-    
-    
+
+
     {% block content_layout %}
     <div class="container">
 
@@ -69,13 +70,14 @@
         {% endblock content %}
     </div>
     {% endblock content_layout %}
-    
+
     {% block javascript %}
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="/static/jquery/jquery-1.11.2.min.js"></script>
     <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/static/bootstrap_table/bootstrap-table.min.js"></script>
     <!-- The following sets the current navigation item as active -->
     <script>
         $(document).ready(function() {
@@ -86,6 +88,6 @@
         });
     </script>
     {% endblock javascript %}
-    
+
   </body>
 </html>

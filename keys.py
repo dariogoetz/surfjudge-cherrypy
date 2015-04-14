@@ -41,7 +41,8 @@ KEY_ENGINE_USER_INFO = 'lookup-user-info'
 
 KEY_ENGINE_DB_RETRIEVE_SCORES = 'db_retrieve_scores'
 KEY_ENGINE_DB_INSERT_SCORE = 'db_insert_score'
-
+KEY_ENGINE_DB_RETRIEVE_TOURNAMENTS = 'db_retrieve_tournaments'
+KEY_ENGINE_DB_INSERT_TOURNAMENT = 'db_insert_tournament'
 
 ###################################
 # cherrypy plugins - jinja lookup #
@@ -56,4 +57,6 @@ KEY_ENGINE_LOOKUP_TEMPLATE = 'lookup-template'
 
 KEY_GET_SCORES = 'get_scores'
 KEY_INSERT_SCORE = 'insert_score'
+KEY_GET_TOURNAMENTS = 'get_tournaments'
+KEY_INSERT_TOURNAMENT = 'insert_tournament'
 KEY_SHUTDOWN = 'shutdown'

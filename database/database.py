@@ -67,6 +67,18 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         #print 'result arrived'
         return res
 
+    def get_tournaments(self, query_info):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (KEY_GET_TOURNAMENTS, query_info, pipe_send), block=True)
+        #print 'scheduled query command, waiting for result'
+        res = pipe_recv.recv()
+        #print 'result arrived'
+        return res
+
+
+    def insert_tournament(self, tournament):
+        self.__access_queue.put( (KEY_INSERT_TOURNAMENT, tournament, None), block=True)
+        return
 
     def shutdown(self):
         if not self._thread.isAlive():
@@ -97,6 +109,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
                 #print scores
                 pipe_conn.send(scores)
                 pipe_conn.close()
+            elif task == KEY_GET_TOURNAMENTS:
+                tournaments = self._get_tournaments(data)
+                pipe_conn.send(tournaments)
+                pipe_conn.close()
+            elif task == KEY_INSERT_TOURNAMENT:
+                self._insert_tournament(data)
             elif task == KEY_SHUTDOWN:
                 self.__access_queue.task_done()
                 break
@@ -143,7 +161,31 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
     def _get_scores(self, query_info, cols = None):
-        target_table = 'scores'
+        return self._query_db(query_info, 'scores', cols = cols)
+
+
+    def _insert_score(self, score):
+        self._insert_db(score, 'scores')
+        return
+
+
+    def _get_tournaments(self, query_info, cols = None):
+        # TODO: make a JOIN on categories, tournaments and events
+        # --> get tournaments with a list of their categories and events
+        return self._query_db(query_info, 'tournaments', cols = cols)
+
+
+    def _insert_tournament(self, tournament):
+        # check if id exists
+        if len(self._get_tournaments({'id': tournament.get('id')})) > 0:
+            #delete
+            pass
+        self._insert_db(tournament, 'tournaments')
+        return
+
+
+
+    def _query_db(self, query_info, target_table, cols = None):
         if cols is None:
             cols_str = '*'
         else:
@@ -168,18 +210,14 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             res = []
         return res
 
-    def _insert_score(self, score):
-        target_table = 'scores'
-        col_info = self._table_info.get(target_table, {})
-        vals = []
+
+    def _insert_db(self, data, table):
+        col_info = self._table_info.get(table, {})
+        values = []
 
         for col in sorted(col_info.values(), key = lambda val: val['cid']):
-            vals.append( score.get(col['name'], None) )
-        self._insert_db(target_table, vals)
-        return
+            values.append( data.get(col['name'], None) )
 
-
-    def _insert_db(self, table, values):
         cursor = self._db.cursor()
         values_str = ', '.join(['?']*len(values))
 
