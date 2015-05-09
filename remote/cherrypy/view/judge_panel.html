@@ -57,6 +57,33 @@ function mark_best_field_of_surfer(surfer_color_index)
 	}
 	mark_field_as_best(best_score_id);
 }
+
+
+function sync_with_server()
+{
+    $.get('do_query_scores', function(data){
+        var server_data = $.parseJSON(data);
+
+        for (var color in surfer_scores)
+        {
+            for (var wave_index=0; wave_index < server_data[color].length; wave_index++)
+            {
+                surfer_scores[color][wave_index] = server_data[color][wave_index];
+            }
+
+            // maybe the if condition is unnecessary
+            if (surfer_scores[color].length > server_data[color].length)
+            {
+                for (var wave_index=server_data[color].length; wave_index < surfer_scores[color].length; wave_index++)
+                {
+                    //upload surfer_scores[color][wave_index] appropriately
+                }
+            }
+        }
+    });
+}
+
+
 function update_fields()
 {
 	clear_fields();
