@@ -90,7 +90,7 @@ class AuthenticationController(CherrypyWebInterface):
 
         env['message']     = message
         env['from_page']   = from_page
-        env['post_action'] = os.path.join(self.mount_location, 'login')
+        env['post_action'] = self.mount_location + '/' + 'login'
         return env
 
 
@@ -121,7 +121,7 @@ class AuthenticationController(CherrypyWebInterface):
                     message = 'Register unsuccessful!'
 
         env['message']     = message
-        env['post_action'] = os.path.join(self.mount_location, 'register')
+        env['post_action'] = self.mount_location + '/' + 'register'
         return env
 
 
