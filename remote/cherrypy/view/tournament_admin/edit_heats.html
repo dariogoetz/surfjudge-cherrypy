@@ -1,0 +1,233 @@
+{% extends "base_dashboard.html" %}
+
+{% block nav_items %}['#nav_item_tournament_admin', '#sidebar_item_edit_heats']{% endblock nav_items %}
+
+{% block title %}Edit Heats{% endblock title %}
+
+{% block sidebar_content %}
+{% include "tournament_admin/sidebar.html" %}
+{% endblock sidebar_content %}
+
+
+{% block css %}
+{{ super() }}
+
+<link href="/static/datepicker/css/datepicker.css" rel="stylesheet">
+<style>
+.datepicker{z-index:1151 !important;}
+
+.scrollable-menu{
+    height: auto;
+    max-height: 200px;
+    overflow-x: hidden;
+}
+</style>
+
+{% endblock css %}
+
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="dropdown">
+            <button id="dropdown_label" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Dropdown Label
+            </button>
+            <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
+                <li><a href="#">Tournament Name 1</a></li>
+            </ul>
+        </div>
+    </div>
+
+  <table class="table table-striped"
+         id="heats_table"
+         data-toggle="table"
+         data-url="{{ mount_loc }}/get_heats"
+         data-sort-name="name"
+         date-sort-order="asc">
+      <thead>
+          <tr>
+              <th data-field="id">ID (for admin)</th>
+              <th data-field="name" data-sortable="true">Heat Name</th>
+              <th data-field="date" data-sortable="true">Date</th>
+              <th data-field="start_time" data-sortable="true">Start Time</th>
+              <th data-field="additional_info">Additional Info</th>
+          </tr>
+      </thead>
+  </table>
+</div>
+
+<button type="button" id="new_heat_btn" class="btn btn-primary btn-lg">New Heat</button>
+
+{% endblock content %}
+
+
+
+{% block modals %}
+
+<!-- Edit heats modal -->
+<div class="modal fade" id="edit_heat_modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title">Edit Heat</h4>
+          </div> <!-- /.modal-header -->
+
+          <div class="modal-body">
+
+
+          <div class="well">
+              <div class="form-horizontal">
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Heat name</label>
+                      <div class="col-sm-10">
+                          <input type="hidden" id="modal_heat_id">
+                          <input type="text" id="modal_heat_name" name="heat_name" class="form-control" placeholder="Heat Name">
+                      </div>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Date</label>
+                      <div class="row">
+                        <div class="col-sm-4">
+
+			              <div class="input-group date" id="modal_date_picker" data-date="" data-date-format="dd.mm.yyyy">
+				              <input class="form-control" id="modal_date_input" name="date_begin" size="16" type="text" placeholder="Date start" readonly>
+				              <span class="input-group-addon add-on"><i class="glyphicon glyphicon-calendar"></i></span>
+			              </div>
+                        </div>
+                      <div class="col-sm-4">
+                          Need time picker
+                      </div>
+                      </div>
+                  </div>
+
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Additional Info</label>
+                      <div class="col-sm-10">
+                        <input type="text" id ="modal_additional_info" name="modal_additional_info" class="form-control" placeholder="Additional Info">
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+
+      </div><!-- /.modal-body -->
+
+
+      <div class="modal-footer">
+        <button id="modal_delete" class="btn btn-danger pull-left">Delete</button>
+        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button id="modal_submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+{% endblock modals %}
+
+{% block javascript %}
+{{ super() }}
+
+<script src="/static/datepicker/js/bootstrap-datepicker.js"></script>
+
+<script>
+function fill_modal(heat_id, heat_name, date, start_time, additional_info){
+  $('#modal_heat_id')[0].value = heat_id;
+  $('#modal_heat_name')[0].value = heat_name;
+  if (date == null){
+    $('#modal_date_picker').data('datepicker').setValue('');
+  } else {
+    $('#modal_date_picker').data('datepicker').setValue(start_date);
+  }
+  // time picker
+  $('#modal_additional_info')[0].value = additional_info;
+
+}
+
+$(document).ready(function (){
+  $.get('{{ mount_loc }}/get_tournaments', function(data){
+    var tournaments = JSON.parse(data);
+
+    // fill dropdown list with tournament names
+    $('#tournaments_dropdown_list').empty();
+    for (i in tournaments){
+      $('#tournaments_dropdown_list').append('<li><a href="#" data-select=' + tournaments[i]['id'] + ' data-index=' + i + '>' + tournaments[i]['name'] + '</a></li>');
+    }
+    console.log($('#tournaments_dropdown_list'));
+
+    // sort
+    function comp_func(a,b){
+      console.log($(b).data('index'));
+      return (tournaments[$(b).data('index')]['start_datetime'] < tournaments[$(a).data('index')]['start_datetime']) ? 1 : -1;
+    }
+
+    $('#tournaments_dropdown_list').sort(comp_func).appendTo('#tournaments_dropdown_list');
+    console.log($('#tournaments_dropdown_list'));
+  });
+});
+
+$('#new_heat_btn').on('click', function(){
+  fill_modal(null, null, null, null, null);
+  $('#edit_heat_modal').modal('toggle');
+  });
+
+
+$('#heats_table').on('click-row.bs.table', function (e, row, $element) {
+  var date = new Date();
+
+  heat_id = row['id'];
+  heat_name = row['name'];
+  date = row['date'];
+  start_time = row['start_time'];
+  additional_info = row['additional_info'];
+
+  fill_modal(heat_id, heat_name, date, start_time, additional_info);
+  $('#edit_heat_modal').modal('toggle');
+});
+</script>
+
+
+<!-- modal scripts -->
+<script>
+$('#modal_submit').on('click', function(){
+  var heat_id = $('#modal_heat_id')[0].value;
+  var heat_name = $('#modal_heat_name')[0].value;
+  var date = $('#modal_date_input')[0].value;
+  var start_time = '18:00'//$('#modal_start_time_input')[0].value;
+  var additional_info = $('#modal_additional_info')[0].value;
+
+  if (heat_id == null && heat_name.length == 0) {
+    alert('Empty field "Heat Name"');
+    return
+  }
+
+  $.post('{{ mount_loc }}/do_edit_heat', {heat_id: heat_id, heat_name: heat_name, date: date, start_time: start_time, additional_info: additional_info});
+  $('#edit_heat_modal').modal('toggle');
+  $('#heats_table').bootstrapTable('refresh');
+});
+
+$('#modal_delete').on('click', function(){
+  $.post('{{ mount_loc }}/do_delete_heat', {heat_id: heat_id});
+  $('#edit_heat_modal').modal('toggle');
+  $('#heats_table').bootstrapTable('refresh');
+});
+
+</script>
+
+
+<!-- enable datepickers in modal window -->
+<script>
+var nowTemp = new Date();
+var start_date = new Date(nowTemp.getFullYear(), nowTemp.getMonth(), nowTemp.getDate(), 0,0,0,0);
+
+$('#modal_date_picker').datepicker({weekStart: 1})
+  .on('changeDate', function(ev){
+    start_date = ev.date;
+    $('#modal_date_picker').datepicker('hide');
+  });
+</script>
+
+{% endblock javascript %}

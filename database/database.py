@@ -4,7 +4,7 @@ from .sql_adapter import PythonSQLAdapter
 from keys import *
 
 from Queue import Queue
-import multiprocessing
+import multiprocessing, uuid, json, os
 
 _CONFIG = Config(__name__)
 
@@ -51,35 +51,90 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         import threading
         self._thread = threading.Thread(target=self._run)
         self._thread.start()
+
+        self._db_info = self._read_db_info()
+
+        return
+
+    def _read_db_info(self):
+        import os
+        filename = _CONFIG['db_info']['filename']
+        if os.path.isfile(filename):
+            with open(filename, 'rb') as fp:
+                res = json.load(fp)
+        else:
+            res = {}
+        return res
+
+    def _write_db_info(self):
+        filename = _CONFIG['db_info']['filename']
+        with open(filename, 'wb') as fp:
+            json.dump(self._db_info, fp)
         return
 
 
+
+    ############ scores interface ##############
     def insert_score(self, score):
-        self.__access_queue.put( (KEY_INSERT_SCORE, score, None), block=True)
-        return
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._insert_score, score, None), block=True)
+        res = pipe_recv()
+        return res
 
 
     def get_scores(self, query_info):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        self.__access_queue.put( (KEY_GET_SCORES, query_info, pipe_send), block=True)
-        #print 'scheduled query command, waiting for result'
+        self.__access_queue.put( (self._get_scores, query_info, pipe_send), block=True)
         res = pipe_recv.recv()
-        #print 'result arrived'
         return res
 
+
+
+    ############ tournaments interface ##############
     def get_tournaments(self, query_info):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        self.__access_queue.put( (KEY_GET_TOURNAMENTS, query_info, pipe_send), block=True)
-        #print 'scheduled query command, waiting for result'
+        self.__access_queue.put( (self._get_tournaments, query_info, pipe_send), block=True)
         res = pipe_recv.recv()
-        #print 'result arrived'
+        return res
+
+    def insert_tournament(self, tournament):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._insert_tournament, tournament, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
+    def delete_tournament(self, tournament):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        del_tournament = lambda data: self._delete_from_db(data, 'tournaments')
+        self.__access_queue.put( (del_tournament, tournament, pipe_send), block=True)
+        res = pipe_recv.recv()
         return res
 
 
-    def insert_tournament(self, tournament):
-        self.__access_queue.put( (KEY_INSERT_TOURNAMENT, tournament, None), block=True)
-        return
 
+    ############ heats interface ##############
+    def get_heats(self, query_info):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_heats, query_info, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
+    def insert_heat(self, heat):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._insert_heat, heat, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
+    def delete_heat(self, heat):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        del_heat = lambda data: self._delete_from_db(data, 'heats')
+        self.__access_queue.put( (del_heat, heat, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
+
+
+    ############ db admin interface ##############
     def shutdown(self):
         if not self._thread.isAlive():
             return
@@ -100,25 +155,64 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         print 'Starting database'
         while True:
             #print 'waiting for db commands'
-            task, data, pipe_conn = self.__access_queue.get()
-            if task == KEY_INSERT_SCORE:
-                self._insert_score(data)
-            elif task == KEY_GET_SCORES:
-                scores = self._get_scores(data)
-                #print 'retrieved score, sending results through pipe'
-                #print scores
-                pipe_conn.send(scores)
-                pipe_conn.close()
-            elif task == KEY_GET_TOURNAMENTS:
-                tournaments = self._get_tournaments(data)
-                pipe_conn.send(tournaments)
-                pipe_conn.close()
-            elif task == KEY_INSERT_TOURNAMENT:
-                self._insert_tournament(data)
-            elif task == KEY_SHUTDOWN:
+            task_processor, data, pipe_conn = self.__access_queue.get()
+
+            if task_processor == KEY_SHUTDOWN:
                 self.__access_queue.task_done()
                 break
+
+            res = task_processor(data)
+            pipe_conn.send(res)
+            pipe_conn.close()
             self.__access_queue.task_done()
+
+
+    def _get_scores(self, query_info, cols = None):
+        return self._query_db(query_info, 'scores', cols = cols)
+
+
+    def _insert_score(self, score):
+        self._insert_into_db(score, 'scores')
+        return
+
+
+    def _get_tournaments(self, query_info, cols = None):
+        # TODO: make a JOIN on categories, tournaments and events
+        # --> get tournaments with a list of their categories and events
+        return self._query_db(query_info, 'tournaments', cols = cols)
+
+
+    def _insert_tournament(self, tournament):
+        if 'id' not in tournament or tournament['id'] is None:
+            # generate new id
+            n_tournaments = self._db_info.setdefault('n_tournaments', 0)
+            tournament['id'] = n_tournaments
+            self._db_info['n_tournaments'] += 1
+            self._write_db_info()
+        # check if id exists
+        if len(self._get_tournaments({'id': tournament.get('id')})) > 0:
+            self._modify_in_db({'id': tournament.get('id')}, tournament, 'tournaments')
+        else:
+            self._insert_into_db(tournament, 'tournaments')
+        return
+
+    def _get_heats(self, query_info, cols = None):
+        return self._query_db(query_info, 'heats', cols = cols)
+
+
+    def _insert_heat(self, heat):
+        if 'id' not in heat or heat['id'] is None:
+            # generate new id
+            n_heats = self._db_info.setdefault('n_heats', 0)
+            heat['id'] = n_heats
+            self._db_info['n_heats'] += 1
+            self._write_db_info()
+        # check if id exists
+        if len(self._get_heats({'id': heat.get('id')})) > 0:
+            self._modify_in_db({'id': heat.get('id')}, heat, 'heats')
+        else:
+            self._insert_into_db(heat, 'heats')
+        return
 
 
     def _register_converter_adapter(self, sql):
@@ -160,32 +254,15 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         return where_str
 
 
-    def _get_scores(self, query_info, cols = None):
-        return self._query_db(query_info, 'scores', cols = cols)
-
-
-    def _insert_score(self, score):
-        self._insert_db(score, 'scores')
-        return
-
-
-    def _get_tournaments(self, query_info, cols = None):
-        # TODO: make a JOIN on categories, tournaments and events
-        # --> get tournaments with a list of their categories and events
-        return self._query_db(query_info, 'tournaments', cols = cols)
-
-
-    def _insert_tournament(self, tournament):
-        # check if id exists
-        if len(self._get_tournaments({'id': tournament.get('id')})) > 0:
-            #delete
-            pass
-        self._insert_db(tournament, 'tournaments')
-        return
-
+    def _update_str(self, table, col_names, val_dict):
+        updates = ['{} = "{}"'.format(c, val_dict[c]) for c in col_names]
+        update_str = ', '.join(updates)
+        return update_str
 
 
     def _query_db(self, query_info, target_table, cols = None):
+        print '** DB ** querying "{}" from "{}"'.format(query_info, target_table)
+
         if cols is None:
             cols_str = '*'
         else:
@@ -200,7 +277,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
         sql_command = 'SELECT {cols} FROM {tables}'.format(cols = cols_str, tables = tables_str)
         if len(where_str) > 0:
-            sql_command.append(' WHERE {cond}'.format(cond = where_str))
+            sql_command += ' WHERE {cond}'.format(cond = where_str)
 
         cursor = self._db.cursor()
         try:
@@ -211,7 +288,57 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         return res
 
 
-    def _insert_db(self, data, table):
+
+    def _modify_in_db(self, query_info, new_vals, target_table):
+        print '** DB ** modifying "{}" from "{}"'.format(query_info, target_table)
+
+        tables_str = target_table
+
+        col_info = self._table_info.get(target_table,{})
+
+        common_cols = set(query_info.keys()).intersection(set(col_info.keys()))
+        where_str = self._where_str(target_table, common_cols, query_info)
+
+        upd_cols = set(new_vals.keys()).intersection(set(col_info.keys()))
+        upd_str = self._update_str(target_table, upd_cols, new_vals)
+
+        sql_command = 'UPDATE {tables} SET {upd}'.format(tables = tables_str, upd=upd_str)
+        if len(where_str) > 0:
+            sql_command += ' WHERE {cond}'.format(cond = where_str)
+
+        cursor = self._db.cursor()
+        try:
+            cursor.execute(sql_command)
+        except Exception as e:
+            print 'Error executing sql command: {}'.format(e)
+        return
+
+
+
+    def _delete_from_db(self, query_info, target_table):
+        print '** DB ** deleting "{}" from "{}"'.format(query_info, target_table)
+
+        tables_str = target_table
+
+        col_info = self._table_info.get(target_table,{})
+        common_cols = set(query_info.keys()).intersection(set(col_info.keys()))
+        where_str = self._where_str(target_table, common_cols, query_info)
+
+        sql_command = 'DELETE FROM {tables}'.format(tables = tables_str)
+        if len(where_str) > 0:
+            sql_command += ' WHERE {cond}'.format(cond = where_str)
+
+        cursor = self._db.cursor()
+        try:
+            cursor.execute(sql_command)
+        except Exception as e:
+            print 'Error executing sql command: {}'.format(e)
+        return
+
+
+
+    def _insert_into_db(self, data, table):
+        print '** DB ** inserting "{}" into "{}"'.format(data, table)
         col_info = self._table_info.get(table, {})
         values = []
 
@@ -222,7 +349,11 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         values_str = ', '.join(['?']*len(values))
 
         sql_command = 'INSERT INTO {table} VALUES ({values})'.format(table = table, values = values_str)
-        cursor.execute(sql_command, values)
+
+        try:
+            cursor.execute(sql_command, values)
+        except Exception as e:
+            print 'Error executing sql command: {}'.format(e)
         self._db.commit()
         return
 

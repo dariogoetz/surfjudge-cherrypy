@@ -1,0 +1,191 @@
+{% extends "base_dashboard.html" %}
+
+{% block nav_item %}nav_item_judge_panel{% endblock nav_item %}
+
+{% block title %}UI for Judges{% endblock title %}
+
+{% block javascript %}
+{{ super() }}
+<script type="text/javascript">
+    //Variables that need to be defined by Contest Operators*****
+        var max_no_of_waves=10;
+        var surfer_colors=["red","green"];
+        var current_surfer=NaN;
+        
+    //Variables	that are needed to run the script, using variables from contest operator as parameters
+        var current_input_field="none"; //This variables is a state variable telling the key board where to write input
+        var surfer_scores=[[1.2, 5.4, 3],[2,5]];// This variable contains for each surfer an array with his scored waves
+            
+    function transform_score_index_to_field_id(surfer_color_index,surfer_score_index)
+    {
+        return surfer_colors[surfer_color_index] + "_" + surfer_score_index;
+    }
+
+    function mark_field_as_best(field_id)
+    {
+            document.getElementById(field_id).style.backgroundColor = "FFFFFF";
+            document.getElementById(field_id).style.border = "solid black 2px";
+    }
+
+    function mark_field_as_active(field_id)
+    {
+        document.getElementById(field_id).style.backgroundColor = surfer_colors[current_surfer];
+        // document.getElementById(field_id).style.border = "solid black 2px";
+    }
+
+    function mark_field_as_inactive(field_id)
+    {
+        document.getElementById(field_id).style.backgroundColor = "FFFFFF"
+        document.getElementById(field_id).style.border = "solid black 1px";
+    }
+    function mark_best_field_of_surfer(surfer_color_index)
+    {
+        var best_score=0;
+        for (surfer_score_index = 0; surfer_score_index < surfer_scores[surfer_color_index].length; surfer_score_index++)  
+            {
+                if (surfer_scores[surfer_color_index][surfer_score_index]>=best_score)
+                {
+                    best_score=surfer_scores[surfer_color_index][surfer_score_index];
+                    var best_score_id=transform_score_index_to_field_id(surfer_color_index,surfer_score_index);
+                }
+            var field_id=transform_score_index_to_field_id(surfer_color_index, surfer_score_index);	
+            mark_field_as_inactive(field_id);	
+            }
+        mark_field_as_best(best_score_id);	
+    }
+    function update_fields()
+    {
+        clear_fields();
+        for (surfer_color_index = 0; surfer_color_index < surfer_scores.length; surfer_color_index++) 
+        { 
+            for (surfer_score_index = 0; surfer_score_index < surfer_scores[surfer_color_index].length; surfer_score_index++)  
+            {
+                var field_id = transform_score_index_to_field_id(surfer_color_index,surfer_score_index);
+                var text_box = document.getElementById(field_id);
+                text_box.value=surfer_scores[surfer_color_index][surfer_score_index];
+            }
+        mark_best_field_of_surfer(surfer_color_index);	
+        }
+    }
+
+    function clear_fields()
+    {
+        var surfer_scores=[[1.2, 5.4, 3],[2,5]];
+        for (var i = 0; i<surfer_colors.length;i++)
+        {
+            for (var j = 0; j<max_no_of_waves;j++)
+            {
+                var field_id=transform_score_index_to_field_id(i,j);
+                var text_box = document.getElementById(field_id);
+                text_box.value=null;
+            }
+        }
+        
+    }
+
+    function number_write(x)
+    {
+        if(current_input_field!="none")
+        {
+            var text_box = document.getElementById(current_input_field);
+            if(x>=0 && x<=9)
+            {
+                if(text_box.value===null || isNaN(text_box.value))
+                {
+                    text_box.value = 0;
+                }
+                var input = (text_box.value ) * 10 + 0.1 * x;
+                if (input<=10)
+                {
+                    text_box.value = input;
+                }
+            }
+        }
+    }
+
+    function number_clear()
+    {
+        if(current_input_field != "none")
+        {
+            document.getElementById(current_input_field).value = null;
+        }
+    }
+
+    function set_input_field(surfer_color_index)
+    {
+        current_input_field= transform_score_index_to_field_id(surfer_color_index,surfer_scores[surfer_color_index].length);
+        current_surfer=surfer_color_index;
+        mark_field_as_active(current_input_field);
+    }
+    function enter_score()
+    {
+        if(current_input_field != "none" )
+        {
+            var text_box = document.getElementById(current_input_field);
+            var content_of_text_box=parseFloat(text_box.value); // Konvertiert den String aus dem Input Feld in eine Zahl vom Typ Float
+            if(isNaN(content_of_text_box))
+            {
+            }
+            else
+            {
+                surfer_scores[current_surfer][surfer_scores[current_surfer].length]=content_of_text_box;
+                mark_best_field_of_surfer(current_surfer);
+                current_surfer=NaN;
+                current_input_field="none";
+            }
+        }	
+    }
+    function cancel()
+    {
+        if(current_input_field != "none")
+        {
+            mark_field_as_inactive(current_input_field);
+            document.getElementById(current_input_field).value = null;
+            current_surfer=NaN;
+            current_input_field="none";
+            
+        }
+    }
+</script>
+{% endblock javascript %}
+
+
+{% block content %}
+
+<h1> Judge Table </h1>
+<table class="table">
+    {% for surfer_color in ["red", "green"] %}
+    <tr>
+        <td>
+            <button class="btn btn-default btn-lg btn-block" onclick="set_input_field({{loop.index-1}});" id="{{surfer_color}}_enter">{{surfer_color}}</button>
+        </td>
+
+        <td>
+            <div class="form-inline">
+                <div class="input-group input-group-lg">
+                    {% for wave_nr in range(10) %}
+                    <input type="text" class="form-control" id="{{surfer_color}}_{{wave_nr}}" style="width: 10%" readonly />
+                    {% endfor %}
+                </div>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="btn-toolbar" role="toolbar" aria-label="button toolbar">
+    <div class="btn-group" role="group" aria-label="number buttons">
+        {% for i in range(10) %}
+        <button class="btn btn-default btn-lg" onclick="number_write({{i}});">{{i}}</button>
+        {% endfor %}
+    </div>
+    <div class="btn-group" role="group" aria-label="number buttons">
+        <button class="btn btn-info btn-lg" onclick="number_clear();">Clr</button>
+    </div>
+    <div class="btn-group pull-right" role="group" aria-label="management buttons"> 
+        <button class="btn btn-success btn-lg" onclick="enter_score();">ENTER</button>
+        <button class="btn btn-danger btn-lg" onclick="cancel();">CANCEL</button>
+        <button class="btn btn-default btn-lg" onclick="update_fields();">Update</button>
+    </div>
+</div>
+{% endblock content %}

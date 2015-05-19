@@ -44,6 +44,15 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @require(has_roles(KEY_ROLE_JUDGE))
+    def do_query_scores_for_heat(self):
+        # get heat_id for current judge from state object
+        # query scores for heat_id in db
+        query_info = {}
+        scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
+        return json.dumps(scores)
+
+    @cherrypy.expose
+    @require(has_roles(KEY_ROLE_JUDGE))
     def do_query_scores(self):
         query_info = {}
         scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
@@ -54,7 +63,8 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         score = {'wave': 1,
                  'score': 5,
                  'color': 'blue',
-                 'judge_id': '1'}
+                 'judge_id': '1',
+                 'heat_id': '1'}
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SCORE, score).pop()
         return res
 
