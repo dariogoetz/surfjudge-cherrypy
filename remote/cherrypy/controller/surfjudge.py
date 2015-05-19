@@ -36,7 +36,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         data['judge_name'] = 'Christian'
         data['judge_number'] = '1234'
         data['surfer_color_names'] = ['red', 'blue', 'green']
-        data['surfer_color_colors'] = ['#FF8888', '#8888FF', '#88FF88']
+        data['surfer_color_colors'] = {'red': '#FF8888', 'blue': '#8888FF', 'green': '#88FF88'}
         data['n_surfers'] = len(data['surfer_color_names'])
         data['number_of_waves'] = 10
         return data
