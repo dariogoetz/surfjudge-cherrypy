@@ -14,13 +14,19 @@ var INTERFERENCE = -2
 
 
 //Variables that need to be defined by Contest Operators*****
-	var max_no_of_waves={{ number_of_waves }};
-    var surfer_colors_hex={{ surfer_color_colors }};
-	var current_surfer="none";
+var max_no_of_waves={{ number_of_waves }};
+var surfer_colors_hex={{ surfer_color_colors }};
+var current_surfer="none";
 
 //Variables	that are needed to run the script, using variables from contest operator as parameters
-	var current_input_field="none"; //This variables is a state variable telling the key board where to write input
-	var surfer_scores={'red':[1.2, 5.4, 3], 'blue': [2,5]};// This variable contains for each surfer an array with his scored waves
+var current_input_field="none"; //This variables is a state variable telling the key board where to write input
+var surfer_scores={};// This variable contains for each surfer an array with his scored waves
+
+var surfer_color_names = {{ surfer_color_names }};
+for (var surfer_color_idx = 0; surfer_color_idx < surfer_color_names.length; surfer_color_idx++)
+{
+    surfer_scores[surfer_color_names[surfer_color_idx]] = [];
+}
 
 function transform_score_index_to_field_id(color,surfer_score_index)
 {
@@ -45,36 +51,39 @@ function mark_field_as_inactive(field_id)
 	document.getElementById(field_id).style.border = "solid black 1px";
 }
 function mark_best_field_of_surfer(color)
-{
+ {
 	var best_score=0;
 	var best_score_id="none";
 	for (var surfer_score_index = 0; surfer_score_index < surfer_scores[color].length; surfer_score_index++)
-	{
-		if (parseFloat(surfer_scores[color][surfer_score_index])<0) // Check if field contains valid score i.e. not a missed of interference
+	 {
+        var score = parseFloat(surfer_scores[color][surfer_score_index]);
+		if (score < 0) // Check if field contains valid score i.e. not a missed of interference
         {
         }
         else
         {
-            if (surfer_scores[color][surfer_score_index]>=best_score)
+            if (score >= best_score)
             {
-                best_score=surfer_scores[color][surfer_score_index];
-                best_score_id=transform_score_index_to_field_id(color,surfer_score_index);
+                best_score = score;
+                best_score_id = transform_score_index_to_field_id(color,surfer_score_index);
             }
         }
 		var field_id=transform_score_index_to_field_id(color, surfer_score_index);
 		mark_field_as_inactive(field_id);
 	}
-	mark_field_as_best(best_score_id);
+    if ( !(best_score_id === "none") )
+	     mark_field_as_best(best_score_id);
 }
 
 
 function sync_with_server()
 {
     $.get('do_query_scores', function(data){
-        var server_data = $.parseJSON(data);
-
+        var server_data = $.parseJSON(data); //server_data is a javascript object
         for (var color in surfer_scores)
         {
+            if ( !(color in server_data) ) continue;
+
             for (var wave_index=0; wave_index < server_data[color].length; wave_index++)
             {
                 surfer_scores[color][wave_index] = server_data[color][wave_index];
@@ -85,10 +94,13 @@ function sync_with_server()
             {
                 for (var wave_index=server_data[color].length; wave_index < surfer_scores[color].length; wave_index++)
                 {
+                    console.log('new');
                     //upload surfer_scores[color][wave_index] appropriately
+                    //$.post('do_insert_score',dataset,function,);
                 }
             }
         }
+        update_fields();
     });
 }
 
@@ -137,10 +149,9 @@ function number_write(x)
         {
             text_box.value="I";
         }
-        else if(!isNaN(text_box_value) && x>=0 && x<=9) 
+        else if(!isNaN(text_box_value) && x>=0 && x<=9)
 		{
 			var input = text_box_value * 10 + 0.1 * x;
-            console.log('hallo');
 			if (input<=10)
 			{
 				text_box.value = input.toFixed(1);
@@ -185,7 +196,7 @@ function enter_score()
         {
             surfer_scores[current_surfer][surfer_scores[current_surfer].length]=INTERFERENCE;
         }
-		else if(!isNaN(content_of_text_box) && content_of_text_box >=0 && content_of_text_box<=10) 
+		else if(!isNaN(content_of_text_box) && content_of_text_box >=0 && content_of_text_box<=10)
 		{
 			surfer_scores[current_surfer][surfer_scores[current_surfer].length]=content_of_text_box;
 		}
@@ -195,9 +206,11 @@ function enter_score()
         }
         mark_field_as_inactive(current_input_field);
 	}
+    mark_best_field_of_surfer(current_surfer);
     current_surfer="none";
 	current_input_field="none";
-}
+ }
+
 function cancel()
 {
     number_clear();
@@ -217,7 +230,7 @@ function make_buttons_quadratic()
 <script>
 	$(document).ready(function ()
     {
-        update_fields();
+        sync_with_server();
         make_buttons_quadratic();
         $(window).resize(make_buttons_quadratic);
     });
@@ -327,10 +340,10 @@ function make_buttons_quadratic()
 <br /><br />
 <div class="btn-toolbar" role="toolbar">
     <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="number_write(-1);">Missed</button>
-    <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="number_write(-2);">Interf.</button> 
+    <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="number_write(-2);">Interf.</button>
     <button class="btn btn-info btn-lg" style="width: 31%; height: 100px" onclick="number_clear();">Del</button>
     <button class="btn btn-success btn-lg" style="width: 31%; height: 100px" onclick="enter_score();">ENTER</button>
-    <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="cancel();">Cancel</button> 
+    <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="cancel();">Cancel</button>
 </div>
 <!--<button class="enter_button" onclick="update_fields();">Update</button> -->
 {% endblock content %}

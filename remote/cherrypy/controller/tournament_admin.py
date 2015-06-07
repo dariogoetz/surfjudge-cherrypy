@@ -70,6 +70,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     def get_tournaments(self, **kwargs):
         query_info = {}
+
         res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_TOURNAMENTS, query_info).pop()
         for tournament in res:
             tournament['start_date'], _ = dtstr2dstr_and_tstr(tournament['start_datetime'])
@@ -98,9 +99,13 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    def get_heats(self, format = None, **kwargs):
+    def get_heats(self, format=None, tournament_id=None, **kwargs):
         query_info = {}
-        res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, query_info).pop()
+
+        if tournament_id is not None:
+            query_info['tournament_id'] = tournament_id
+
+            res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, query_info).pop()
         for heat in res:
             heat['date'], heat['start_time'] = dtstr2dstr_and_tstr(heat['start_datetime'])
         return json.dumps(res)

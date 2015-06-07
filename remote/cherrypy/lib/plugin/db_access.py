@@ -19,12 +19,16 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.log('Setting up database access resources')
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_SCORES, self.get_scores)
         self.bus.subscribe(KEY_ENGINE_DB_INSERT_SCORE, self.insert_score)
+
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_TOURNAMENTS, self.get_tournaments)
         self.bus.subscribe(KEY_ENGINE_DB_INSERT_TOURNAMENT, self.insert_tournament)
         self.bus.subscribe(KEY_ENGINE_DB_DELETE_TOURNAMENT, self.delete_tournament)
+
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_HEATS, self.get_heats)
         self.bus.subscribe(KEY_ENGINE_DB_INSERT_HEAT, self.insert_heat)
         self.bus.subscribe(KEY_ENGINE_DB_DELETE_HEAT, self.delete_heat)
+
+        self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID, self.get_judge_id)
 
         return
 
@@ -32,12 +36,16 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.log('Freeing database access resources')
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_SCORES, self.get_scores)
         self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_SCORE, self.insert_score)
+
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_TOURNAMENTS, self.get_tournaments)
         self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_TOURNAMENT, self.insert_tournament)
         self.bus.unsubscribe(KEY_ENGINE_DB_DELETE_TOURNAMENT, self.delete_tournament)
+
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_HEATS, self.get_heats)
         self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_HEAT, self.insert_heat)
         self.bus.unsubscribe(KEY_ENGINE_DB_DELETE_HEAT, self.delete_heat)
+
+        self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID, self.get_judge_id)
 
         return
 
@@ -73,3 +81,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
     def delete_heat(self, heat):
         res = self.database.delete_heat(heat)
+
+
+    def get_judge_id(self, username):
+        res = self.database.get_judge_id(username)
+        return res

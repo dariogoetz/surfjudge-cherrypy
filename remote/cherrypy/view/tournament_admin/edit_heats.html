@@ -30,20 +30,31 @@
 
 <div class="container">
     <div class="row">
-        <div class="dropdown">
-            <button id="dropdown_label" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Dropdown Label
-            </button>
-            <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
-                <li><a href="#">Tournament Name 1</a></li>
-            </ul>
+        <div class="col-md-2">
+            <div class="dropdown">
+                <div class="btn-group">
+                <button id="dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Dropdown Label <span class="caret"></span>
+                </button>
+                <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
+                    <li><a href="#">Tournament Name 1</a></li>
+                </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="alert alert-success" role="alert">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span class="sr-only">Selected Tournament:</span>
+                <span id="selected_tournament">No tournament selected</span>
+            </div>
         </div>
     </div>
 
   <table class="table table-striped"
          id="heats_table"
          data-toggle="table"
-         data-url="{{ mount_loc }}/get_heats"
+         data-url="{{ mount_loc }}/get_heats?tournament_id=1"
          data-sort-name="name"
          date-sort-order="asc">
       <thead>
@@ -148,33 +159,36 @@ function fill_modal(heat_id, heat_name, date, start_time, additional_info){
 }
 
 $(document).ready(function (){
+  // fill dropdown with tournament names
   $.get('{{ mount_loc }}/get_tournaments', function(data){
     var tournaments = JSON.parse(data);
+    // sort
+    function comp_func(a,b){
+      return (b['start_datetime'] < a['start_datetime']) ? 1 : -1;
+    }
 
-    // fill dropdown list with tournament names
+    tournaments.sort(comp_func);
+
+    // fill dropdown list with sorted tournament names
     $('#tournaments_dropdown_list').empty();
     for (i in tournaments){
       $('#tournaments_dropdown_list').append('<li><a href="#" data-select=' + tournaments[i]['id'] + ' data-index=' + i + '>' + tournaments[i]['name'] + '</a></li>');
     }
-    console.log($('#tournaments_dropdown_list'));
 
-    // sort
-    function comp_func(a,b){
-      console.log($(b).data('index'));
-      return (tournaments[$(b).data('index')]['start_datetime'] < tournaments[$(a).data('index')]['start_datetime']) ? 1 : -1;
-    }
-
-    $('#tournaments_dropdown_list').sort(comp_func).appendTo('#tournaments_dropdown_list');
-    console.log($('#tournaments_dropdown_list'));
   });
 });
 
+ // register functionality to choose tournament from dropdown list
+ // and table adjusts accordingly
+
+// register functionality for "new heat" button
 $('#new_heat_btn').on('click', function(){
   fill_modal(null, null, null, null, null);
   $('#edit_heat_modal').modal('toggle');
   });
 
 
+// register functionality for selecting heats from table
 $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
   var date = new Date();
 

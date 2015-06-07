@@ -77,8 +77,8 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
     ############ scores interface ##############
     def insert_score(self, score):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        self.__access_queue.put( (self._insert_score, score, None), block=True)
-        res = pipe_recv()
+        self.__access_queue.put( (self._insert_score, score, pipe_send), block=True)
+        res = pipe_recv.recv()
         return res
 
 
@@ -132,6 +132,14 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
+
+    ############ judge interface ##############
+
+    def get_judge_id(self, username):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_judge_id, username, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
 
 
     ############ db admin interface ##############
@@ -213,6 +221,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         else:
             self._insert_into_db(heat, 'heats')
         return
+
+
+    def _get_judge_id(self, username):
+        query_info = {'username': username}
+        return self._query_db(query_info, 'judges', cols = ['id'])
+
 
 
     def _register_converter_adapter(self, sql):

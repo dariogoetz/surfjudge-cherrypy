@@ -24,6 +24,7 @@ KEY_PASSWORD = 'password'
 
 KEY_USERNAME = '_cp_username'
 KEY_USER_INFO = '_cp_user_info'
+KEY_JUDGE_ID = '_cp_judge_id'
 
 ################################
 # cherrypy plugins - user auth #
@@ -47,7 +48,7 @@ KEY_ENGINE_DB_DELETE_TOURNAMENT = 'db_delete_tournament'
 KEY_ENGINE_DB_RETRIEVE_HEATS = 'db_retrieve_heats'
 KEY_ENGINE_DB_INSERT_HEAT = 'db_insert_heat'
 KEY_ENGINE_DB_DELETE_HEAT = 'db_delete_heat'
-
+KEY_ENGINE_DB_RETRIEVE_JUDGE_ID = 'db_retrieve_judge_id'
 
 ###################################
 # cherrypy plugins - jinja lookup #

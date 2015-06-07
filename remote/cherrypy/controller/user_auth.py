@@ -36,6 +36,10 @@ class AuthenticationController(CherrypyWebInterface):
             user_info = cherrypy.engine.publish(KEY_ENGINE_USER_INFO, username).pop()
             cherrypy.session[KEY_USERNAME] = username
             cherrypy.session[KEY_USER_INFO] = user_info
+            if KEY_ROLE_JUDGE in user_info.get(KEY_ROLES):
+                judge_ids = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID, username).pop()
+                if len(judge_ids) > 0:
+                    cherrypy.session[KEY_JUDGE_ID] = judge_ids[0]['id']
 
             return True
         else:

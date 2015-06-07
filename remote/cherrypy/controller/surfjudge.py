@@ -56,16 +56,36 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     def do_query_scores(self):
         query_info = {}
         scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
-        return json.dumps(scores)
+        out_scores = {}
+        for score in scores:
+            out_scores.setdefault(score['color'], []).append( (score['wave'], score['score']) )
+
+        print out_scores
+        for color in out_scores:
+            print out_scores[color]
+            sorted_pairs = sorted(out_scores[color], key=lambda x: x[0])
+            out_scores[color] = [score for (wave, score) in sorted_pairs]
+
+        return json.dumps(out_scores)
 
     @cherrypy.expose
-    def do_insert_score(self):
-        score = {'wave': 1,
-                 'score': 5,
-                 'color': 'blue',
-                 'judge_id': '1',
-                 'heat_id': '1'}
-        res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SCORE, score).pop()
+    #@require(has_roles(KEY_ROLE_JUDGE))
+    def do_insert_score(self, score = None):
+        if score is None:
+            return
+        #score = score.encode('utf-8')
+        db_data = json.loads(score)
+
+        judge_id = cherrypy.session.get(KEY_JUDGE_ID)
+        if judge_id is None:
+            return 'Error: Not registered as judge'
+        db_data['judge_id'] = judge_id
+
+        # TODO: get heat_id for judge_id from state-manager
+        heat_id = 0
+        db_data['heat_id'] = heat_id
+
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SCORE, db_data).pop()
         return res
 
     @cherrypy.expose
