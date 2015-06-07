@@ -142,6 +142,13 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         return res
 
 
+    ############ surfers interface ##############
+    def get_surfers(self, query_info):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_surfers, query_info, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
+
     ############ db admin interface ##############
     def shutdown(self):
         if not self._thread.isAlive():
@@ -228,6 +235,8 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         return self._query_db(query_info, 'judges', cols = ['id'])
 
 
+    def _get_surfers(self, query_info):
+        return self._query_db(query_info, 'surfers')
 
     def _register_converter_adapter(self, sql):
         for t, adapter in self._pysql_adapt.adapter.items():

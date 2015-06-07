@@ -49,7 +49,7 @@ KEY_ENGINE_DB_RETRIEVE_HEATS = 'db_retrieve_heats'
 KEY_ENGINE_DB_INSERT_HEAT = 'db_insert_heat'
 KEY_ENGINE_DB_DELETE_HEAT = 'db_delete_heat'
 KEY_ENGINE_DB_RETRIEVE_JUDGE_ID = 'db_retrieve_judge_id'
-
+KEY_ENGINE_DB_RETRIEVE_SURFERS = 'db_retrieve_surfers'
 ###################################
 # cherrypy plugins - jinja lookup #
 ###################################

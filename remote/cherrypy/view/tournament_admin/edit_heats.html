@@ -13,6 +13,8 @@
 {{ super() }}
 
 <link href="/static/datepicker/css/datepicker.css" rel="stylesheet">
+<link href="/static/bootstrap_duallistbox/bootstrap-duallistbox.min.css" rel="stylesheet">
+
 <style>
 .datepicker{z-index:1151 !important;}
 
@@ -54,7 +56,7 @@
   <table class="table table-striped"
          id="heats_table"
          data-toggle="table"
-         data-url="{{ mount_loc }}/get_heats?tournament_id=1"
+         data-url="{{ mount_loc }}/do_get_heats?tournament_id=1"
          data-sort-name="name"
          date-sort-order="asc">
       <thead>
@@ -124,6 +126,12 @@
               </div>
           </div>
 
+          <!-- participants duallistbox -->
+          <div class="row">
+              <select multiple="multiple" size="10" id="participants_select" data-title="participants" data-source="do_get_surfers" data-value="id" data-text="name">
+              </select>
+          </div>
+
 
       </div><!-- /.modal-body -->
 
@@ -143,6 +151,7 @@
 {{ super() }}
 
 <script src="/static/datepicker/js/bootstrap-datepicker.js"></script>
+<script src="/static/duallistbox/dual-list-box.min.js"></script>
 
 <script>
 function fill_modal(heat_id, heat_name, date, start_time, additional_info){
@@ -160,7 +169,7 @@ function fill_modal(heat_id, heat_name, date, start_time, additional_info){
 
 $(document).ready(function (){
   // fill dropdown with tournament names
-  $.get('{{ mount_loc }}/get_tournaments', function(data){
+  $.get('{{ mount_loc }}/do_get_tournaments', function(data){
     var tournaments = JSON.parse(data);
     // sort
     function comp_func(a,b){
@@ -243,5 +252,12 @@ $('#modal_date_picker').datepicker({weekStart: 1})
     $('#modal_date_picker').datepicker('hide');
   });
 </script>
+
+<!-- enable duallistbox for participant selection -->
+<script>
+ var participant_picker = $('#participants_select').DualListBox();
+ 
+</script>
+
 
 {% endblock javascript %}
