@@ -22,6 +22,7 @@ var current_surfer="none";
 var current_input_field="none"; //This variables is a state variable telling the key board where to write input
 var surfer_scores={};// This variable contains for each surfer an array with his scored waves
 
+// Initialize colors in surfer_scores from jinja template
 var surfer_color_names = {{ surfer_color_names }};
 for (var surfer_color_idx = 0; surfer_color_idx < surfer_color_names.length; surfer_color_idx++)
 {
@@ -82,21 +83,24 @@ function sync_with_server()
         var server_data = $.parseJSON(data); //server_data is a javascript object
         for (var color in surfer_scores)
         {
-            if ( !(color in server_data) ) continue;
-
-            for (var wave_index=0; wave_index < server_data[color].length; wave_index++)
+            var server_data_length=0;
+            if (color in server_data)
             {
-                surfer_scores[color][wave_index] = server_data[color][wave_index];
-            }
-
-            // maybe the if condition is unnecessary
-            if (surfer_scores[color].length > server_data[color].length)
-            {
-                for (var wave_index=server_data[color].length; wave_index < surfer_scores[color].length; wave_index++)
+                server_data_length=server_data[color].length;
+                for (var wave_index=0; wave_index < server_data[color].length; wave_index++)
                 {
-                    console.log('new');
-                    //upload surfer_scores[color][wave_index] appropriately
-                    //$.post('do_insert_score',dataset,function,);
+                    surfer_scores[color][wave_index] = server_data[color][wave_index];
+                }
+            }
+            if (surfer_scores[color].length > server_data_length)
+            {
+                for (var wave_index=server_data_length; wave_index < surfer_scores[color].length; wave_index++)
+                {
+                    console.log('Versuche Upload');
+                    var upload_data = {'color':color, 'score':surfer_scores[color][wave_index], 'wave':wave_index }; 
+                    var jsonyfied_upload_data= JSON.stringify(upload_data); //Transform object into JSON
+                    var data_to_be_uploaded = {'score':jsonyfied_upload_data};
+                    $.post('do_insert_score',data_to_be_uploaded,function(data){console.log('upload the data'+data+'successfully')});
                 }
             }
         }
@@ -206,6 +210,7 @@ function enter_score()
         }
         mark_field_as_inactive(current_input_field);
 	}
+    sync_with_server();
     mark_best_field_of_surfer(current_surfer);
     current_surfer="none";
 	current_input_field="none";
