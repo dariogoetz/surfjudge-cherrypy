@@ -40,6 +40,19 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         data['n_surfers'] = len(data['surfer_color_names'])
         data['number_of_waves'] = 10
         return data
+    
+    @cherrypy.expose
+    #@require(is_admin()) # later ask for judge or similar
+    @cherrypy.tools.render(template='commentator_panel.html')
+    def commentator_panel(self):
+        data = self._standard_env()
+        data['judge_name'] = 'Christian'
+        data['judge_number'] = '1234'
+        data['surfer_color_names'] = ['red', 'blue', 'green']
+        data['surfer_color_colors'] = {'red': '#FF8888', 'blue': '#8888FF', 'green': '#88FF88'}
+        data['n_surfers'] = len(data['surfer_color_names'])
+        data['number_of_waves'] = 10
+        return data
 
 
     @cherrypy.expose
