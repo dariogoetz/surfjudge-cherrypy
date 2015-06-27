@@ -149,6 +149,16 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
+
+    ############ joins #################
+    def get_judge_activities(self, query_info):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_judge_activities, query_info, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
+
+
+
     ############ db admin interface ##############
     def shutdown(self):
         if not self._thread.isAlive():
@@ -238,6 +248,19 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
     def _get_surfers(self, query_info):
         return self._query_db(query_info, 'surfers')
 
+
+    def _get_judge_activities(self, query_info):
+        cols = ['judges.id AS judge_id',
+                'judges.first_name AS judge_first_name',
+                'judges.last_name AS judge_last_name',
+                'judges.username AS judge_username',
+                'judges.additional_info AS judge_additional_info',
+                'heats.id AS heat_id',
+                'heats.name AS heat_name',
+                'heats.additional_info AS heat_additional_info']
+        return self._query_join_multiple(query_info, 'judges', 'id', 'judge_id', 'judge_activities', 'heat_id', 'id', 'heats', cols=cols)
+
+
     def _register_converter_adapter(self, sql):
         for t, adapter in self._pysql_adapt.adapter.items():
             sql.register_adapter(t, adapter)
@@ -273,7 +296,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def _where_str(self, table, col_names, val_dict):
         conditions = ['{}.{} = "{}"'.format(table, c, val_dict[c]) for c in col_names]
-        where_str = 'AND '.join(conditions)
+        where_str = ' AND '.join(conditions)
         return where_str
 
 
@@ -294,7 +317,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
         tables_str = target_table
 
-        col_info = self._table_info.get(target_table,{})
+        col_info = self._table_info.get(target_table, {})
         common_cols = set(query_info.keys()).intersection(set(col_info.keys()))
         where_str = self._where_str(target_table, common_cols, query_info)
 
@@ -306,10 +329,110 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         try:
             res = [x for x in cursor.execute(sql_command)]
         except Exception as e:
-            print 'Error executing sql command: {}'.format(e)
+            print 'Error executing sql command "{}": {}'.format(sql_command, e)
             res = []
         return res
 
+
+
+    def _query_join_multiple(self, query_info, *args, **kwargs):
+        print '** DB ** querying "{}" from join of multiple tables'.format(query_info)
+
+        if len(args) % 3 != 1:
+            print 'Wrong number of arguments for multiple db join: {}, {}, {}'.format(query_info, cols, args)
+            return []
+
+        tables = [args[0]]
+        join_keys = []
+        where_str_list = []
+        common_cols_list = []
+
+        for i in range(len(args)/3):
+            table = args[3*i+3]
+            join_key1 = args[3*i+1]
+            join_key2 = args[3*i+2]
+            tables.append(table)
+            join_keys.extend([join_key1, join_key2])
+            col_info = self._table_info.get(table, {})
+            common_cols = set(query_info.keys()).intersection(set(col_info.keys()))
+            common_cols_list.append(common_cols)
+            where_str_list.append(self._where_str(table, common_cols, query_info))
+
+        join_cols = set.union(*common_cols_list)
+        if kwargs.get('cols') is None:
+            cols_str = '*'
+        else:
+            cols_str = ", ".join(kwargs['cols'])
+
+        old_table = tables[0]
+        join_str = str(old_table)
+        for idx, table in enumerate(tables[1:]):
+            join_str = '{table} INNER JOIN ({join_str}) ON {old_table}.{key1}=={table}.{key2}'.format(old_table = old_table, table = table, key1 = join_keys[2*idx], key2 = join_keys[2*idx+1], join_str = join_str)
+            old_table = table
+
+        sql_command = 'SELECT {cols} FROM {joins}'.format(cols = cols_str, joins = join_str)
+
+        where_conditions = []
+        for where_str in where_str_list:
+            if len(where_str) > 0:
+                where_conditions.append(where_str)
+
+        where_str = ' AND '.join(where_conditions)
+        if len(where_str) > 0:
+            sql_command += ' WHERE {cond}'.format(cond = where_str)
+
+        cursor = self._db.cursor()
+        try:
+            res = [x for x in cursor.execute(sql_command)]
+        except Exception as e:
+            print 'Error executing sql command "{}": {}'.format(sql_command, e)
+            res = []
+
+#        print '*********************************'
+#        print '*******SQL COMMAND: ', sql_command
+#        print '*******RESULT     : ', res
+#        print '*********************************'
+        return res
+
+
+    def _query_join(self, query_info, table1, join_key1, table2, join_key2, cols = None):
+        print '** DB ** querying "{}" from join of "{}" and "{}"'.format(query_info, table1, table2)
+
+        col_info1 = self._table_info.get(table1, {})
+        common_cols1 = set(query_info.keys()).intersection(set(col_info1.keys()))
+        where_str1 = self._where_str(table1, common_cols1, query_info)
+
+
+        col_info2 = self._table_info.get(table2, {})
+        common_cols2 = set(query_info.keys()).intersection(set(col_info2.keys()))
+        where_str2 = self._where_str(table2, common_cols2, query_info)
+
+        join_cols = common_cols1 | common_cols2
+        if cols is None:
+            cols_str = '*'
+        else:
+            cols_str = ", ".join(join_cols)
+
+        join_str = '{table1} INNER JOIN {table2} ON {table1}.{key1}=={table2}.{key2}'.format(table1 = table1, table2 = table2, key1 = join_key1, key2 = join_key2)
+        sql_command = 'SELECT {cols} FROM {joins}'.format(cols = cols_str, joins = join_str)
+
+
+        where_conditions = []
+        if len(where_str1) > 0:
+            where_conditions.append(where_str1)
+        if len(where_str2) > 0:
+            where_conditions.append(where_str2)
+        where_str = ' AND '.join(where_conditions)
+        if len(where_str) > 0:
+            sql_command += ' WHERE {cond}'.format(cond = where_str)
+
+        cursor = self._db.cursor()
+        try:
+            res = [x for x in cursor.execute(sql_command)]
+        except Exception as e:
+            print 'Error executing sql command "{}": {}'.format(sql_command, e)
+            res = []
+        return res
 
 
     def _modify_in_db(self, query_info, new_vals, target_table):
@@ -333,7 +456,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         try:
             cursor.execute(sql_command)
         except Exception as e:
-            print 'Error executing sql command: {}'.format(e)
+            print 'Error executing sql command "{}": {}'.format(sql_command, e)
         return
 
 
@@ -355,7 +478,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         try:
             cursor.execute(sql_command)
         except Exception as e:
-            print 'Error executing sql command: {}'.format(e)
+            print 'Error executing sql command "{}": {}'.format(sql_command, e)
         return
 
 

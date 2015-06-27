@@ -42,7 +42,7 @@ def doit(args):
     surfjudge = SurfJudge()
 
     if args.webserver:
-        cpserver = CherryPyServer(user_manager = surfjudge.interface.user_manager, database = surfjudge.database, port = args.port)
+        cpserver = CherryPyServer(user_manager = surfjudge.interface.user_manager, database = surfjudge.database, statemanager = surfjudge.statemanager, port = args.port)
         surfjudge.interface.add_server(cpserver)
 
     # start console

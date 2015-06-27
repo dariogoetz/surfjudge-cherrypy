@@ -50,6 +50,13 @@ KEY_ENGINE_DB_INSERT_HEAT = 'db_insert_heat'
 KEY_ENGINE_DB_DELETE_HEAT = 'db_delete_heat'
 KEY_ENGINE_DB_RETRIEVE_JUDGE_ID = 'db_retrieve_judge_id'
 KEY_ENGINE_DB_RETRIEVE_SURFERS = 'db_retrieve_surfers'
+KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES = 'db_retrieve_judge_activities'
+
+KEY_ENGINE_SM_ACTIVATE_HEAT = 'sm_activate_heat'
+KEY_ENGINE_SM_DEACTIVATE_HEAT = 'sm_deactivate_heat'
+KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO = 'sm_get_active_heat_info'
+
+
 ###################################
 # cherrypy plugins - jinja lookup #
 ###################################
@@ -62,3 +69,13 @@ KEY_ENGINE_LOOKUP_TEMPLATE = 'lookup-template'
 ############
 
 KEY_SHUTDOWN = 'shutdown'
+
+
+#################
+# state manager #
+#################
+
+KEY_TOURNAMENT = 'tournament'
+KEY_CLASS      = 'class'
+KEY_HEAT_ID       = 'heat_id'
+KEY_JUDGE_ID      = 'judge_id'

@@ -102,6 +102,16 @@ class Server(object):
             engine.subscribe('exit', db.shutdown)
         else:
             raise Exception("Database plugin is not initialized!")
+
+        # statemanager connect plugin
+        sm = params.get('statemanager')
+        if sm is not None:
+            from remote.cherrypy.lib.plugin.statemanager_access import StateManagerPlugin
+            engine.database = StateManagerPlugin(engine, sm)
+            engine.database.subscribe()
+        else:
+            raise Exception("Statemanager plugin is not initialized!")
+
         return
 
 
@@ -131,6 +141,14 @@ class Server(object):
         ta_interface = TournamentAdminWebInterface(mount_loc)
         conf_path = os.path.join(self.conf_path, _CONFIG['config_files']['SurfJudgeWebInterface'])
         app = self.mount_app(ta_interface, mount_loc, conf_path)
+
+        # HeadJudge app
+        from remote.cherrypy.controller.head_judge_tools import HeadJudgeWebInterface
+
+        mount_loc = '/headjudge'
+        hj_interface = HeadJudgeWebInterface(mount_loc)
+        conf_path = os.path.join(self.conf_path, _CONFIG['config_files']['SurfJudgeWebInterface'])
+        app = self.mount_app(hj_interface, mount_loc, conf_path)
 
         return
 

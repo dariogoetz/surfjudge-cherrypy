@@ -32,6 +32,7 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_SURFERS, self.get_surfers)
 
+        self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
         return
 
     def stop(self):
@@ -49,8 +50,9 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID, self.get_judge_id)
 
-
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_SURFERS, self.get_surfers)
+
+        self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
         return
 
 
@@ -94,5 +96,9 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
     def get_surfers(self, query_info):
         res = self.database.get_surfers(query_info)
-        print 'surfers:', res
+        return res
+
+
+    def get_judge_activities(self, query_info):
+        res = self.database.get_judge_activities(query_info)
         return res
