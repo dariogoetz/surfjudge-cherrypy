@@ -36,18 +36,14 @@ class StateManager(object):
         self.active_tournaments = {}
         self.active_heats = {}
 
+        #active_heats is dict: heat_id -> judge_id -> {info}
+
     def add_tournament(self, tournament):
         self.active_tournaments[tournament.tournament_id] = tournament
 
     def activate_heat(self, heat_id, heat_info):
         if heat_id is None or heat_info is None:
             return
-
-        # get judges that are supposed to judge this heat from database
-        # TODO
-
-        # get tournament and class corresponding to heat from database
-        # TODO
 
         self.active_heats[heat_id] = heat_info
         return
@@ -65,3 +61,10 @@ class StateManager(object):
                 return {heat_id: self.active_heats[heat_id]}
             else:
                 return {}
+
+    def get_heats_for_judge(self, judge_id = None):
+        res = {}
+        for heat_id, heat in self.active_heats.items():
+            if judge_id in heat['judges']:
+                res[heat_id] = {KEY_HEAT_ID: heat_id, KEY_HEAT_NAME: heat[KEY_HEAT_NAME]}
+        return res

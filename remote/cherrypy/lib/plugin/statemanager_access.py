@@ -20,6 +20,7 @@ class StateManagerPlugin(plugins.SimplePlugin):
         self.bus.subscribe(KEY_ENGINE_SM_ACTIVATE_HEAT, self.activate_heat)
         self.bus.subscribe(KEY_ENGINE_SM_DEACTIVATE_HEAT, self.deactivate_heat)
         self.bus.subscribe(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, self.get_active_heat_info)
+        self.bus.subscribe(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, self.get_heats_for_judge)
 
         return
 
@@ -28,6 +29,8 @@ class StateManagerPlugin(plugins.SimplePlugin):
         self.bus.unsubscribe(KEY_ENGINE_SM_ACTIVATE_HEAT, self.activate_heat)
         self.bus.unsubscribe(KEY_ENGINE_SM_DEACTIVATE_HEAT, self.deactivate_heat)
         self.bus.unsubscribe(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, self.get_active_heat_info)
+        self.bus.unsubscribe(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, self.get_heats_for_judge)
+
         return
 
 
@@ -41,4 +44,8 @@ class StateManagerPlugin(plugins.SimplePlugin):
 
     def get_active_heat_info(self, heat_id):
         res = self.statemanager.get_active_heat_info(heat_id)
+        return res
+
+    def get_heats_for_judge(self, judge_id):
+        res = self.statemanager.get_heats_for_judge(judge_id)
         return res

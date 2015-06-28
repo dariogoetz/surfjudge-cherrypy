@@ -7,3 +7,6 @@ roles = ac_admin, ac_judge
 [jcr]
 password = $2a$12$If7O5tlYJE43LuAIv6r5GuyAc8wdOJ90RiZS0BSCMkSZ4v/2x6Ejy
 roles = ac_admin, ac_judge
+[test]
+roles = ,
+password = $2a$12$C6x4qlpgw4vFQomlOkoMD.sY.ba5DXHz6FpcmtF.P9Wrr9fRrOT46

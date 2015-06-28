@@ -157,7 +157,17 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
+    def get_judges_for_heat(self, heat_id):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_judges_for_heat, heat_id, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
 
+    def get_heat_info(self, heat_id):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_heat_info, heat_id, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
 
     ############ db admin interface ##############
     def shutdown(self):
@@ -258,7 +268,32 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
                 'heats.id AS heat_id',
                 'heats.name AS heat_name',
                 'heats.additional_info AS heat_additional_info']
-        return self._query_join_multiple(query_info, 'judges', 'id', 'judge_id', 'judge_activities', 'heat_id', 'id', 'heats', cols=cols)
+        return self._query_join(query_info, 'judges', 'id', 'judge_id', 'judge_activities', 'heat_id', 'id', 'heats', cols=cols)
+
+    def _get_judges_for_heat(self, heat_id):
+        query_info = {KEY_HEAT_ID: heat_id}
+        return self._query_join(query_info, 'judges', 'id', 'judge_id', 'judge_activities')
+
+
+    def _get_heat_info(self, heat_id):
+        query_info = {KEY_HEAT_ID: heat_id}
+        cols = ['heats.id AS heat_id',
+                'heats.name AS heat_name',
+                'heats.start_datetime AS heat_start_datetime',
+                'heats.number_of_waves AS number_of_waves',
+                'heats.additional_info AS heat_additional_info',
+                'events.id AS event_id',
+                'events.name AS event_name',
+                'events.additional_info AS event_additional_info',
+                'categories.id AS categoy_id',
+                'categories.name AS category_name',
+                'categories.additional_info AS categories_additional_info',
+                'tournaments.id AS tournament_id',
+                'tournaments.name AS tournament_name',
+                'tournaments.start_datetime AS tournament_start_datetime',
+                'tournaments.end_datetime AS tournament_end_datetime',
+                'tournaments.additional_info AS tournament_additional_info']
+        return self._query_join(query_info, 'heats', 'event_id', 'id', 'events', 'category_id', 'id', 'categories', 'tournament_id', 'id', 'tournaments', cols=cols)
 
 
     def _register_converter_adapter(self, sql):
@@ -335,8 +370,10 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
 
-    def _query_join_multiple(self, query_info, *args, **kwargs):
+    def _query_join(self, query_info, *args, **kwargs):
         print '** DB ** querying "{}" from join of multiple tables'.format(query_info)
+
+        join_type = kwargs.get('join_type', 'INNER JOIN')
 
         if len(args) % 3 != 1:
             print 'Wrong number of arguments for multiple db join: {}, {}, {}'.format(query_info, cols, args)
@@ -367,7 +404,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         old_table = tables[0]
         join_str = str(old_table)
         for idx, table in enumerate(tables[1:]):
-            join_str = '{table} INNER JOIN ({join_str}) ON {old_table}.{key1}=={table}.{key2}'.format(old_table = old_table, table = table, key1 = join_keys[2*idx], key2 = join_keys[2*idx+1], join_str = join_str)
+            join_str = '{table} {join_type} ({join_str}) ON {old_table}.{key1}=={table}.{key2}'.format(join_type = join_type, old_table = old_table, table = table, key1 = join_keys[2*idx], key2 = join_keys[2*idx+1], join_str = join_str)
             old_table = table
 
         sql_command = 'SELECT {cols} FROM {joins}'.format(cols = cols_str, joins = join_str)
@@ -392,46 +429,6 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 #        print '*******SQL COMMAND: ', sql_command
 #        print '*******RESULT     : ', res
 #        print '*********************************'
-        return res
-
-
-    def _query_join(self, query_info, table1, join_key1, table2, join_key2, cols = None):
-        print '** DB ** querying "{}" from join of "{}" and "{}"'.format(query_info, table1, table2)
-
-        col_info1 = self._table_info.get(table1, {})
-        common_cols1 = set(query_info.keys()).intersection(set(col_info1.keys()))
-        where_str1 = self._where_str(table1, common_cols1, query_info)
-
-
-        col_info2 = self._table_info.get(table2, {})
-        common_cols2 = set(query_info.keys()).intersection(set(col_info2.keys()))
-        where_str2 = self._where_str(table2, common_cols2, query_info)
-
-        join_cols = common_cols1 | common_cols2
-        if cols is None:
-            cols_str = '*'
-        else:
-            cols_str = ", ".join(join_cols)
-
-        join_str = '{table1} INNER JOIN {table2} ON {table1}.{key1}=={table2}.{key2}'.format(table1 = table1, table2 = table2, key1 = join_key1, key2 = join_key2)
-        sql_command = 'SELECT {cols} FROM {joins}'.format(cols = cols_str, joins = join_str)
-
-
-        where_conditions = []
-        if len(where_str1) > 0:
-            where_conditions.append(where_str1)
-        if len(where_str2) > 0:
-            where_conditions.append(where_str2)
-        where_str = ' AND '.join(where_conditions)
-        if len(where_str) > 0:
-            sql_command += ' WHERE {cond}'.format(cond = where_str)
-
-        cursor = self._db.cursor()
-        try:
-            res = [x for x in cursor.execute(sql_command)]
-        except Exception as e:
-            print 'Error executing sql command "{}": {}'.format(sql_command, e)
-            res = []
         return res
 
 

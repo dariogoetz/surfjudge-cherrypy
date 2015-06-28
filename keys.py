@@ -51,11 +51,13 @@ KEY_ENGINE_DB_DELETE_HEAT = 'db_delete_heat'
 KEY_ENGINE_DB_RETRIEVE_JUDGE_ID = 'db_retrieve_judge_id'
 KEY_ENGINE_DB_RETRIEVE_SURFERS = 'db_retrieve_surfers'
 KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES = 'db_retrieve_judge_activities'
+KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT = 'db_retrieve_judges_for_heat'
+KEY_ENGINE_DB_RETRIEVE_HEAT_INFO = 'db_retrieve_heat_info'
 
 KEY_ENGINE_SM_ACTIVATE_HEAT = 'sm_activate_heat'
 KEY_ENGINE_SM_DEACTIVATE_HEAT = 'sm_deactivate_heat'
 KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO = 'sm_get_active_heat_info'
-
+KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE = 'sm_get_heats_for_judge'
 
 ###################################
 # cherrypy plugins - jinja lookup #
@@ -75,7 +77,9 @@ KEY_SHUTDOWN = 'shutdown'
 # state manager #
 #################
 
-KEY_TOURNAMENT = 'tournament'
-KEY_CLASS      = 'class'
-KEY_HEAT_ID       = 'heat_id'
-KEY_JUDGE_ID      = 'judge_id'
+KEY_TOURNAMENT_NAME = 'tournament_name'
+KEY_CLASS_NAME      = 'class_name'
+KEY_EVENT_NAME      = 'event_name'
+KEY_HEAT_ID         = 'heat_id'
+KEY_HEAT_NAME       = 'heat_name'
+KEY_JUDGE_ID        = 'judge_id'

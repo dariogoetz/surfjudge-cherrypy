@@ -10,16 +10,13 @@
   <table class="table table-striped"
          id="heats_table"
          data-toggle="table"
-         data-url="{{ mount_loc }}/do_get_active_heat_info"
-         data-sort-name="name"
+         data-url="/do_get_active_heats"
+         data-sort-name="heat_name"
          date-sort-order="asc">
       <thead>
           <tr>
               <th data-field="heat_id" data-sortable="true">Heat ID</th>
               <th data-field="heat_name" data-sortable="true">Heat Name</th>
-              <th data-field="judge_first_name" data-sortable="true">Judge First Name</th>
-              <th data-field="judge_last_name" data-sortable="true">Judge Last Name</th>
-              <th data-field="judge_username" data-sortable="true">Judge Username</th>
           </tr>
       </thead>
   </table>
