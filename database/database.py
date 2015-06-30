@@ -111,6 +111,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         return res
 
 
+    ########### categories interface ##############
+    def get_categories(self, query_info):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_categories, query_info, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
 
     ############ heats interface ##############
     def get_heats(self, query_info):
@@ -231,6 +237,13 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._insert_into_db(tournament, 'tournaments')
         return
 
+
+    def _get_categories(self, query_info, cols=None):
+        return self._query_db(query_info, 'categories', cols = cols)
+
+
+
+
     def _get_heats(self, query_info, cols = None):
         return self._query_db(query_info, 'heats', cols = cols)
 
@@ -271,12 +284,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         return self._query_join(query_info, 'judges', 'id', 'judge_id', 'judge_activities', 'heat_id', 'id', 'heats', cols=cols)
 
     def _get_judges_for_heat(self, heat_id):
-        query_info = {KEY_HEAT_ID: heat_id}
+        query_info = {'heats': {'id': heat_id}}
         return self._query_join(query_info, 'judges', 'id', 'judge_id', 'judge_activities')
 
 
     def _get_heat_info(self, heat_id):
-        query_info = {KEY_HEAT_ID: heat_id}
+        query_info = {'heats':{'id': heat_id}}
         cols = ['heats.id AS heat_id',
                 'heats.name AS heat_name',
                 'heats.start_datetime AS heat_start_datetime',
@@ -370,6 +383,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
 
+    # TODO: put table name in query_info
     def _query_join(self, query_info, *args, **kwargs):
         print '** DB ** querying "{}" from join of multiple tables'.format(query_info)
 
@@ -379,21 +393,29 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             print 'Wrong number of arguments for multiple db join: {}, {}, {}'.format(query_info, cols, args)
             return []
 
-        tables = [args[0]]
-        join_keys = []
-        where_str_list = []
-        common_cols_list = []
 
+        table = args[0]
+        qinfo = query_info.get(table, {})
+        col_info = self._table_info.get(table, {})
+        common_cols = set(qinfo.keys()).intersection(set(col_info.keys()))
+        where_str = self._where_str(table, common_cols, qinfo)
+
+
+        tables = [table]
+        join_keys = []
+        common_cols_list = [common_cols]
+        where_str_list = [where_str]
         for i in range(len(args)/3):
             table = args[3*i+3]
             join_key1 = args[3*i+1]
             join_key2 = args[3*i+2]
             tables.append(table)
             join_keys.extend([join_key1, join_key2])
+            qinfo = query_info.get(table, {})
             col_info = self._table_info.get(table, {})
-            common_cols = set(query_info.keys()).intersection(set(col_info.keys()))
+            common_cols = set(qinfo.keys()).intersection(set(col_info.keys()))
             common_cols_list.append(common_cols)
-            where_str_list.append(self._where_str(table, common_cols, query_info))
+            where_str_list.append(self._where_str(table, common_cols, qinfo))
 
         join_cols = set.union(*common_cols_list)
         if kwargs.get('cols') is None:

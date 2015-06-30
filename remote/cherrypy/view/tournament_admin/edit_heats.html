@@ -35,16 +35,15 @@
         <div class="col-md-2">
             <div class="dropdown">
                 <div class="btn-group">
-                <button id="dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Dropdown Label <span class="caret"></span>
+                <button id="tournaments_dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Tournaments <span class="caret"></span>
                 </button>
-                <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
-                    <li><a href="#">Tournament Name 1</a></li>
+                <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="tournaments_dropdown_label">
                 </ul>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-5">
             <div class="alert alert-success" role="alert">
                 <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
                 <span class="sr-only">Selected Tournament:</span>
@@ -53,10 +52,35 @@
         </div>
     </div>
 
+    <div class="row">
+        <div class="col-md-2">
+            <div class="dropdown">
+                <div class="btn-group">
+                <button id="categories_dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Categories <span class="caret"></span>
+                </button>
+                <ul id="categories_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="categories_dropdown_label">
+                </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="alert alert-success" role="alert">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span class="sr-only">Selected Category:</span>
+                <span id="selected_category">No category selected</span>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
   <table class="table table-striped"
          id="heats_table"
          data-toggle="table"
-         data-url="{{ mount_loc }}/do_get_heats?tournament_id=1"
+         data-url="{{ mount_loc }}/do_get_heats"
          data-sort-name="name"
          date-sort-order="asc">
       <thead>
@@ -154,6 +178,67 @@
 <script src="/static/duallistbox/dual-list-box.min.js"></script>
 
 <script>
+ // ***** DROPDOWN *****
+
+ function refresh_tournaments_dropdown(){
+     // fill dropdown with tournament names
+     $.get('{{ mount_loc }}/do_get_tournaments', function(data){
+         var tournaments = JSON.parse(data);
+         // sort
+         function comp_func(a,b){
+             return (b['start_datetime'] < a['start_datetime']) ? 1 : -1;
+         }
+
+         tournaments.sort(comp_func);
+
+         // fill dropdown list with sorted tournament names
+         $('#tournaments_dropdown_list').empty();
+         for (i in tournaments){
+             $('#tournaments_dropdown_list').append('<li><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
+         };
+     });
+ };
+
+ function refresh_categories(tournament_id){
+     $.get('{{ mount_loc }}/do_get_categories',{tournament_id: tournament_id}, function(data){
+         var categories = JSON.parse(data);
+         $('#categories_dropdown_list').empty();
+         for (i in categories){
+             $('#categories_dropdown_list').append('<li><a class="select" href="#" data-name="' + categories[i]['name'] + '" data-index=' + categories[i]['id'] + '>' + categories[i]['name'] + '</a></li>');
+         };
+     });
+     $('#selected_category').html('No category selected');
+     $('#selected_category').data('select', null);
+ };
+
+ $(document).ready(function(){
+     refresh_tournaments_dropdown();
+ });
+
+ $('#tournaments_dropdown_list').on('click', '.select', function(e){
+     tid =  $(this).data('index');
+     $('#selected_tournament').html('Tournament "<b>' + $(this).data('name') + '</b>" selected');
+     $('#selected_tournament').data('select', tid);
+     refresh_categories(tid);
+ });
+ $('#categories_dropdown_list').on('click', '.select', function(e){
+     $('#selected_category').html('Category "<b>' + $(this).data('name') + '</b>" selected');
+     $('#selected_category').data('select', $(this).data('index'));
+     refresh_heats_table();
+ });
+
+ function refresh_heats_table(){
+     tid = $('#selected_tournament').data('select');
+     console.log(tid);
+     query = {}
+     if (typeof tid !== 'undefined')
+         query['tournament_id'] = tid;
+     $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: query});
+     };
+</script>
+
+<script>
+ // ***** NEW HEAT BUTTON *****
 function fill_modal(heat_id, heat_name, date, start_time, additional_info){
   $('#modal_heat_id')[0].value = heat_id;
   $('#modal_heat_name')[0].value = heat_name;
@@ -166,26 +251,6 @@ function fill_modal(heat_id, heat_name, date, start_time, additional_info){
   $('#modal_additional_info')[0].value = additional_info;
 
 }
-
-$(document).ready(function (){
-  // fill dropdown with tournament names
-  $.get('{{ mount_loc }}/do_get_tournaments', function(data){
-    var tournaments = JSON.parse(data);
-    // sort
-    function comp_func(a,b){
-      return (b['start_datetime'] < a['start_datetime']) ? 1 : -1;
-    }
-
-    tournaments.sort(comp_func);
-
-    // fill dropdown list with sorted tournament names
-    $('#tournaments_dropdown_list').empty();
-    for (i in tournaments){
-      $('#tournaments_dropdown_list').append('<li><a href="#" data-select=' + tournaments[i]['id'] + ' data-index=' + i + '>' + tournaments[i]['name'] + '</a></li>');
-    }
-
-  });
-});
 
  // register functionality to choose tournament from dropdown list
  // and table adjusts accordingly
@@ -215,6 +280,7 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 
 <!-- modal scripts -->
 <script>
+ // ***** MODAL internals *****
 $('#modal_submit').on('click', function(){
   var heat_id = $('#modal_heat_id')[0].value;
   var heat_name = $('#modal_heat_name')[0].value;
@@ -243,6 +309,7 @@ $('#modal_delete').on('click', function(){
 
 <!-- enable datepickers in modal window -->
 <script>
+ // ***** DATEPICKER *****
 var nowTemp = new Date();
 var start_date = new Date(nowTemp.getFullYear(), nowTemp.getMonth(), nowTemp.getDate(), 0,0,0,0);
 
@@ -256,7 +323,7 @@ $('#modal_date_picker').datepicker({weekStart: 1})
 <!-- enable duallistbox for participant selection -->
 <script>
  var participant_picker = $('#participants_select').DualListBox();
- 
+
 </script>
 
 

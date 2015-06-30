@@ -44,7 +44,7 @@ class StateManager(object):
     def activate_heat(self, heat_id, heat_info):
         if heat_id is None or heat_info is None:
             return
-
+        # heat info comes from web interface since database is not known here
         self.active_heats[heat_id] = heat_info
         return
 
@@ -65,6 +65,6 @@ class StateManager(object):
     def get_heats_for_judge(self, judge_id = None):
         res = {}
         for heat_id, heat in self.active_heats.items():
-            if judge_id in heat['judges']:
+            if judge_id in heat.get('judges', {}):
                 res[heat_id] = {KEY_HEAT_ID: heat_id, KEY_HEAT_NAME: heat[KEY_HEAT_NAME]}
         return res

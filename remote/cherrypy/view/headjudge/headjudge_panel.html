@@ -7,6 +7,19 @@
 
 {% block content %}
 
+            <div class="dropdown">
+                <div class="btn-group">
+                <button id="dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Tournaments <span class="caret"></span>
+                </button>
+                <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
+                    <li><a class="select_tournament" data-selected="t1" href="#">Tournament Name 1</a></li>
+                    <li><a class="select_tournament" data-selected="t2" href="#">Tournament Name 2</a></li>
+                </ul>
+                </div>
+            </div>
+
+
   <table class="table table-striped"
          id="heats_table"
          data-toggle="table"
@@ -28,10 +41,20 @@
 {% block javascript %}
 {{ super() }}
 <script>
+ $('#tournaments_dropdown_list').append('<li><a class="select_tournament" href="#" data-selected="t3" > Hallo </a></li>');
+
+ $('#tournaments_dropdown_list').on('click', '.select_tournament', function(e){
+
+     //do something
+    console.log('button clicked: '+$(this).data('selected'));
+    e.preventDefault();
+ });
+
+
 	$(document).ready(function ()
     {
         //initialize some status
-        $.get('do_activate_heat?heat_id=1');
+        //$.get('do_activate_heat?heat_id=1');
         $.get('do_activate_heat?heat_id=2');
     });
 </script>

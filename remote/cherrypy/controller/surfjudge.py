@@ -113,11 +113,11 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             print 'Error: No heat_id specified and judge has no active heat'
             return
 
-        if heat_id != active_heat_id: # and not is_admin... later: ask for admin roles
+        if int(heat_id) != int(active_heat_id): # and not is_admin... later: ask for admin roles
             print 'Error: Specified heat_id does not coincide with active heat of judge'
             return
 
-        db_data['heat_id'] = heat_id
+        db_data['heat_id'] = int(heat_id)
 
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SCORE, db_data).pop()
         return res
@@ -131,8 +131,13 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             judge_id = cherrypy.session.get(KEY_JUDGE_ID)
             if judge_id is None:
                 print 'Error: Not registered as judge and no heat_id specified'
-                return
-        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop()
+                return '{}'
+            heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
+            if len(heats) == 0:
+                print 'Error: No heat specified and judge has no active heats'
+                return '{}'
+            heat_id = heats.keys()[0]
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
         return json.dumps(heat_info)
 
 

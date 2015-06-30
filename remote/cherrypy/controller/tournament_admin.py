@@ -13,6 +13,8 @@ DT_FORMAT = '%Y-%m-%dT%H:%M'
 
 
 def dtstr2dstr_and_tstr(dt_str):
+    if dt_str is None or len(dt_str) == 0:
+        return (None, None)
     dt = datetime.datetime.strptime(dt_str, DT_FORMAT)
     return (dt.strftime(D_FORMAT), dt.strftime(T_FORMAT))
 
@@ -73,9 +75,20 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
         res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_TOURNAMENTS, query_info).pop()
         for tournament in res:
-            tournament['start_date'], _ = dtstr2dstr_and_tstr(tournament['start_datetime'])
-            tournament['end_date'], _ = dtstr2dstr_and_tstr(tournament['end_datetime'])
+            tournament['start_date'], _ = dtstr2dstr_and_tstr(tournament.get('start_datetime'))
+            tournament['end_date'], _ = dtstr2dstr_and_tstr(tournament.get('end_datetime'))
 
+        return json.dumps(res)
+
+
+    @cherrypy.expose
+    def do_get_categories(self, tournament_id = None, **kwargs):
+        print 'get categories', tournament_id
+        if tournament_id is None:
+            res = []
+        else:
+            query_info = {'tournament_id': int(tournament_id)}
+            res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_CATEGORIES, query_info).pop()
         return json.dumps(res)
 
 
@@ -100,14 +113,13 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     def do_get_heats(self, format=None, tournament_id=None, **kwargs):
-        query_info = {}
-
-        if tournament_id is not None:
-            query_info['tournament_id'] = tournament_id
-
+        if tournament_id is None:
+            res = []
+        else:
+            query_info = {'tournament_id': tournament_id}
             res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, query_info).pop()
-        for heat in res:
-            heat['date'], heat['start_time'] = dtstr2dstr_and_tstr(heat['start_datetime'])
+            for heat in res:
+                heat['date'], heat['start_time'] = dtstr2dstr_and_tstr(heat['start_datetime'])
         return json.dumps(res)
 
 
