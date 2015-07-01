@@ -1,6 +1,6 @@
-{% extends "base_dashboard.html" %}
+{% extends "base_template.html" %}
 
-{% block nav_items %}['#nav_item_judge_tools', '#sidebar_item_judge_panel']{% endblock nav_items %}
+{% block nav_items %}['#nav_item_judge_tools']{% endblock nav_items %}
 
 {% block title %}UI for Judges{% endblock title %}
 
@@ -316,6 +316,10 @@ function make_buttons_quadratic()
 
 
 {% block content %}
+<div class="container-fluid">
+    <div class="jumbotron"><h1>No Heat running for you!</h1></div>
+</div>
+<div class="container-fluid hidden">
     <div class="col-md-8">
         <div class="alert alert-success" role="alert">
             <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -362,4 +366,5 @@ function make_buttons_quadratic()
     <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="cancel();">Cancel</button>
 </div>
 <!--<button class="enter_button" onclick="update_fields();">Update</button> -->
+</div>
 {% endblock content %}
