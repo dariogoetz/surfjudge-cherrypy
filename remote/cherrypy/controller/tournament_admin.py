@@ -129,14 +129,13 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    def do_get_heats(self, format=None, tournament_id=None, category_id=None, **kwargs):
-        if tournament_id is None or category_id is None:
-            res = []
-        else:
-            query_info = {'tournament_id': tournament_id, 'category_id': category_id}
-            res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, query_info).pop()
-            for heat in res:
-                heat['date'], heat['start_time'] = dtstr2dstr_and_tstr(heat['start_datetime'])
+    def do_get_heats(self, format=None, category_id=None, **kwargs):
+        query_info = {}
+        if category_id is not None:
+            query_info['category_id'] = int(category_id)
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, query_info).pop()
+        for heat in res:
+            heat['date'], heat['start_time'] = dtstr2dstr_and_tstr(heat['start_datetime'])
         return json.dumps(res)
 
 
@@ -145,7 +144,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     #@cherrypy.tools.render(template='tournament_admin/edit_modal.html')
     def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, tournament_id=None, category_id=None, date=None, start_time=None, additional_info=None):
-        print heat_id, type(heat_id)
         # data is a json with the fields?
         if json_data is not None:
             data = json.loads(json_data)

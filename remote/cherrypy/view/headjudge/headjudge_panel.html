@@ -7,32 +7,26 @@
 
 {% block content %}
 
-            <div class="dropdown">
-                <div class="btn-group">
-                <button id="dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Tournaments <span class="caret"></span>
-                </button>
-                <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
-                    <li><a class="select_tournament" data-selected="t1" href="#">Tournament Name 1</a></li>
-                    <li><a class="select_tournament" data-selected="t2" href="#">Tournament Name 2</a></li>
-                </ul>
-                </div>
-            </div>
+
+<div class="dropdown">
+    <div class="btn-group">
+        <button id="dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Add tournament <span class="caret"></span>
+        </button>
+        <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
+            <li><a class="select_tournament" data-selected="t1" href="#">Tournament Name 1</a></li>
+            <li><a class="select_tournament" data-selected="t2" href="#">Tournament Name 2</a></li>
+        </ul>
+    </div>
+</div>
 
 
-  <table class="table table-striped"
-         id="heats_table"
-         data-toggle="table"
-         data-url="/do_get_active_heats"
-         data-sort-name="heat_name"
-         date-sort-order="asc">
-      <thead>
-          <tr>
-              <th data-field="heat_id" data-sortable="true">Heat ID</th>
-              <th data-field="heat_name" data-sortable="true">Heat Name</th>
-          </tr>
-      </thead>
-  </table>
+
+<div id="activity_panels" class="container-fluid">
+    {% for panel in panels %}
+    {{ panel }}
+    {% endfor %}
+
 </div>
 
 {% endblock content %}
@@ -55,7 +49,7 @@
     {
         //initialize some status
         //$.get('do_activate_heat?heat_id=1');
-        $.get('do_activate_heat?heat_id=2');
+        //$.get('do_activate_heat?heat_id=2');
     });
 </script>
 {% endblock javascript %}

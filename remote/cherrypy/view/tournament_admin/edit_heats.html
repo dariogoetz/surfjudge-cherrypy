@@ -237,8 +237,6 @@
      var tid = $('#selected_tournament').data('select');
      var cid = $('#selected_category').data('select');
      query = {}
-     if (typeof tid !== 'undefined')
-         query['tournament_id'] = tid;
      if (typeof cid !== 'undefined')
          query['category_id'] = cid;
 
@@ -303,7 +301,7 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 
     $.post('{{ mount_loc }}/do_edit_heat', {heat_id: heat_id, heat_name: heat_name, tournament_id: tournament_id, category_id: category_id, date: date, start_time: start_time, additional_info: additional_info});
     $('#edit_heat_modal').modal('toggle');
-    $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {tournament_id: tournament_id, category_id: category_id}});
+    $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
  });
 
  $('#modal_delete').on('click', function(){
@@ -313,7 +311,7 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 
      $.post('{{ mount_loc }}/do_delete_heat', {id: heat_id});
      $('#edit_heat_modal').modal('toggle');
-     $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {tournament_id: tournament_id, category_id: category_id}});
+     $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
  });
 
 </script>

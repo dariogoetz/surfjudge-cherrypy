@@ -22,12 +22,16 @@ class CherrypyWebInterface(object):
         if ui is None:
             ui = {}
 
-        env['global_is_admin'] = KEY_ROLE_ADMIN in ui.get(KEY_ROLES, [])
+        roles = ui.get(KEY_ROLES, [])
+        env['global_is_admin'] = KEY_ROLE_ADMIN in roles
+        env['global_is_commentator'] = KEY_ROLE_COMMENTATOR in roles
+        env['global_is_judge'] = KEY_ROLE_JUDGE in roles
+        env['global_is_headjudge'] = KEY_ROLE_HEADJUDGE in roles
         env['global_logged_in'] = bool(username)
         return env
 
 
-    def render_html(context = None, template = None):
+    def render_html(self, context = None, template = None):
         if context is None:
             context = {}
         env = self._standard_env()

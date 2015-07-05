@@ -189,9 +189,9 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
-    def get_heat_info(self, heat_id):
+    def get_heat_info(self, query_info):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        self.__access_queue.put( (self._get_heat_info, heat_id, pipe_send), block=True )
+        self.__access_queue.put( (self._get_heat_info, query_info, pipe_send), block=True )
         res = pipe_recv.recv()
         return res
 
@@ -336,17 +336,21 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         return self._query_join(query_info, 'judges', 'id', 'judge_id', 'judge_activities')
 
 
-    def _get_heat_info(self, heat_id):
-        query_info = {'heats':{'id': heat_id}}
+    def _get_heat_info(self, query_info):
+        qinfo = {}
+        if query_info.get('heat_id') is not None:
+            qinfo['heats'] = {'id': query_info['heat_id']}
+        if query_info.get('category_id') is not None:
+            qinfo['categories'] = {'id': query_info['category_id']}
+        if query_info.get('tournament_id') is not None:
+            qinfo['tournaments'] = {'id': query_info['tournament_id']}
+
         cols = ['heats.id AS heat_id',
                 'heats.name AS heat_name',
                 'heats.start_datetime AS heat_start_datetime',
                 'heats.number_of_waves AS number_of_waves',
                 'heats.additional_info AS heat_additional_info',
-                'events.id AS event_id',
-                'events.name AS event_name',
-                'events.additional_info AS event_additional_info',
-                'categories.id AS categoy_id',
+                'categories.id AS category_id',
                 'categories.name AS category_name',
                 'categories.additional_info AS categories_additional_info',
                 'tournaments.id AS tournament_id',
@@ -354,7 +358,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
                 'tournaments.start_datetime AS tournament_start_datetime',
                 'tournaments.end_datetime AS tournament_end_datetime',
                 'tournaments.additional_info AS tournament_additional_info']
-        return self._query_join(query_info, 'heats', 'event_id', 'id', 'events', 'category_id', 'id', 'categories', 'tournament_id', 'id', 'tournaments', cols=cols)
+        return self._query_join(qinfo, 'heats', 'category_id', 'id', 'categories', 'tournament_id', 'id', 'tournaments', cols=cols)
 
 
     def _register_converter_adapter(self, sql):

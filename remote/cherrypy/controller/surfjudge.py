@@ -144,11 +144,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     def do_get_active_heats(self, **kwargs):
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
-        res = []
-        for heat in heat_info.values():
-            tmp = {KEY_HEAT_ID: heat[KEY_HEAT_ID], KEY_HEAT_NAME: heat[KEY_HEAT_NAME]}
-            res.append(tmp)
-        return json.dumps(res)
+        return json.dumps(heat_info.values())
 
 
     @cherrypy.expose

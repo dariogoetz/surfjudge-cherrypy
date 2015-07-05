@@ -144,6 +144,6 @@ class DBAccessPlugin(plugins.SimplePlugin):
         res = self.database.get_judges_for_heat(heat_id)
         return res
 
-    def get_heat_info(self, heat_id):
-        res = self.database.get_heat_info(heat_id)
+    def get_heat_info(self, query_info):
+        res = self.database.get_heat_info(query_info)
         return res

@@ -8,7 +8,7 @@ KEY_ROLE_ADMIN = 'ac_admin'
 KEY_ROLE_JUDGE = 'ac_judge'
 KEY_ROLE_HEADJUDGE = 'ac_headjudge'
 KEY_ROLE_OBSERVER = 'ac_observer'
-
+KEY_ROLE_COMMENTATOR = 'ac_commentator'
 
 ################
 # user manager #
