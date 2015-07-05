@@ -1,0 +1,241 @@
+{% extends "base_dashboard.html" %}
+
+{% block nav_items %}['#nav_item_tournament_admin', '#sidebar_item_edit_categories']{% endblock nav_items %}
+
+{% block title %}Edit Heats{% endblock title %}
+
+{% block sidebar_content %}
+{% include "tournament_admin/sidebar.html" %}
+{% endblock sidebar_content %}
+
+
+{% block css %}
+{{ super() }}
+
+<link href="/static/bootstrap_duallistbox/bootstrap-duallistbox.min.css" rel="stylesheet">
+
+{% endblock css %}
+
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="dropdown">
+                <div class="btn-group">
+                <button id="tournaments_dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Tournaments <span class="caret"></span>
+                </button>
+                <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="tournaments_dropdown_label">
+                </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="alert alert-success" role="alert">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span class="sr-only">Selected Tournament:</span>
+                <span id="selected_tournament">No tournament selected</span>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="data_section" style="display:none">
+        <table class="table table-striped"
+               id="data_table"
+               data-toggle="table"
+               data-url="{{ mount_loc }}/do_get_categories"
+               data-sort-name="name"
+               date-sort-order="asc">
+            <thead>
+                <tr>
+                    <th data-field="id">ID (for admin)</th>
+                    <th data-field="name" data-sortable="true">Category Name</th>
+                    <th data-field="additional_info">Additional Info</th>
+                </tr>
+            </thead>
+        </table>
+        <button type="button" id="new_btn" class="btn btn-primary btn-lg">New Category</button>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+
+
+{% block modals %}
+
+<!-- Edit heats modal -->
+<div class="modal fade" id="edit_modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title">Edit Category</h4>
+          </div> <!-- /.modal-header -->
+
+          <div class="modal-body">
+
+
+          <div class="well">
+              <div class="form-horizontal">
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Category name</label>
+                      <div class="col-sm-10">
+                          <input type="hidden" id="modal_id">
+                          <input type="text" id="modal_name" name="name" class="form-control" placeholder="Category Name">
+                      </div>
+                  </div>
+
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Additional Info</label>
+                      <div class="col-sm-10">
+                        <input type="text" id ="modal_additional_info" name="modal_additional_info" class="form-control" placeholder="Additional Info">
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- participants duallistbox -->
+          <div class="row">
+              <select multiple="multiple" size="10" id="participants_select" data-title="participants" data-source="do_get_surfers" data-value="id" data-text="name">
+              </select>
+          </div>
+
+
+      </div><!-- /.modal-body -->
+
+
+      <div class="modal-footer">
+        <button id="modal_delete" class="btn btn-danger pull-left">Delete</button>
+        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button id="modal_submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+{% endblock modals %}
+
+{% block javascript %}
+{{ super() }}
+
+<script src="/static/duallistbox/dual-list-box.min.js"></script>
+
+<script>
+ // ***** DROPDOWN *****
+
+ function refresh_tournaments_dropdown(){
+     // fill dropdown with tournament names
+     $.get('{{ mount_loc }}/do_get_tournaments', function(data){
+         var tournaments = JSON.parse(data);
+         // sort
+         function comp_func(a,b){
+             return (b['start_datetime'] < a['start_datetime']) ? 1 : -1;
+         }
+
+         tournaments.sort(comp_func);
+
+         // fill dropdown list with sorted tournament names
+         $('#tournaments_dropdown_list').empty();
+         for (i in tournaments){
+             $('#tournaments_dropdown_list').append('<li><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
+         };
+     });
+     $('#selected_tournament').html('No tournament selected');
+     $('#selected_tournament').data('select', null);
+     $('#data_section').hide();
+ };
+
+ $(document).ready(function(){
+     refresh_tournaments_dropdown();
+ });
+
+ $('#tournaments_dropdown_list').on('click', '.select', function(e){
+     tid =  $(this).data('index');
+     $('#selected_tournament').html('Tournament "<b>' + $(this).data('name') + '</b>" selected');
+     $('#selected_tournament').data('select', tid);
+
+     refresh_data_table();
+ });
+
+ function refresh_data_table(){
+     var tid = $('#selected_tournament').data('select');
+     query = {}
+     if (typeof tid !== 'undefined')
+         query['tournament_id'] = tid;
+     $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: query});
+     $('#data_section').show();
+ };
+
+</script>
+
+<script>
+ // ***** NEW CATEGORY BUTTON *****
+function fill_modal(id, name, additional_info){
+  $('#modal_id').val(id);
+  $('#modal_name').val(name);
+  // time picker
+  $('#modal_additional_info').val(additional_info);
+
+}
+
+ // register functionality to choose tournament from dropdown list
+ // and table adjusts accordingly
+
+// register functionality for "new category" button
+$('#new_btn').on('click', function(){
+  fill_modal(null, null, null, null, null);
+  $('#edit_modal').modal('toggle');
+  });
+
+
+// register functionality for selecting categories from table
+ $('#data_table').on('click-row.bs.table', function (e, row, $element) {
+     if (typeof(row) !== 'undefined'){
+         fill_modal(row['id'], row['name'], row['additional_info']);
+         $('#edit_modal').modal('toggle');
+     };
+});
+</script>
+
+
+<!-- modal scripts -->
+<script>
+ // ***** MODAL internals *****
+$('#modal_submit').on('click', function(){
+  var id = $('#modal_id').val();
+  var name = $('#modal_name').val();
+  var additional_info = $('#modal_additional_info').val();
+  var tournament_id = $('#selected_tournament').data('select');
+  if (id == null && name.length == 0) {
+    alert('Empty field "Category Name"');
+    return
+  }
+
+  $.post('{{ mount_loc }}/do_edit_category', {id: id, name: name, tournament_id: tournament_id, additional_info: additional_info});
+    $('#edit_modal').modal('toggle');
+    $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
+ });
+
+$('#modal_delete').on('click', function(){
+    var id = $('#modal_id').val();
+    var tournament_id = $('#selected_tournament').data('select');
+    $.post('{{ mount_loc }}/do_delete_category', {id: id});
+    $('#edit_modal').modal('toggle');
+    $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
+ });
+
+</script>
+
+<script>
+ var participant_picker = $('#participants_select').DualListBox();
+
+</script>
+
+
+{% endblock javascript %}

@@ -25,6 +25,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.subscribe(KEY_ENGINE_DB_DELETE_TOURNAMENT, self.delete_tournament)
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_CATEGORIES, self.get_categories)
+        self.bus.subscribe(KEY_ENGINE_DB_INSERT_CATEGORY, self.insert_category)
+        self.bus.subscribe(KEY_ENGINE_DB_DELETE_CATEGORY, self.delete_category)
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_HEATS, self.get_heats)
         self.bus.subscribe(KEY_ENGINE_DB_INSERT_HEAT, self.insert_heat)
@@ -33,6 +35,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID, self.get_judge_id)
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_SURFERS, self.get_surfers)
+        self.bus.subscribe(KEY_ENGINE_DB_INSERT_SURFER, self.insert_surfer)
+        self.bus.subscribe(KEY_ENGINE_DB_DELETE_SURFER, self.delete_surfer)
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
@@ -49,6 +53,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.unsubscribe(KEY_ENGINE_DB_DELETE_TOURNAMENT, self.delete_tournament)
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_CATEGORIES, self.get_categories)
+        self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_CATEGORY, self.insert_category)
+        self.bus.unsubscribe(KEY_ENGINE_DB_DELETE_CATEGORY, self.delete_category)
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_HEATS, self.get_heats)
         self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_HEAT, self.insert_heat)
@@ -57,6 +63,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID, self.get_judge_id)
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_SURFERS, self.get_surfers)
+        self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_SURFER, self.insert_surfer)
+        self.bus.unsubscribe(KEY_ENGINE_DB_DELETE_SURFER, self.delete_surfer)
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
@@ -83,11 +91,19 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
     def delete_tournament(self, tournament):
         res = self.database.delete_tournament(tournament)
-
+        return res
 
     def get_categories(self, query_info):
         categories = self.database.get_categories(query_info)
         return categories
+
+    def insert_category(self, category):
+        res = self.database.insert_category(category)
+        return res
+
+    def delete_category(self, category):
+        res = self.database.delete_category(category)
+        return res
 
 
     def get_heats(self, query_info):
@@ -100,7 +116,7 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
     def delete_heat(self, heat):
         res = self.database.delete_heat(heat)
-
+        return res
 
     def get_judge_id(self, username):
         res = self.database.get_judge_id(username)
@@ -109,6 +125,14 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
     def get_surfers(self, query_info):
         res = self.database.get_surfers(query_info)
+        return res
+
+    def insert_surfer(self, surfer):
+        res = self.database.insert_surfer(surfer)
+        return res
+
+    def delete_surfer(self, surfer):
+        res = self.database.delete_surfer(surfer)
         return res
 
 

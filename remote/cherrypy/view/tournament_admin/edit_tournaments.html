@@ -41,7 +41,7 @@
     </thead>
 </table>
 
-<button type="button" id="new_tournament_btn" class="btn btn-primary btn-lg">New Tournament</button>
+<button type="button" id="new_btn" class="btn btn-primary btn-lg">New Tournament</button>
 
 {% endblock content %}
 
@@ -119,9 +119,9 @@
 
 <script>
 function fill_modal(tournament_id, tournament_name, start_date, end_date, additional_info){
-  $('#modal_tournament_id')[0].value = tournament_id;
+  $('#modal_tournament_id').val(tournament_id);
 
-  $('#modal_tournament_name')[0].value = tournament_name;
+  $('#modal_tournament_name').val(tournament_name);
   //if (tournament_name == null){
   //  $('#modal_tournament_name')[0].placeholder = 'Tournament Name';
   //}
@@ -146,24 +146,17 @@ $(document).ready(function (){
   //fill_modal('test_id', 'test_name', '10.04.2015', '12.04.2015', 'Additional Info');
 });
 
-$('#new_tournament_btn').on('click', function(){
+$('#new_btn').on('click', function(){
   fill_modal(null, null, null, null, null);
   $('#edit_tournament_modal').modal('toggle');
   });
 
 
-$('#tournaments_table').on('click-row.bs.table', function (e, row, $element) {
-  var start_date = new Date();
-  var end_date = new Date();
-
-  tournament_id = row['id'];
-  tournament_name = row['name'];
-  start_date = row['start_date'];
-  end_date = row['end_date'];
-  additional_info = row['additional_info'];
-
-  fill_modal(tournament_id, tournament_name, start_date, end_date, additional_info);
-  $('#edit_tournament_modal').modal('toggle');
+ $('#tournaments_table').on('click-row.bs.table', function (e, row, $element) {
+     if (typeof(row) !== 'undefined'){
+         fill_modal(row['id'], row['name'], row['start_date'], row['end_date'], row['additional_info']);
+         $('#edit_tournament_modal').modal('toggle');
+     };
 });
 </script>
 
@@ -171,24 +164,25 @@ $('#tournaments_table').on('click-row.bs.table', function (e, row, $element) {
 <!-- modal scripts -->
 <script>
 $('#modal_submit').on('click', function(){
-  var tournament_id = $('#modal_tournament_id')[0].value;
-  var tournament_name = $('#modal_tournament_name')[0].value;
-  var start_date = $('#modal_start_date_input')[0].value;
-  var end_date = $('#modal_end_date_input')[0].value;
-  var additional_info = $('#modal_additional_info')[0].value;
+  var tournament_id = $('#modal_tournament_id').val();
+  var tournament_name = $('#modal_tournament_name').val();
+  var start_date = $('#modal_start_date_input').val();
+  var end_date = $('#modal_end_date_input').value();
+  var additional_info = $('#modal_additional_info').val();
 
   if (tournament_id == null && tournament_name.length == 0) {
     alert('Empty field "Tournament Name"');
     return
   }
 
-  $.post('{{ mount_loc }}/do_edit_tournament', {tournament_id: tournament_id, tournament_name: tournament_name, start_date: start_date, end_date: end_date, additional_info: additional_info});
+  $.post('{{ mount_loc }}/do_edit_tournament', {id: tournament_id, name: tournament_name, start_date: start_date, end_date: end_date, additional_info: additional_info});
   $('#edit_tournament_modal').modal('toggle');
   $('#tournaments_table').bootstrapTable('refresh');
 });
 
 $('#modal_delete').on('click', function(){
-  $.post('{{ mount_loc }}/do_delete_tournament', {tournament_id: tournament_id});
+  var tournament_id = $('#modal_tournament_id').val();
+  $.post('{{ mount_loc }}/do_delete_tournament', {id: tournament_id});
   $('#edit_tournament_modal').modal('toggle');
   $('#tournaments_table').bootstrapTable('refresh');
 });

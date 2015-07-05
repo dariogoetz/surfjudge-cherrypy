@@ -1,0 +1,166 @@
+{% extends "base_dashboard.html" %}
+
+{% block nav_items %}['#nav_item_tournament_admin', '#sidebar_item_edit_surfers']{% endblock nav_items %}
+
+{% block title %}Edit Surfers{% endblock title %}
+
+{% block sidebar_content %}
+{% include "tournament_admin/sidebar.html" %}
+{% endblock sidebar_content %}
+
+
+{% block content %}
+
+<div class="container-fluid">
+    <table class="table table-striped"
+           id="data_table"
+           data-toggle="table"
+           data-url="{{ mount_loc }}/do_get_surfers"
+           data-sort-name="name"
+           date-sort-order="asc">
+        <thead>
+            <tr>
+                <th data-field="id">ID (for admin)</th>
+                <th data-field="name" data-sortable="true">Full Name</th>
+                <th data-field="first_name" data-sortable="true">First Name</th>
+                <th data-field="last_name" data-sortable="true">Last Name</th>
+                <th data-field="country" data-sortable="true">Country</th>
+                <th data-field="additional_info" data-sortable="true">Additional Info</th>
+            </tr>
+        </thead>
+    </table>
+    <button type="button" id="new_btn" class="btn btn-primary btn-lg">New Surfer</button>
+    <button type="button" id="load_csv_btn" class="btn btn-primary btn-lg">Load CSV</button>
+</div>
+{% endblock content %}
+
+
+{% block modals %}
+
+<!-- Edit tournaments modal -->
+<div class="modal fade" id="edit_modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title">Edit Surfer</h4>
+          </div> <!-- /.modal-header -->
+
+          <div class="modal-body">
+
+
+          <div class="well">
+              <div class="form-horizontal">
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Name</label>
+                      <div class="col-sm-5">
+                          <input type="hidden" id="modal_id">
+                          <input type="text" id ="modal_first_name" name="modal_first_name" class="form-control" placeholder="First Name">
+                      </div>
+                      <div class="col-sm-5">
+                        <input type="text" id ="modal_last_name" name="modal_last_name" class="form-control" placeholder="Last Name">
+                      </div>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Country</label>
+                      <div class="col-sm-10">
+                        <input type="text" id ="modal_country" name="modal_country" class="form-control" placeholder="Country">
+                      </div>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Additional Info</label>
+                      <div class="col-sm-10">
+                        <input type="text" id ="modal_additional_info" name="modal_additional_info" class="form-control" placeholder="Additional Info">
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div><!-- /.modal-body -->
+
+
+      <div class="modal-footer">
+        <button id="modal_delete" class="btn btn-danger pull-left">Delete</button>
+        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button id="modal_submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+{% endblock modals %}
+
+
+{% block javascript %}
+{{ super() }}
+
+<script>
+ // ***** NEW CATEGORY BUTTON *****
+function fill_modal(id, first_name, last_name, country, additional_info){
+    $('#modal_id').val(id);
+    $('#modal_first_name').val(first_name);
+    $('#modal_last_name').val(last_name);
+    $('#modal_country').val(country);
+  // time picker
+  $('#modal_additional_info').val(additional_info);
+
+}
+
+ // register functionality to choose tournament from dropdown list
+ // and table adjusts accordingly
+
+// register functionality for "new category" button
+$('#new_btn').on('click', function(){
+  fill_modal(null, null, null, null, null);
+  $('#edit_modal').modal('toggle');
+  });
+
+// register functionality for "new category" button
+$('#load_csv_btn').on('click', function(){
+    $.post('{{ mount_loc }}/do_surfers_load_csv');
+    $('#data_table').bootstrapTable('refresh');
+  });
+
+
+// register functionality for selecting categories from table
+ $('#data_table').on('click-row.bs.table', function (e, row, $element) {
+     if (typeof(row) !== 'undefined'){
+         fill_modal(row['id'], row['first_name'], row['last_name'], row['country'], row['additional_info']);
+         $('#edit_modal').modal('toggle');
+     };
+});
+</script>
+
+<script>
+$('#modal_submit').on('click', function(){
+    var id = $('#modal_id').val();
+    var first_name = $('#modal_first_name').val();
+    var last_name = $('#modal_last_name').val();
+    var country = $('#modal_country').val();
+    var additional_info = $('#modal_additional_info').val();
+
+    if (id == null && first_name.length === 0 ) {
+        alert('Empty fields "First Name"');
+        return
+    }
+    if (id == null && last_name.length === 0 ) {
+        alert('Empty fields "Last Name"');
+        return
+    }
+
+  $.post('{{ mount_loc }}/do_edit_surfer', {id: id, first_name: first_name, last_name: last_name,country: country, additional_info: additional_info});
+  $('#edit_modal').modal('toggle');
+  $('#data_table').bootstrapTable('refresh');
+});
+
+$('#modal_delete').on('click', function(){
+  var id = $('#modal_id').val();
+  $.post('{{ mount_loc }}/do_delete_surfer', {id: id});
+  $('#edit_modal').modal('toggle');
+  $('#data_table').bootstrapTable('refresh');
+});
+
+</script>
+
+
+{% endblock javascript %}

@@ -30,7 +30,7 @@
 
 {% block content %}
 
-<div class="container">
+<div class="container-fluid">
     <div class="row">
         <div class="col-md-2">
             <div class="dropdown">
@@ -76,27 +76,26 @@
 
 
 
-
-  <table class="table table-striped"
-         id="heats_table"
-         data-toggle="table"
-         data-url="{{ mount_loc }}/do_get_heats"
-         data-sort-name="name"
-         date-sort-order="asc">
-      <thead>
-          <tr>
-              <th data-field="id">ID (for admin)</th>
-              <th data-field="name" data-sortable="true">Heat Name</th>
-              <th data-field="date" data-sortable="true">Date</th>
-              <th data-field="start_time" data-sortable="true">Start Time</th>
-              <th data-field="additional_info">Additional Info</th>
-          </tr>
-      </thead>
-  </table>
+    <div id="data_section"  style="display:none">
+        <table class="table table-striped"
+               id="heats_table"
+               data-toggle="table"
+               data-url="{{ mount_loc }}/do_get_heats"
+               data-sort-name="name"
+               date-sort-order="asc">
+            <thead>
+                <tr>
+                    <th data-field="id">ID (for admin)</th>
+                    <th data-field="name" data-sortable="true">Heat Name</th>
+                    <th data-field="date" data-sortable="true">Date</th>
+                    <th data-field="start_time" data-sortable="true">Start Time</th>
+                    <th data-field="additional_info">Additional Info</th>
+                </tr>
+            </thead>
+        </table>
+        <button type="button" id="new_btn" class="btn btn-primary btn-lg">New Heat</button>
+    </div>
 </div>
-
-<button type="button" id="new_heat_btn" class="btn btn-primary btn-lg">New Heat</button>
-
 {% endblock content %}
 
 
@@ -180,7 +179,7 @@
 <script>
  // ***** DROPDOWN *****
 
- function refresh_tournaments_dropdown(){
+ function refresh_tournaments(){
      // fill dropdown with tournament names
      $.get('{{ mount_loc }}/do_get_tournaments', function(data){
          var tournaments = JSON.parse(data);
@@ -197,22 +196,29 @@
              $('#tournaments_dropdown_list').append('<li><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
          };
      });
+     $('#selected_tournament').html('No tournament selected');
+     $('#selected_tournament').data('select', null);
+     refresh_categories();
+     $('#data_section').hide();
  };
 
  function refresh_categories(tournament_id){
-     $.get('{{ mount_loc }}/do_get_categories',{tournament_id: tournament_id}, function(data){
-         var categories = JSON.parse(data);
-         $('#categories_dropdown_list').empty();
-         for (i in categories){
-             $('#categories_dropdown_list').append('<li><a class="select" href="#" data-name="' + categories[i]['name'] + '" data-index=' + categories[i]['id'] + '>' + categories[i]['name'] + '</a></li>');
-         };
-     });
+     if (typeof tournament_id !== 'undefined'){
+         $.get('{{ mount_loc }}/do_get_categories',{tournament_id: tournament_id}, function(data){
+             var categories = JSON.parse(data);
+             $('#categories_dropdown_list').empty();
+             for (i in categories){
+                 $('#categories_dropdown_list').append('<li><a class="select" href="#" data-name="' + categories[i]['name'] + '" data-index=' + categories[i]['id'] + '>' + categories[i]['name'] + '</a></li>');
+             };
+         });
+     };
      $('#selected_category').html('No category selected');
      $('#selected_category').data('select', null);
+     $('#data_section').hide();
  };
 
  $(document).ready(function(){
-     refresh_tournaments_dropdown();
+     refresh_tournaments();
  });
 
  $('#tournaments_dropdown_list').on('click', '.select', function(e){
@@ -224,31 +230,36 @@
  $('#categories_dropdown_list').on('click', '.select', function(e){
      $('#selected_category').html('Category "<b>' + $(this).data('name') + '</b>" selected');
      $('#selected_category').data('select', $(this).data('index'));
-     refresh_heats_table();
+     refresh_data_table();
  });
 
- function refresh_heats_table(){
-     tid = $('#selected_tournament').data('select');
-     console.log(tid);
+ function refresh_data_table(){
+     var tid = $('#selected_tournament').data('select');
+     var cid = $('#selected_tournament').data('select');
      query = {}
      if (typeof tid !== 'undefined')
          query['tournament_id'] = tid;
+     if (typeof cid !== 'undefined')
+         query['category_id'] = cid;
+
      $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: query});
-     };
+     $('#data_section').show();
+ };
+
 </script>
 
 <script>
  // ***** NEW HEAT BUTTON *****
 function fill_modal(heat_id, heat_name, date, start_time, additional_info){
-  $('#modal_heat_id')[0].value = heat_id;
-  $('#modal_heat_name')[0].value = heat_name;
+  $('#modal_heat_id').val(heat_id);
+  $('#modal_heat_name').val(heat_name);
   if (date == null){
     $('#modal_date_picker').data('datepicker').setValue('');
   } else {
     $('#modal_date_picker').data('datepicker').setValue(start_date);
   }
   // time picker
-  $('#modal_additional_info')[0].value = additional_info;
+  $('#modal_additional_info').val(additional_info);
 
 }
 
@@ -256,7 +267,7 @@ function fill_modal(heat_id, heat_name, date, start_time, additional_info){
  // and table adjusts accordingly
 
 // register functionality for "new heat" button
-$('#new_heat_btn').on('click', function(){
+$('#new_btn').on('click', function(){
   fill_modal(null, null, null, null, null);
   $('#edit_heat_modal').modal('toggle');
   });
@@ -264,45 +275,46 @@ $('#new_heat_btn').on('click', function(){
 
 // register functionality for selecting heats from table
 $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
-  var date = new Date();
-
-  heat_id = row['id'];
-  heat_name = row['name'];
-  date = row['date'];
-  start_time = row['start_time'];
-  additional_info = row['additional_info'];
-
-  fill_modal(heat_id, heat_name, date, start_time, additional_info);
-  $('#edit_heat_modal').modal('toggle');
+    if (typeof(row) !== 'undefined'){
+        fill_modal(row['id'], row['name'], row['date'], row['start_time'], row['additional_info']);
+        $('#edit_heat_modal').modal('toggle');
+    };
 });
 </script>
 
 
 <!-- modal scripts -->
-<script>
+-<script>
  // ***** MODAL internals *****
-$('#modal_submit').on('click', function(){
-  var heat_id = $('#modal_heat_id')[0].value;
-  var heat_name = $('#modal_heat_name')[0].value;
-  var date = $('#modal_date_input')[0].value;
-  var start_time = '18:00'//$('#modal_start_time_input')[0].value;
-  var additional_info = $('#modal_additional_info')[0].value;
+ $('#modal_submit').on('click', function(){
+    var heat_id = $('#modal_heat_id').val();
+    var heat_name = $('#modal_heat_name').val();
+    var date = $('#modal_date_input').val();
+    var start_time = '18:00'//$('#modal_start_time_input').val(); // TODO: still need time picker
+    var additional_info = $('#modal_additional_info').val();
+    var tournament_id = $('#selected_tournament').data('select');
+    var category_id = $('#selected_category').data('select');
 
-  if (heat_id == null && heat_name.length == 0) {
-    alert('Empty field "Heat Name"');
-    return
-  }
 
-  $.post('{{ mount_loc }}/do_edit_heat', {heat_id: heat_id, heat_name: heat_name, date: date, start_time: start_time, additional_info: additional_info});
-  $('#edit_heat_modal').modal('toggle');
-  $('#heats_table').bootstrapTable('refresh');
-});
+    if (heat_id == null && heat_name.length == 0) {
+        alert('Empty field "Heat Name"');
+        return
+    };
 
-$('#modal_delete').on('click', function(){
-  $.post('{{ mount_loc }}/do_delete_heat', {heat_id: heat_id});
-  $('#edit_heat_modal').modal('toggle');
-  $('#heats_table').bootstrapTable('refresh');
-});
+    $.post('{{ mount_loc }}/do_edit_heat', {heat_id: heat_id, heat_name: heat_name, tournament_id: tournament_id, category_id: category_id, date: date, start_time: start_time, additional_info: additional_info});
+    $('#edit_heat_modal').modal('toggle');
+    $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {tournament_id: tournament_id, category_id: category_id}});
+ });
+
+ $('#modal_delete').on('click', function(){
+     var tournament_id = $('#selected_tournament').data('select');
+     var category_id = $('#selected_category').data('select');
+     var heat_id = $('#modal_heat_id').val();
+
+     $.post('{{ mount_loc }}/do_delete_heat', {id: heat_id});
+     $('#edit_heat_modal').modal('toggle');
+     $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {tournament_id: tournament_id, category_id: category_id}});
+ });
 
 </script>
 

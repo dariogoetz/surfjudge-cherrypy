@@ -118,6 +118,14 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
+    def insert_category(self, category):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._insert_category, category, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
+
+
     ############ heats interface ##############
     def get_heats(self, query_info):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
@@ -155,6 +163,18 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
+    def insert_surfer(self, surfer):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._insert_surfer, surfer, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
+    def delete_surfer(self, surfer):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        del_surfer = lambda data: self._delete_from_db(data, 'surfers')
+        self.__access_queue.put( (del_surfer, surfer, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
 
     ############ joins #################
     def get_judge_activities(self, query_info):
@@ -241,6 +261,19 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
     def _get_categories(self, query_info, cols=None):
         return self._query_db(query_info, 'categories', cols = cols)
 
+    def _insert_category(self, category):
+        if 'id' not in category or category['id'] is None:
+            # generate new id
+            n_categories = self._db_info.setdefault('n_categories', 0)
+            category['id'] = n_categories
+            self._db_info['n_categories'] += 1
+            self._write_db_info()
+        # check if id exists
+        if len(self._get_categories({'id': category.get('id')})) > 0:
+            self._modify_in_db({'id': category.get('id')}, category, 'categories')
+        else:
+            self._insert_into_db(category, 'categories')
+        return
 
 
 
@@ -270,6 +303,21 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def _get_surfers(self, query_info):
         return self._query_db(query_info, 'surfers')
+
+
+    def _insert_surfer(self, surfer):
+        if 'id' not in surfer or surfer['id'] is None:
+            # generate new id
+            n_surfers = self._db_info.setdefault('n_surfers', 0)
+            surfer['id'] = n_surfers
+            self._db_info['n_surfers'] += 1
+            self._write_db_info()
+        # check if id exists
+        if len(self._get_surfers({'id': surfer.get('id')})) > 0:
+            self._modify_in_db({'id': surfer.get('id')}, surfer, 'surfers')
+        else:
+            self._insert_into_db(surfer, 'surfers')
+        return
 
 
     def _get_judge_activities(self, query_info):

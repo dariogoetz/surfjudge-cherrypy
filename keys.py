@@ -42,15 +42,25 @@ KEY_ENGINE_USER_INFO = 'lookup-user-info'
 
 KEY_ENGINE_DB_RETRIEVE_SCORES = 'db_retrieve_scores'
 KEY_ENGINE_DB_INSERT_SCORE = 'db_insert_score'
+
 KEY_ENGINE_DB_RETRIEVE_TOURNAMENTS = 'db_retrieve_tournaments'
 KEY_ENGINE_DB_INSERT_TOURNAMENT = 'db_insert_tournament'
 KEY_ENGINE_DB_DELETE_TOURNAMENT = 'db_delete_tournament'
+
 KEY_ENGINE_DB_RETRIEVE_CATEGORIES = 'db_retrieve_categories'
+KEY_ENGINE_DB_INSERT_CATEGORY = 'db_insert_category'
+KEY_ENGINE_DB_DELETE_CATEGORY = 'db_delete_category'
+
 KEY_ENGINE_DB_RETRIEVE_HEATS = 'db_retrieve_heats'
 KEY_ENGINE_DB_INSERT_HEAT = 'db_insert_heat'
 KEY_ENGINE_DB_DELETE_HEAT = 'db_delete_heat'
+
 KEY_ENGINE_DB_RETRIEVE_JUDGE_ID = 'db_retrieve_judge_id'
+
 KEY_ENGINE_DB_RETRIEVE_SURFERS = 'db_retrieve_surfers'
+KEY_ENGINE_DB_INSERT_SURFER = 'db_insert_surfer'
+KEY_ENGINE_DB_DELETE_SURFER = 'db_delete_surfer'
+
 KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES = 'db_retrieve_judge_activities'
 KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT = 'db_retrieve_judges_for_heat'
 KEY_ENGINE_DB_RETRIEVE_HEAT_INFO = 'db_retrieve_heat_info'
