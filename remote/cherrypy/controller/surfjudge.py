@@ -13,18 +13,16 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     #@require(is_admin())
-    @cherrypy.tools.render(template = 'base_template.html')
+    @cherrypy.tools.render(template = 'index.html')
     def index(self):
         context = self._standard_env()
-
-        if context['global_username']:
-            message = 'Why, you again...? Welcome back, {}!'.format(context['global_username'])
-        else:
-            message = 'Welcome.'
-
-        context['title'] = 'Cool Jinja2-rendered file'
-        context['description'] = 'Some description of this awesome file'
-        context['message'] = message
+        heats_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
+        for heat_id, heat in heats_info.items():
+            query_info = {KEY_HEAT_ID: int(heat_id)}
+            # TODO: maybe store current scores in state object for faster access
+            scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
+            heat['scores'] = scores
+        context['active_heats'] = heats_info
         return context
 
 

@@ -14,8 +14,6 @@
             Add tournament <span class="caret"></span>
         </button>
         <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
-            <li><a class="select_tournament" data-selected="t1" href="#">Tournament Name 1</a></li>
-            <li><a class="select_tournament" data-selected="t2" href="#">Tournament Name 2</a></li>
         </ul>
     </div>
 </div>
@@ -35,21 +33,81 @@
 {% block javascript %}
 {{ super() }}
 <script>
- $('#tournaments_dropdown_list').append('<li><a class="select_tournament" href="#" data-selected="t3" > Hallo </a></li>');
+ // ***** DROPDOWN *****
+ $(document).ready(function(){
+     refresh_tournaments_dropdown();
+ });
 
- $('#tournaments_dropdown_list').on('click', '.select_tournament', function(e){
+ function refresh_tournaments_dropdown(){
+     // fill dropdown with tournament names
+     $.get('/tournament_admin/do_get_tournaments', function(data){
+         var tournaments = JSON.parse(data);
+         // sort
+         function comp_func(a,b){
+             return (b['start_datetime'] < a['start_datetime']) ? 1 : -1;
+         }
 
-     //do something
-    console.log('button clicked: '+$(this).data('selected'));
-    e.preventDefault();
+         tournaments.sort(comp_func);
+
+         // fill dropdown list with sorted tournament names
+         $('#tournaments_dropdown_list').empty();
+         for (i in tournaments){
+             $('#tournaments_dropdown_list').append('<li><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
+         };
+     });
+ };
+
+ $('#tournaments_dropdown_list').on('click', '.select', function(e){
+     $.get('{{ mount_loc }}/get_tournament_activity_panel', {tournament_id: $(this).data('index')}, function(data){
+         $('#activity_panels').append(data);
+     });
  });
 
 
-	$(document).ready(function ()
-    {
-        //initialize some status
-        //$.get('do_activate_heat?heat_id=1');
-        //$.get('do_activate_heat?heat_id=2');
-    });
+</script>
+
+<script>
+
+ function activate(elem){
+     elem.addClass('btn-success');
+     elem.removeClass('btn-default');
+     elem.data('status', 'active');
+     $.get('{{ mount_loc }}/do_activate_heat', {heat_id: elem.data('index')});
+ };
+ function deactivate(elem){
+     elem.addClass('btn-default');
+     elem.removeClass('btn-success');
+     elem.data('status', 'inactive');
+     $.get('{{ mount_loc }}/do_deactivate_heat', {heat_id: elem.data('index')});
+ };
+
+ $('#activity_panels').on('click', '.heat_activity_button', function(e){
+     if ($(this).data('status') === 'inactive')
+         activate($(this));
+     else
+         deactivate($(this));
+ });
+</script>
+
+<script>
+ $(document).ready(function(){
+     refresh_activity();
+ });
+
+ function refresh_activity(){
+     $.get('/do_get_active_heats', function(data){
+         var active_heats = JSON.parse(data);
+         $('.heat_activity_button').addClass('btn-default');
+         $('.heat_activity_button').removeClass('btn-success');
+         $('.heat_activity_button').data('status', 'inactive');
+         for (id in active_heats){
+             console.log(active_heats[id]['heat_id']);
+             var button_id = '#heat_activity_button_'+active_heats[id]['heat_id'];
+             $(button_id).addClass('btn-success');
+             $(button_id).removeClass('btn-default');
+             $(button_id).data('status', 'active');
+         }
+     });
+ };
 </script>
 {% endblock javascript %}
