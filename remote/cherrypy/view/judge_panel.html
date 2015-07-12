@@ -111,8 +111,20 @@ function sync_with_server()
 function check_for_active_heats
 {
         //Periodically DO the following
-       // $.get('do_query_scores', function(data){
-}      // Benutze $('#data_section').show(); oder .hide
+            $.get('do_get_active_heat_info', function(data){
+                var server_data = $.parseJSON(data);
+                if (server_data.length === 0) //if user is not active in any heat
+                {
+                      $("#display_this_if_some_heat_active").hide();
+                      $("#display_this_if_no_heat_active").show();
+                }
+                else // if user is active in any heat
+                {
+                      $("#display_this_if_some_heat_active").show();
+                      $("#display_this_if_no_heat_active").show();
+                }
+            }
+}      
 function update_fields()
 {
 	clear_fields();
@@ -320,10 +332,10 @@ function make_buttons_quadratic()
 
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid" id="display_this_if_no_heat_active">
     <div class="jumbotron"><h1>No Heat running for you!</h1></div>
 </div>
-<div class="container-fluid hidden">
+<div class="container-fluid" id="display_this_if_some_heat_active">
     <div class="col-md-8">
         <div class="alert alert-success" role="alert">
             <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
