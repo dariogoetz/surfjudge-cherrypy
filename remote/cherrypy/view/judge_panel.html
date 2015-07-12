@@ -108,23 +108,25 @@ function sync_with_server()
     });
 }
 
-function check_for_active_heats
+function toggle_visibility()
 {
-        //Periodically DO the following
-            $.get('do_get_active_heat_info', function(data){
-                var server_data = $.parseJSON(data);
-                if (server_data.length === 0) //if user is not active in any heat
-                {
-                      $("#display_this_if_some_heat_active").hide();
-                      $("#display_this_if_no_heat_active").show();
-                }
-                else // if user is active in any heat
-                {
-                      $("#display_this_if_some_heat_active").show();
-                      $("#display_this_if_no_heat_active").show();
-                }
-            }
-}      
+    $.get('do_get_active_heat_info', function(data)
+    {
+        var server_data = $.parseJSON(data);
+        if (server_data.length === 0) //if user is not active in any heat
+        {
+           $('#display_this_if_some_heat_active').hide();
+           $('#display_this_if_no_heat_active').show();
+                      
+        }
+        else // if user is active in any heat
+        {
+            $('#display_this_if_some_heat_active').show();
+            $('#display_this_if_no_heat_active').hide();
+        }
+    })
+}
+
 function update_fields()
 {
 	clear_fields();
@@ -143,14 +145,14 @@ function update_fields()
 function clear_fields()
 {
 	for (var color in surfer_scores)
-	{
+	{alue="";
+            mark_field_as_inactive(field_id);
+		}
 		for (var j = 0; j<max_no_of_waves;j++)
 		{
 			var field_id=transform_score_index_to_field_id(color,j);
 			var text_box = document.getElementById(field_id);
-			text_box.value="";
-            mark_field_as_inactive(field_id);
-		}
+			text_box.v
 	}
 
 }
@@ -249,7 +251,7 @@ function make_buttons_quadratic()
 }
 </script>
 <script>
-	$(document).ready(function ()
+	$(document).ready(function()
     {
         sync_with_server();
         make_buttons_quadratic();
@@ -258,7 +260,8 @@ function make_buttons_quadratic()
             var data = $.parseJSON(server_data);
             $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Event: ' + data['event_name'] + ' Heat: ' + data['heat_name']);
         });
-    });
+        setInterval(toggle_visibility, 500);
+    }); 
 </script>
 {% endblock javascript %}
 

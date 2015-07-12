@@ -4,13 +4,12 @@
 
 {% block title %}UI for commentator{% endblock title %}
 
-
 {% block javascript %}
 {{ super() }}
 
 <script type="text/javascript">
-var MISSED = -1;
-var INTERFERENCE = -2;
+var MISSED = -1
+var INTERFERENCE = -2
 
 
 //Variables that need to be defined by Contest Operators*****
@@ -108,6 +107,24 @@ function sync_with_server()
     });
 }
 
+function toggle_visibility()
+{
+    $.get('do_get_active_heat_info', function(data)
+    {
+        var server_data = $.parseJSON(data);
+        if (server_data.length === 0) //if user is not active in any heat
+        {
+           $('#display_this_if_some_heat_active').hide();
+           $('#display_this_if_no_heat_active').show();
+                      
+        }
+        else // if user is active in any heat
+        {
+            $('#display_this_if_some_heat_active').show();
+            $('#display_this_if_no_heat_active').hide();
+        }
+    })
+}
 
 function update_fields()
 {
@@ -127,14 +144,14 @@ function update_fields()
 function clear_fields()
 {
 	for (var color in surfer_scores)
-	{
+	{alue="";
+            mark_field_as_inactive(field_id);
+		}
 		for (var j = 0; j<max_no_of_waves;j++)
 		{
 			var field_id=transform_score_index_to_field_id(color,j);
 			var text_box = document.getElementById(field_id);
-			text_box.value="";
-            mark_field_as_inactive(field_id);
-		}
+			text_box.v
 	}
 
 }
@@ -233,12 +250,17 @@ function make_buttons_quadratic()
 }
 </script>
 <script>
-	$(document).ready(function ()
+	$(document).ready(function()
     {
         sync_with_server();
         make_buttons_quadratic();
         $(window).resize(make_buttons_quadratic);
-    });
+        $.get('do_get_active_heat_info', function(server_data){
+            var data = $.parseJSON(server_data);
+            $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Event: ' + data['event_name'] + ' Heat: ' + data['heat_name']);
+        });
+        setInterval(toggle_visibility, 500);
+    }); 
 </script>
 {% endblock javascript %}
 
@@ -312,74 +334,38 @@ function make_buttons_quadratic()
 
 
 {% block content %}
-<table class="table">
-    
-    <tr>
-        <td>Color</td>
-        <td>Name</td>
-        <td>Wave Count</td>
-        <td>Score</td>
-        <td>Needs</td>
-        {% for wave_idx in range(  number_of_waves ) %}
-            <td>{{wave_idx}}</td>
-        {% endfor %}
-    </tr>
+<div class="container-fluid" id="display_this_if_no_heat_active">
+    <div class="jumbotron"><h1>No Heat running for you!</h1></div>
+</div>
+<div class="container-fluid" id="display_this_if_some_heat_active">
+    <div class="col-md-8">
+        <div class="alert alert-success" role="alert">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <span class="sr-only">Selected Category:</span>
+            <span id="active_heat"></span>
+        </div>
+    </div>
+  <table class="table">
     {% for surfer_color in surfer_color_names %}
-        <tr>
-            <td>
-                <div style="background-color: {{ surfer_color_colors[surfer_color] }}; id="{{ surfer_color }}_header">{{ surfer_color }}</div>
-            </td>
-            <td>
-                <div style="background-color: {{ surfer_color_colors[surfer_color] }}; id="{{ surfer_color }}_name">Name of {{ surfer_color }}</div>
-            </td>
-            <td>
-                <div class="form-inline">
-                    <div class="form-group">
-                        <div class="input-group input-group-lg"> 
-                            <input class="form-control" style="width: 10%" type="text" id="{{ surfer_color }}_wave_count" readonly />       
-                        </div>
+    <tr>
+        <td>
+            <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000" onclick="set_input_field( '{{ surfer_color }}' )" id="{{ surfer_color }}_enter">{{ surfer_color }}</button>
+        </td>
+        <td>
+            <div class="form-inline">
+                <div class="form-group">
+                    <div class="input-group input-group-lg">
+                            {% for wave_idx in range(  number_of_waves ) %}
+                            <input class="form-control" style="width: 10%" type="text" id="{{ surfer_color }}_{{wave_idx}}" readonly />
+                            {% endfor %}
                     </div>
                 </div>
-            </td>
-            <td>
-                <div class="form-inline">
-                    <div class="form-group">
-                        <div class="input-group input-group-lg"> 
-                            <input class="form-control" style="width: 10%" type="text" id="{{ surfer_color }}_score" readonly />       
-                        </div>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="form-inline">
-                    <div class="form-group">
-                        <div class="input-group input-group-lg"> 
-                            <input class="form-control" style="width: 10%" type="text" id="{{ surfer_color }}_needs" readonly />       
-                        </div>
-                    </div>
-                </div>
-            </td>
-            
-            {% for wave_idx in range(  number_of_waves ) %}
-                <td>
-                    <div class="form-inline">
-                        <div class="form-group">
-                            <div class="input-group input-group-lg"> 
-                                <input class="form-control" style="width: 10%" type="text" id="{{ surfer_color }}_{{wave_idx}}" readonly />       
-                            </div>
-                        </div>
-                    </div>
-                </td>
-            {%endfor%}
-        </tr>
-        <br />
+            </div>
+        </td>
+    </tr>
+    <br />
     {% endfor %}
 </table>
-<!--
-<div class="btn-toolbar" role="toolbar">
-    {% for number_index in range(10) %}
-    <button class="btn btn-default btn-lg quadratic" style="width: 8.5%" onclick="number_write({{ number_index }});">{{number_index}}</button>
-    {% endfor %}
+<br />
 </div>
--->
 {% endblock content %}
