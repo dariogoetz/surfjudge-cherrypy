@@ -13,7 +13,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     #@require(is_admin())
-    @cherrypy.tools.render(template = 'index.html')
+    @cherrypy.tools.render(template = 'base_template.html')
     def index(self):
         context = self._standard_env()
         heats_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
@@ -56,16 +56,23 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         return data
 
     @cherrypy.expose
-    @require(has_roles(KEY_ROLE_JUDGE))
-    def do_query_scores(self, heat_id = None):
-        if heat_id is None:
+    @require(has_roles(KEY_ROLE_JUDGE, KEY_ROLE_COMMENTATOR))
+    def do_query_scores(self, heat_id = None, judge_id = None):
+        if judge_id is None:
             judge_id = cherrypy.session.get(KEY_JUDGE_ID)
+        else:
+            roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
+            if not KEY_COMMENTATOR in roles:
+                print 'Error in "do_query_scores": judge_id specified but is no commentator'
+                return '[]'
+
+        if heat_id is None:
             if judge_id is None:
-                print 'Error: Not registered as judge'
+                print 'Error in "do_query_scores": Not registered as judge'
                 return '[]'
             heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
             if len(heats) == 0:
-                print 'Error: No heat specified and no active heat available'
+                print 'Error in "do_query_scores": No heat specified and no active heat available'
                 return '[]'
             heat_id = heats.values()[0][KEY_HEAT_ID]
 
@@ -76,12 +83,11 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         for score in scores:
             out_scores.setdefault(score['color'], []).append( (score['wave'], score['score']) )
 
-        print out_scores
         for color in out_scores:
-            print out_scores[color]
             sorted_pairs = sorted(out_scores[color], key=lambda x: x[0])
             out_scores[color] = [score for (wave, score) in sorted_pairs]
 
+        print json.dumps(out_scores)
         return json.dumps(out_scores)
 
     @cherrypy.expose
