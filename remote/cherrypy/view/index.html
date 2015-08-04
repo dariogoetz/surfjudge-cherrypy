@@ -1,0 +1,18 @@
+{% extends "base_template.html" %}
+
+{% block title %}Surfjudge{% endblock title %}
+
+{% block content %}
+
+{% for heat_id, heat in active_heats.items() %}
+<div class="panel panel-primary">
+    <div class="panel-heading"><h4><b>{{ heat['heat_name'] }} in {{ heat['category_name'] }}</b></h4></div>
+    <div class="panel-body">
+        <div class="panel-body">
+            <h1>Table with scores, surfer names and colors</h1>
+            {{ heat }}
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock content %}
