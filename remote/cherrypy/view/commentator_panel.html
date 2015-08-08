@@ -1,8 +1,9 @@
 {% extends "base_template.html" %}
-<!--TODO: Diese Navigationstools müssen ersetzt werden -->
-{% block nav_items %}['#nav_item_commentator_panel']{% endblock nav_items %}
 
-{% block title %}UI for commentator{% endblock title %}
+{% block nav_items %}['#nav_item_judge_tools']{% endblock nav_items %}
+
+{% block title %}UI for Judges{% endblock title %}
+
 
 {% block javascript %}
 {{ super() }}
@@ -96,7 +97,7 @@ function sync_with_server()
                 for (var wave_index=server_data_length; wave_index < surfer_scores[color].length; wave_index++)
                 {
                     console.log('Versuche Upload');
-                    var upload_data = {'color':color, 'score':surfer_scores[color][wave_index], 'wave':wave_index }; 
+                    var upload_data = {'color':color, 'score':surfer_scores[color][wave_index], 'wave':wave_index };
                     var jsonyfied_upload_data= JSON.stringify(upload_data); //Transform object into JSON
                     var data_to_be_uploaded = {'score':jsonyfied_upload_data};
                     $.post('do_insert_score',data_to_be_uploaded,function(data){console.log('upload the data'+data+'successfully')});
@@ -112,18 +113,18 @@ function toggle_visibility()
     $.get('do_get_active_heat_info', function(data)
     {
         var server_data = $.parseJSON(data);
-        if (server_data.length === 0) //if user is not active in any heat
+        if ($.isEmptyObject(server_data)) //if user is not active in any heat
         {
            $('#display_this_if_some_heat_active').hide();
            $('#display_this_if_no_heat_active').show();
-                      
+
         }
         else // if user is active in any heat
         {
             $('#display_this_if_some_heat_active').show();
             $('#display_this_if_no_heat_active').hide();
         }
-    })
+    });
 }
 
 function update_fields()
@@ -144,14 +145,14 @@ function update_fields()
 function clear_fields()
 {
 	for (var color in surfer_scores)
-	{alue="";
-            mark_field_as_inactive(field_id);
-		}
+	{
 		for (var j = 0; j<max_no_of_waves;j++)
 		{
 			var field_id=transform_score_index_to_field_id(color,j);
 			var text_box = document.getElementById(field_id);
-			text_box.v
+			text_box.value="";
+            mark_field_as_inactive(field_id);
+		}
 	}
 
 }
@@ -258,9 +259,11 @@ function make_buttons_quadratic()
         $.get('do_get_active_heat_info', function(server_data){
             var data = $.parseJSON(server_data);
             $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Event: ' + data['event_name'] + ' Heat: ' + data['heat_name']);
+            console.log(data);
         });
-        setInterval(toggle_visibility, 500);
-    }); 
+        setInterval(toggle_visibility, 5000);
+        
+    });
 </script>
 {% endblock javascript %}
 
@@ -337,7 +340,7 @@ function make_buttons_quadratic()
 <div class="container-fluid" id="display_this_if_no_heat_active">
     <div class="jumbotron"><h1>No Heat running for you!</h1></div>
 </div>
-<div class="container-fluid" id="display_this_if_some_heat_active">
+<div class="container-fluid" id="display_this_if_some_heat_active" style="display:none">
     <div class="col-md-8">
         <div class="alert alert-success" role="alert">
             <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -367,5 +370,22 @@ function make_buttons_quadratic()
     {% endfor %}
 </table>
 <br />
+
+
+<br /><br />
+<div class="btn-toolbar" role="toolbar">
+    {% for number_index in range(10) %}
+    <button class="btn btn-default btn-lg quadratic" style="width: 8.5%" onclick="number_write({{ number_index }});">{{number_index}}</button>
+    {% endfor %}
+</div>
+<br /><br />
+<div class="btn-toolbar" role="toolbar">
+    <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="number_write(-1);">Missed</button>
+    <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="number_write(-2);">Interf.</button>
+    <button class="btn btn-info btn-lg" style="width: 31%; height: 100px" onclick="number_clear();">Del</button>
+    <button class="btn btn-success btn-lg" style="width: 31%; height: 100px" onclick="enter_score();">ENTER</button>
+    <button class="btn btn-danger btn-lg" style="width: 31%; height: 100px" onclick="cancel();">Cancel</button>
+</div>
+<!--<button class="enter_button" onclick="update_fields();">Update</button> -->
 </div>
 {% endblock content %}
