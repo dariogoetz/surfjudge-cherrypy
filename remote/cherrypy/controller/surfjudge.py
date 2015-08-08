@@ -13,7 +13,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     #@require(is_admin())
-    @cherrypy.tools.render(template = 'base_template.html')
+    @cherrypy.tools.render(template = 'index.html')
     def index(self):
         context = self._standard_env()
         heats_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()

@@ -258,7 +258,7 @@ function make_buttons_quadratic()
         $(window).resize(make_buttons_quadratic);
         $.get('do_get_active_heat_info', function(server_data){
             var data = $.parseJSON(server_data);
-            $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Event: ' + data['event_name'] + ' Heat: ' + data['heat_name']);
+            $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Category: ' + data['category_name'] + ' Heat: ' + data['heat_name']);
         });
         setInterval(toggle_visibility, 5000);
     });
