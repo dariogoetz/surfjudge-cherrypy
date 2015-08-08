@@ -358,7 +358,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
                 'tournaments.start_datetime AS tournament_start_datetime',
                 'tournaments.end_datetime AS tournament_end_datetime',
                 'tournaments.additional_info AS tournament_additional_info']
-        return self._query_join(qinfo, 'heats', 'category_id', 'id', 'categories', 'tournament_id', 'id', 'tournaments', cols=cols)
+        return self._query_join(qinfo, 'tournaments', 'id', 'tournament_id', 'categories', 'id',  'category_id','heats', cols=cols)
 
 
     def _register_converter_adapter(self, sql):
@@ -478,11 +478,16 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         old_table = tables[0]
         join_str = str(old_table)
         for idx, table in enumerate(tables[1:]):
-            join_str = '{table} {join_type} ({join_str}) ON {old_table}.{key1}=={table}.{key2}'.format(join_type = join_type, old_table = old_table, table = table, key1 = join_keys[2*idx], key2 = join_keys[2*idx+1], join_str = join_str)
+            join_str += \
+"""
+    {join_type} {table}
+        ON {old_table}.{key1} = {table}.{key2}""".format(join_type = join_type, old_table = old_table, table = table, key1 = join_keys[2*idx], key2 = join_keys[2*idx+1], join_str = join_str)
             old_table = table
 
-        sql_command = 'SELECT {cols} FROM {joins}'.format(cols = cols_str, joins = join_str)
-
+        sql_command = \
+"""SELECT {cols}
+FROM {joins}
+""".format(cols = cols_str, joins = join_str)
         where_conditions = []
         for where_str in where_str_list:
             if len(where_str) > 0:

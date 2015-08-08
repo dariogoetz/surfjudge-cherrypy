@@ -37,6 +37,9 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
         heat_info = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, query_info).pop()
         if len(heat_info) > 0:
             heat_info = heat_info[0]
+        else:
+            print 'do_activate_heat: Error: heat_id not in DB'
+            return None
 
         heat_info[KEY_HEAT_ID] = heat_id
         judges = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, heat_id).pop()
