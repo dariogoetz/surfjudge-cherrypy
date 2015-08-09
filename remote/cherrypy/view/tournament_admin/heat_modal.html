@@ -1,0 +1,156 @@
+
+<!-- Edit heats modal -->
+<div class="modal fade" id="edit_heat_modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title">Edit Heat</h4>
+          </div> <!-- /.modal-header -->
+
+          <div class="modal-body">
+
+
+          <div class="well">
+              <div class="form-horizontal">
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Heat name</label>
+                      <div class="col-sm-10">
+                          <input type="hidden" id="modal_heat_id">
+                          <input type="text" id="modal_heat_name" name="heat_name" class="form-control" placeholder="Heat Name">
+                      </div>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Date</label>
+                      <div class="row">
+                        <div class="col-sm-4">
+
+			              <div class="input-group date" id="modal_date_picker" data-date="" data-date-format="dd.mm.yyyy">
+				              <input class="form-control" id="modal_date_input" name="date_begin" size="16" type="text" placeholder="Date start" readonly>
+				              <span class="input-group-addon add-on"><i class="glyphicon glyphicon-calendar"></i></span>
+			              </div>
+                        </div>
+                      <div class="col-sm-4">
+                          Need time picker
+                      </div>
+                      </div>
+                  </div>
+
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Number of waves</label>
+                      <div class="col-sm-10">
+
+                          <div class="input-group">
+                              <span class="input-group-btn">
+                                  <button type="button" class="btn btn-danger btn-number"  data-type="minus" data-field="nwaves">
+                                      <span class="glyphicon glyphicon-minus"></span>
+                                  </button>
+                              </span>
+                              <input type="text" id="modal_nwaves" name="nwaves" class="form-control input-number" placeholder="10" min="1" max="100">
+                              <span class="input-group-btn">
+                                  <button type="button" class="btn btn-success btn-number" data-type="plus" data-field="nwaves">
+                                      <span class="glyphicon glyphicon-plus"></span>
+                                  </button>
+                              </span>
+                          </div>
+                      </div>
+                  </div>
+
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">Additional Info</label>
+                      <div class="col-sm-10">
+                        <input type="text" id ="modal_additional_info" name="modal_additional_info" class="form-control" placeholder="Additional Info">
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- participants duallistbox -->
+          <div class="row">
+              <select multiple="multiple" size="10" name="participants" id="participants_select">
+              </select>
+          </div>
+
+
+      </div><!-- /.modal-body -->
+
+
+      <div class="modal-footer">
+        <button id="modal_delete" class="btn btn-danger pull-left">Delete</button>
+        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button id="modal_submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+
+
+
+<!-- modal scripts -->
+-<script>
+ // ***** MODAL internals *****
+ $('#modal_submit').on('click', function(){
+    var heat_id = $('#modal_heat_id').val();
+    var heat_name = $('#modal_heat_name').val();
+    var date = $('#modal_date_input').val();
+    var start_time = '18:00'//$('#modal_start_time_input').val(); // TODO: still need time picker
+    var number_of_waves = $('#modal_nwaves').val();
+    var additional_info = $('#modal_additional_info').val();
+    var tournament_id = $('#selected_tournament').data('select');
+    var category_id = $('#selected_category').data('select');
+
+
+    if (heat_id == null && heat_name.length == 0) {
+        alert('Empty field "Heat Name"');
+        return
+    };
+
+    $.post('{{ mount_loc }}/do_edit_heat', {heat_id: heat_id, heat_name: heat_name, tournament_id: tournament_id, category_id: category_id, date: date, start_time: start_time, number_of_waves: number_of_waves, additional_info: additional_info});
+    $('#edit_heat_modal').modal('toggle');
+    $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
+
+    // select surfers
+    var options = []
+    $('#bootstrap-duallistbox-selected-list_participants option').each(function(){options.push(parseInt(this.value))});
+    options = JSON.stringify(options);
+    $.post('{{ mount_loc }}/do_set_selected_surfers', {heat_id: heat_id, surfer_ids: options});
+  });
+
+ $('#modal_delete').on('click', function(){
+     var tournament_id = $('#selected_tournament').data('select');
+     var category_id = $('#selected_category').data('select');
+     var heat_id = $('#modal_heat_id').val();
+
+     $.post('{{ mount_loc }}/do_delete_heat', {id: heat_id});
+     $('#edit_heat_modal').modal('toggle');
+     $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
+ });
+
+
+
+</script>
+
+
+<!-- enable datepickers in modal window -->
+<script>
+ // ***** DATEPICKER *****
+var nowTemp = new Date();
+var start_date = new Date(nowTemp.getFullYear(), nowTemp.getMonth(), nowTemp.getDate(), 0,0,0,0);
+
+$('#modal_date_picker').datepicker({weekStart: 1})
+  .on('changeDate', function(ev){
+    start_date = ev.date;
+    $('#modal_date_picker').datepicker('hide');
+  });
+</script>
+
+<script>
+    var participants_dlb = $('#participants_select').bootstrapDualListbox(
+    {nonSelectedListLabel: 'Unselected surfers',
+    selectedListLabel: 'Selected surfers'}
+    );
+
+</script>

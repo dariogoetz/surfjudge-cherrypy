@@ -143,7 +143,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     # TODO: as POST action
     @cherrypy.expose
     #@cherrypy.tools.render(template='tournament_admin/edit_modal.html')
-    def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, tournament_id=None, category_id=None, date=None, start_time=None, additional_info=None):
+    def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, tournament_id=None, category_id=None, date=None, start_time=None, number_of_waves=None, additional_info=None):
         # data is a json with the fields?
         if json_data is not None:
             data = json.loads(json_data)
@@ -155,6 +155,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             data['name'] = heat_name.encode()
             data['start_time'] = start_time.encode()
             data['date'] = date.encode()
+            data['number_of_waves'] = number_of_waves.encode()
             data['additional_info'] = additional_info.encode()
 
         data['start_datetime'] = dstr_and_tstr2dtstr(data['date'], data['start_time'])
@@ -176,6 +177,14 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SURFERS, query_info).pop()
         return json.dumps(res)
 
+
+    @cherrypy.expose
+    def do_get_selected_surfers(self, heat_id=None):
+        return '[2, 4]'
+
+    @cherrypy.expose
+    def do_set_selected_surfers(self, json_data=None, heat_id=None, surfer_ids= None):
+        print '*******', heat_id, surfer_ids
 
     # TODO: as POST action
     @cherrypy.expose

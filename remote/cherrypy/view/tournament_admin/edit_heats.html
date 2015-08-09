@@ -89,6 +89,7 @@
                     <th data-field="name" data-sortable="true">Heat Name</th>
                     <th data-field="date" data-sortable="true">Date</th>
                     <th data-field="start_time" data-sortable="true">Start Time</th>
+                    <th data-field="number_of_waves" data-sortable="true">Number of Waves</th>
                     <th data-field="additional_info">Additional Info</th>
                 </tr>
             </thead>
@@ -101,80 +102,15 @@
 
 
 {% block modals %}
-
-<!-- Edit heats modal -->
-<div class="modal fade" id="edit_heat_modal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-
-          <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-              <h4 class="modal-title">Edit Heat</h4>
-          </div> <!-- /.modal-header -->
-
-          <div class="modal-body">
-
-
-          <div class="well">
-              <div class="form-horizontal">
-                  <div class="form-group">
-                      <label class="col-sm-2 control-label">Heat name</label>
-                      <div class="col-sm-10">
-                          <input type="hidden" id="modal_heat_id">
-                          <input type="text" id="modal_heat_name" name="heat_name" class="form-control" placeholder="Heat Name">
-                      </div>
-                  </div>
-                  <div class="form-group">
-                      <label class="col-sm-2 control-label">Date</label>
-                      <div class="row">
-                        <div class="col-sm-4">
-
-			              <div class="input-group date" id="modal_date_picker" data-date="" data-date-format="dd.mm.yyyy">
-				              <input class="form-control" id="modal_date_input" name="date_begin" size="16" type="text" placeholder="Date start" readonly>
-				              <span class="input-group-addon add-on"><i class="glyphicon glyphicon-calendar"></i></span>
-			              </div>
-                        </div>
-                      <div class="col-sm-4">
-                          Need time picker
-                      </div>
-                      </div>
-                  </div>
-
-                  <div class="form-group">
-                      <label class="col-sm-2 control-label">Additional Info</label>
-                      <div class="col-sm-10">
-                        <input type="text" id ="modal_additional_info" name="modal_additional_info" class="form-control" placeholder="Additional Info">
-                      </div>
-                  </div>
-              </div>
-          </div>
-
-          <!-- participants duallistbox -->
-          <div class="row">
-              <select multiple="multiple" size="10" id="participants_select" data-title="participants" data-source="do_get_surfers" data-value="id" data-text="name">
-              </select>
-          </div>
-
-
-      </div><!-- /.modal-body -->
-
-
-      <div class="modal-footer">
-        <button id="modal_delete" class="btn btn-danger pull-left">Delete</button>
-        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <button id="modal_submit" class="btn btn-primary">Save changes</button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
+{% include "tournament_admin/heat_modal.html" %}
 {% endblock modals %}
 
 {% block javascript %}
 {{ super() }}
 
 <script src="/static/datepicker/js/bootstrap-datepicker.js"></script>
-<script src="/static/duallistbox/dual-list-box.min.js"></script>
+<script src="/static/bootstrap_duallistbox/jquery.bootstrap-duallistbox.min.js"></script>
+<script src="/static/plusminusinput/plusminusinput.js"></script>
 
 <script>
  // ***** DROPDOWN *****
@@ -217,9 +153,6 @@
      $('#data_section').hide();
  };
 
- $(document).ready(function(){
-     refresh_tournaments();
- });
 
  $('#tournaments_dropdown_list').on('click', '.select', function(e){
      tid =  $(this).data('index');
@@ -248,7 +181,7 @@
 
 <script>
  // ***** NEW HEAT BUTTON *****
-function fill_modal(heat_id, heat_name, date, start_time, additional_info){
+function fill_modal(heat_id, heat_name, date, start_time, n_waves, additional_info){
   $('#modal_heat_id').val(heat_id);
   $('#modal_heat_name').val(heat_name);
   if (date == null){
@@ -256,17 +189,36 @@ function fill_modal(heat_id, heat_name, date, start_time, additional_info){
   } else {
     $('#modal_date_picker').data('datepicker').setValue(start_date);
   }
-  // time picker
+    // time picker
+  $('#modal_nwaves').val(n_waves);
   $('#modal_additional_info').val(additional_info);
-
+  refresh_participants(heat_id);
 }
 
+function refresh_participants(heat_id){
+
+    $.getJSON( '{{ mount_loc }}/do_get_surfers', function(data){
+        $('#participants_select').empty();
+        for (elem in data){
+            $('#participants_select').append('<option value=' + data[elem]["id"] + '>' + data[elem]["name"] + '</option>');
+        }
+        $.getJSON( '{{ mount_loc }}/do_get_selected_surfers', {heat_id: heat_id}, function(data){
+            for (idx in data){
+                console.log($('#participants_select option[value='+data[idx]+']').text());
+
+                $('#participants_select option[value='+data[idx]+']').attr('selected', 'selected');
+            };
+            participants_dlb.bootstrapDualListbox('refresh');
+
+        });
+    });
+ }
  // register functionality to choose tournament from dropdown list
  // and table adjusts accordingly
 
 // register functionality for "new heat" button
 $('#new_btn').on('click', function(){
-  fill_modal(null, null, null, null, null);
+  fill_modal(null, null, null, null, null, null);
   $('#edit_heat_modal').modal('toggle');
   });
 
@@ -274,67 +226,16 @@ $('#new_btn').on('click', function(){
 // register functionality for selecting heats from table
 $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
     if (typeof(row) !== 'undefined'){
-        fill_modal(row['id'], row['name'], row['date'], row['start_time'], row['additional_info']);
+        fill_modal(row['id'], row['name'], row['date'], row['start_time'], row['number_of_waves'], row['additional_info']);
         $('#edit_heat_modal').modal('toggle');
     };
 });
 </script>
 
-
-<!-- modal scripts -->
--<script>
- // ***** MODAL internals *****
- $('#modal_submit').on('click', function(){
-    var heat_id = $('#modal_heat_id').val();
-    var heat_name = $('#modal_heat_name').val();
-    var date = $('#modal_date_input').val();
-    var start_time = '18:00'//$('#modal_start_time_input').val(); // TODO: still need time picker
-    var additional_info = $('#modal_additional_info').val();
-    var tournament_id = $('#selected_tournament').data('select');
-    var category_id = $('#selected_category').data('select');
-
-
-    if (heat_id == null && heat_name.length == 0) {
-        alert('Empty field "Heat Name"');
-        return
-    };
-
-    $.post('{{ mount_loc }}/do_edit_heat', {heat_id: heat_id, heat_name: heat_name, tournament_id: tournament_id, category_id: category_id, date: date, start_time: start_time, additional_info: additional_info});
-    $('#edit_heat_modal').modal('toggle');
-    $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
- });
-
- $('#modal_delete').on('click', function(){
-     var tournament_id = $('#selected_tournament').data('select');
-     var category_id = $('#selected_category').data('select');
-     var heat_id = $('#modal_heat_id').val();
-
-     $.post('{{ mount_loc }}/do_delete_heat', {id: heat_id});
-     $('#edit_heat_modal').modal('toggle');
-     $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
- });
-
-</script>
-
-
-<!-- enable datepickers in modal window -->
 <script>
- // ***** DATEPICKER *****
-var nowTemp = new Date();
-var start_date = new Date(nowTemp.getFullYear(), nowTemp.getMonth(), nowTemp.getDate(), 0,0,0,0);
-
-$('#modal_date_picker').datepicker({weekStart: 1})
-  .on('changeDate', function(ev){
-    start_date = ev.date;
-    $('#modal_date_picker').datepicker('hide');
-  });
+ $(document).ready(function(){
+     refresh_tournaments();
+ });
 </script>
-
-<!-- enable duallistbox for participant selection -->
-<script>
- var participant_picker = $('#participants_select').DualListBox();
-
-</script>
-
 
 {% endblock javascript %}
