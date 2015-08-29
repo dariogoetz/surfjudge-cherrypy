@@ -195,18 +195,49 @@ function fill_modal(heat_id, heat_name, date, start_time, n_waves, additional_in
   refresh_participants(heat_id);
 }
 
+ function add_participant_row(surfer_id, surfer_name, surfer_color, elem_handle){
+     var colors = ['red', 'blue', 'green', 'yellow'];
+
+     var row = $('<tr><td>'+ surfer_id +'</td><td>'+ surfer_name +'</td></tr>');
+     var s = $('<select class="form-control"/>');
+     $(s).data({'surfer_id': surfer_id});
+
+     for(var val in colors) {
+         var option_data = {value: colors[val], text: colors[val]};
+         if (surfer_color === colors[val])
+             option_data['selected'] = true;
+         $('<option />', option_data).appendTo(s);
+     }
+     $(s).wrap('<td></td>');
+     s.appendTo($(row));
+     $('#participants_table tbody').append(row);
+ }
+
 function refresh_participants(heat_id){
+    $.getJSON( '{{ mount_loc }}/do_get_participating_surfers', {heat_id: heat_id}, function(participants_data){
+        $.getJSON( '{{ mount_loc }}/do_get_surfers', function(surfer_data){
 
-    $.getJSON( '{{ mount_loc }}/do_get_surfers', function(data){
-        $('#participants_select').empty();
-        for (elem in data){
-            $('#participants_select').append('<option value=' + data[elem]["id"] + '>' + data[elem]["name"] + '</option>');
-        }
-        $.getJSON( '{{ mount_loc }}/do_get_selected_surfers', {heat_id: heat_id}, function(data){
-            for (idx in data){
-                console.log($('#participants_select option[value='+data[idx]+']').text());
+            // fill participants_select in participant modal
+            $('#participants_select').empty();
+            for (idx in surfer_data){
+                var surfer_id = surfer_data[idx]['id'];
+                var surfer_name = surfer_data[idx]['name'];
+                $('<option />', {value: surfer_id, text: surfer_name}).appendTo($('#participants_select'));
+            }
 
-                $('#participants_select option[value='+data[idx]+']').attr('selected', 'selected');
+            var participant_ids = participants_data['surfer_ids'];
+            var participant_colors = participants_data['surfer_colors'];
+            $('#participants_table > tbody').empty();
+            for (idx in participant_ids){
+                var surfer_id = participant_ids[idx];
+                var surfer_color = participant_colors[idx];
+                var surfer_name = $('#participants_select option[value="'+ surfer_id +'"]').text();
+
+                // fill table in edit_heat modal
+                add_participant_row(surfer_id, surfer_name, surfer_color, '#participants_table > tbody');
+
+                // activate in participants_select
+                $('#participants_select option[value='+surfer_id+']').prop('selected', true)
             };
             participants_dlb.bootstrapDualListbox('refresh');
 

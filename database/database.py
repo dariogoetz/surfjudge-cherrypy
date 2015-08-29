@@ -141,8 +141,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def delete_heat(self, heat):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        del_heat = lambda data: self._delete_from_db(data, 'heats')
-        self.__access_queue.put( (del_heat, heat, pipe_send), block=True)
+        self.__access_queue.put( (self._delete_heat, heat, pipe_send), block=True)
         res = pipe_recv.recv()
         return res
 
@@ -173,6 +172,19 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
         del_surfer = lambda data: self._delete_from_db(data, 'surfers')
         self.__access_queue.put( (del_surfer, surfer, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
+
+    def get_participants(self, heat_id):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_participants, heat_id, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
+    def set_participants(self, data):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._set_participants, data, pipe_send), block=True)
         res = pipe_recv.recv()
         return res
 
@@ -280,6 +292,11 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
     def _get_heats(self, query_info, cols = None):
         return self._query_db(query_info, 'heats', cols = cols)
 
+    def _delete_heat(self, data):
+        self._delete_from_db(data, 'heats')
+        self._delete_from_db({'heat_id': data['id']}, 'participants')
+        self._delete_from_db({'heat_id': data['id']}, 'judge_activities')
+        return
 
     def _insert_heat(self, heat):
         if 'id' not in heat or heat['id'] is None:
@@ -318,6 +335,21 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         else:
             self._insert_into_db(surfer, 'surfers')
         return
+
+
+    def _get_participants(self, heat_id):
+        query_info = {'heat_id': heat_id}
+        return self._query_db(query_info, 'participants')
+
+    def _set_participants(self, data):
+        heat_id = data['heat_id']
+        surfers = data['surfers']
+        if len(self._get_participants(heat_id)) > 0:
+            self._delete_from_db({'heat_id': heat_id}, 'participants')
+        for (surfer_id, surfer_color) in surfers:
+            self._insert_into_db({'heat_id': heat_id, 'surfer_id': surfer_id, 'surfer_color': surfer_color}, 'participants')
+        return
+
 
 
     def _get_judge_activities(self, query_info):

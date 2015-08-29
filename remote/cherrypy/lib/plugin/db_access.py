@@ -38,6 +38,9 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.subscribe(KEY_ENGINE_DB_INSERT_SURFER, self.insert_surfer)
         self.bus.subscribe(KEY_ENGINE_DB_DELETE_SURFER, self.delete_surfer)
 
+        self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, self.get_participants)
+        self.bus.subscribe(KEY_ENGINE_DB_SET_PARTICIPANTS, self.set_participants)
+
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, self.get_heat_info)
@@ -65,6 +68,9 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_SURFERS, self.get_surfers)
         self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_SURFER, self.insert_surfer)
         self.bus.unsubscribe(KEY_ENGINE_DB_DELETE_SURFER, self.delete_surfer)
+
+        self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, self.get_participants)
+        self.bus.unsubscribe(KEY_ENGINE_DB_SET_PARTICIPANTS, self.set_participants)
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
@@ -133,6 +139,15 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
     def delete_surfer(self, surfer):
         res = self.database.delete_surfer(surfer)
+        return res
+
+
+    def get_participants(self, heat_id):
+        res = self.database.get_participants(heat_id)
+        return res
+
+    def set_participants(self, data):
+        res = self.database.set_participants(data)
         return res
 
 

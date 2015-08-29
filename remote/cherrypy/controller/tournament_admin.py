@@ -179,12 +179,28 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    def do_get_selected_surfers(self, heat_id=None):
-        return '[2, 4]'
+    def do_get_participating_surfers(self, heat_id=None):
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, heat_id).pop()
+
+        data = {}
+        for participant in res:
+            data.setdefault('surfer_ids', []).append(participant.get('surfer_id'))
+            data.setdefault('surfer_colors', []).append(participant.get('surfer_color'))
+        return json.dumps(data)
 
     @cherrypy.expose
-    def do_set_selected_surfers(self, json_data=None, heat_id=None, surfer_ids= None):
-        print '*******', heat_id, surfer_ids
+    def do_set_participating_surfers(self, json_data=None, heat_id=None, surfer_ids=None, surfer_colors=None):
+        surfer_ids = json.loads(surfer_ids)
+        if surfer_colors is not None:
+            surfer_colors = json.loads(surfer_colors)
+
+        if surfer_colors is None:
+            surfer_colors = [''] * len(surfer_ids)#'red', 'blue', 'green', 'yellow', 'white', 'orange'][:len(surfer_ids)]
+        surfers = zip(surfer_ids, surfer_colors)
+        data = {'heat_id': heat_id, 'surfers': surfers}
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_SET_PARTICIPANTS, data)
+        return
+
 
     # TODO: as POST action
     @cherrypy.expose
