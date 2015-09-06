@@ -125,7 +125,11 @@
 
 
 <!-- modal scripts -->
--<script>
+
+
+<script  src="/static/plusminusinput/plusminusinput.js"></script>
+
+<script>
  // ***** MODAL internals *****
  $('#modal_submit').on('click', function(){
     var heat_id = $('#modal_heat_id').val();
@@ -185,8 +189,6 @@
      $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
  });
 
-
-
 </script>
 
 
@@ -210,3 +212,5 @@ $('#modal_date_picker').datepicker({weekStart: 1})
     );
 
 </script>
+
+
