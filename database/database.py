@@ -241,7 +241,9 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
     def _get_scores(self, query_info, cols = None):
-        return self._query_db(query_info, 'scores', cols = cols)
+        res = self._query_db(query_info, 'scores', cols = cols)
+        print res
+        return res
 
 
     def _insert_score(self, score):
@@ -463,6 +465,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         except Exception as e:
             print 'Error executing sql command "{}": {}'.format(sql_command, e)
             res = []
+        print res
         return res
 
 

@@ -9,21 +9,21 @@
 {{ super() }}
 
 <script type="text/javascript">
-var MISSED = -1
-var INTERFERENCE = -2
+var MISSED = -1;
+var INTERFERENCE = -2;
 
 
 //Variables that need to be defined by Contest Operators*****
-var max_no_of_waves={{ number_of_waves }};
-var surfer_colors_hex={{ surfer_color_colors }};
+var max_no_of_waves= {{ number_of_waves }}; // 10 is default value will be overwritten by toggle_visibility
+var surfer_colors_hex= {{ surfer_color_colors }}; //will be overwritten by toggle_visibility
+var surfer_color_names = {{ surfer_color_names }};
 var current_surfer="none";
 
 //Variables	that are needed to run the script, using variables from contest operator as parameters
 var current_input_field="none"; //This variables is a state variable telling the key board where to write input
 var surfer_scores={};// This variable contains for each surfer an array with his scored waves
 
-// Initialize colors in surfer_scores from jinja template
-var surfer_color_names = {{ surfer_color_names }};
+ // Initialize colors in surfer_scores from jinja template
 for (var surfer_color_idx = 0; surfer_color_idx < surfer_color_names.length; surfer_color_idx++)
 {
     surfer_scores[surfer_color_names[surfer_color_idx]] = [];
@@ -97,7 +97,9 @@ function sync_with_server()
                 for (var wave_index=server_data_length; wave_index < surfer_scores[color].length; wave_index++)
                 {
                     console.log('Versuche Upload');
-                    var upload_data = {'color':color, 'score':surfer_scores[color][wave_index], 'wave':wave_index };
+                    var missed = (surfer_scores[color][wave_index] === MISSED);
+                    var interference = (surfer_scores[color][wave_index] === INTERFERENCE);
+                    var upload_data = {'color':color, 'score':surfer_scores[color][wave_index], 'wave':wave_index, 'missed': missed, 'interference': interference };
                     var jsonyfied_upload_data= JSON.stringify(upload_data); //Transform object into JSON
                     var data_to_be_uploaded = {'score':jsonyfied_upload_data};
                     $.post('do_insert_score',data_to_be_uploaded,function(data){console.log('upload the data'+data+'successfully')});
@@ -113,17 +115,13 @@ function toggle_visibility()
     $.get('do_get_active_heat_info', function(data)
     {
         var server_data = $.parseJSON(data);
-        if ($.isEmptyObject(server_data)) //if user is not active in any heat
-        {
-           $('#display_this_if_some_heat_active').hide();
-           $('#display_this_if_no_heat_active').show();
-
-        }
-        else // if user is active in any heat
-        {
-            $('#display_this_if_some_heat_active').show();
-            $('#display_this_if_no_heat_active').hide();
-        }
+        var heat_id = server_data['heat_id'];
+        $.getJSON('/headjudge/do_get_participating_surfers', {heat_id:heat_id}, function(data){
+            if ($.isEmptyObject(server_data)) //if user is not active in any heat
+            {
+                window.location.replace('/judge_waiting');
+            }
+        });
     });
 }
 
@@ -335,10 +333,7 @@ function make_buttons_quadratic()
 
 
 {% block content %}
-<div class="container-fluid" id="display_this_if_no_heat_active">
-    <div class="jumbotron"><h1>No Heat running for you!</h1></div>
-</div>
-<div class="container-fluid" id="display_this_if_some_heat_active" style="display:none">
+<div class="container-fluid" id="display_this_if_some_heat_active">
     <div class="col-md-8">
         <div class="alert alert-success" role="alert">
             <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -357,7 +352,7 @@ function make_buttons_quadratic()
                 <div class="form-group">
                     <div class="input-group input-group-lg">
                             {% for wave_idx in range(  number_of_waves ) %}
-                            <input class="form-control" style="width: 10%" type="text" id="{{ surfer_color }}_{{wave_idx}}" readonly />
+                            <input class="form-control" style="width: {{100 / number_of_waves}}%" type="text" id="{{ surfer_color }}_{{wave_idx}}" readonly />
                             {% endfor %}
                     </div>
                 </div>

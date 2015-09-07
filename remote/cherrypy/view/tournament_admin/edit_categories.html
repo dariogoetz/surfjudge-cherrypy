@@ -103,9 +103,9 @@
 
 
       <div class="modal-footer">
-        <button id="modal_delete" class="btn btn-danger pull-left">Delete</button>
+        <button type="button" id="modal_delete" class="btn btn-danger pull-left">Delete</button>
         <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <button id="modal_submit" class="btn btn-primary">Save changes</button>
+        <button type="button" id="modal_submit" class="btn btn-primary">Save changes</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
@@ -117,6 +117,33 @@
 {{ super() }}
 
 <script src="/static/duallistbox/dual-list-box.min.js"></script>
+<!-- modal scripts -->
+<script>
+ // ***** MODAL internals *****
+ $('#modal_submit').on('click', function(){
+  var id = $('#modal_id').val();
+  var name = $('#modal_name').val();
+  var additional_info = $('#modal_additional_info').val();
+  var tournament_id = $('#selected_tournament').data('select');
+  if (id == null && name.length == 0) {
+    alert('Empty field "Category Name"');
+    return
+  }
+
+  $.post('{{ mount_loc }}/do_edit_category', {id: id, name: name, tournament_id: tournament_id, additional_info: additional_info});
+    $('#edit_modal').modal('toggle');
+    $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
+ });
+
+$('#modal_delete').on('click', function(){
+    var id = $('#modal_id').val();
+    var tournament_id = $('#selected_tournament').data('select');
+    $.post('{{ mount_loc }}/do_delete_category', {id: id});
+    $('#edit_modal').modal('toggle');
+    $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
+ });
+
+</script>
 
 <script>
  // ***** DROPDOWN *****
@@ -166,25 +193,24 @@
 
 </script>
 
+
 <script>
  // ***** NEW CATEGORY BUTTON *****
-function fill_modal(id, name, additional_info){
+ function fill_modal(id, name, additional_info){
   $('#modal_id').val(id);
   $('#modal_name').val(name);
   // time picker
   $('#modal_additional_info').val(additional_info);
-
 }
 
  // register functionality to choose tournament from dropdown list
  // and table adjusts accordingly
 
 // register functionality for "new category" button
-$('#new_btn').on('click', function(){
+ $('#new_btn').on('click', function(){
   fill_modal(null, null, null, null, null);
   $('#edit_modal').modal('toggle');
   });
-
 
 // register functionality for selecting categories from table
  $('#data_table').on('click-row.bs.table', function (e, row, $element) {
@@ -196,38 +222,6 @@ $('#new_btn').on('click', function(){
 </script>
 
 
-<!-- modal scripts -->
-<script>
- // ***** MODAL internals *****
-$('#modal_submit').on('click', function(){
-  var id = $('#modal_id').val();
-  var name = $('#modal_name').val();
-  var additional_info = $('#modal_additional_info').val();
-  var tournament_id = $('#selected_tournament').data('select');
-  if (id == null && name.length == 0) {
-    alert('Empty field "Category Name"');
-    return
-  }
-
-  $.post('{{ mount_loc }}/do_edit_category', {id: id, name: name, tournament_id: tournament_id, additional_info: additional_info});
-    $('#edit_modal').modal('toggle');
-    $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
- });
-
-$('#modal_delete').on('click', function(){
-    var id = $('#modal_id').val();
-    var tournament_id = $('#selected_tournament').data('select');
-    $.post('{{ mount_loc }}/do_delete_category', {id: id});
-    $('#edit_modal').modal('toggle');
-    $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
- });
-
-</script>
-
-<script>
- var participant_picker = $('#participants_select').DualListBox();
-
-</script>
 
 
 {% endblock javascript %}

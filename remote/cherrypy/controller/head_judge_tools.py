@@ -55,6 +55,9 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
                                                             'judge_first_name': first_name,
                                                             'judge_last_name': last_name,
                                                             'judge_username': username}
+        surfer_data = json.loads(self.do_get_participating_surfers(heat_id = heat_id))
+        heat_info['participants'] = surfer_data
+
         res = cherrypy.engine.publish(KEY_ENGINE_SM_ACTIVATE_HEAT, heat_id, heat_info).pop()
         return res
 
@@ -93,3 +96,20 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
             print heats.values()
             context['heats'][cid] = sorted(heats.values(), key=lambda x:x['name'])
         return context
+
+
+
+    @cherrypy.expose
+    def do_get_participating_surfers(self, heat_id=None):
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, heat_id).pop()
+        import utils
+        colors = utils.read_lycra_colors('lycra_colors.csv')
+        data = {}
+        for participant in res:
+            id = participant.get('surfer_id')
+            color = participant.get('surfer_color')
+            color_hex = colors.get(color, {}).get('HEX')
+            data.setdefault('surfer_ids', []).append(id)
+            data.setdefault('surfer_colors', []).append(color)
+            data.setdefault('surfer_colors_hex', []).append(color_hex)
+        return json.dumps(data)

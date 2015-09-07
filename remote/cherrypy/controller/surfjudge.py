@@ -27,19 +27,34 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @cherrypy.tools.render(template='judge_waiting.html')
+    def judge_waiting(self):
+        data = self._standard_env()
+        return data
+
+
+    @cherrypy.expose
     #@require(is_admin()) # later ask for judge or similar
     @cherrypy.tools.render(template='judge_panel.html')
     def judge_panel(self):
-        #judge_id = cherrypy.session.get(KEY_JUDGE_ID)
-        #heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
-
+        judge_id = cherrypy.session.get(KEY_JUDGE_ID)
+        heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
         data = self._standard_env()
-        data['judge_name'] = 'Christian'
-        data['judge_number'] = '1234'
-        data['surfer_color_names'] = ['red', 'blue', 'green']
-        data['surfer_color_colors'] = {'red': '#FF8888', 'blue': '#8888FF', 'green': '#88FF88'}
+        if len(heats) > 0:
+            heat_id = int(heats.keys()[0])
+
+        else:
+            return ''
+
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        surfer_data = heat_info['participants']
+        colors = map(str, surfer_data.get('surfer_colors', []))
+        colors_hex = map(str, surfer_data.get('surfer_colors_hex', []))
+        data['judge_name'] = '{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name'])
+        data['surfer_color_names'] = colors
+        data['surfer_color_colors'] = dict(zip(colors, colors_hex))
         data['n_surfers'] = len(data['surfer_color_names'])
-        data['number_of_waves'] = 10
+        data['number_of_waves'] = int(heat_info['number_of_waves'])
         return data
 
     @cherrypy.expose
@@ -79,9 +94,13 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         query_info = {KEY_HEAT_ID: int(heat_id)}
 
         scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        participants = heat_info['participants']
+        id2color = dict(zip(participants['surfer_ids'], participants['surfer_colors']))
+
         out_scores = {}
         for score in scores:
-            out_scores.setdefault(score['color'], []).append( (score['wave'], score['score']) )
+            out_scores.setdefault(id2color[int(score['surfer_id'])], []).append( (score['wave'], score['score']) )
 
         for color in out_scores:
             sorted_pairs = sorted(out_scores[color], key=lambda x: x[0])
@@ -90,13 +109,17 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         print json.dumps(out_scores)
         return json.dumps(out_scores)
 
+
     @cherrypy.expose
     @require(has_roles(KEY_ROLE_JUDGE))
     def do_insert_score(self, score = None, heat_id = None):
         if score is None:
             return
         #score = score.encode('utf-8')
-        db_data = json.loads(score)
+        score = json.loads(score)
+        db_data = score
+        print 'score to be inserted'
+        print score
 
         judge_id = cherrypy.session.get(KEY_JUDGE_ID)
         if judge_id is None:
@@ -122,6 +145,11 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             return
 
         db_data['heat_id'] = int(heat_id)
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        participants = heat_info['participants']
+        color2id = dict(zip(participants['surfer_colors'], participants['surfer_ids']))
+        db_data['surfer_id'] = int(color2id[score['color']])
+        del db_data['color']
 
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SCORE, db_data).pop()
         return res

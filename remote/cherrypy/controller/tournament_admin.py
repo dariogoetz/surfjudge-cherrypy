@@ -113,10 +113,13 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         return res
 
 
+
     @cherrypy.expose
     @cherrypy.tools.render(template='tournament_admin/edit_heats.html')
     def heats(self):
         context = self._standard_env()
+        import utils
+        context['lycra_colors'] = utils.read_lycra_colors('lycra_colors.csv').keys()
         return context
 
 
@@ -179,16 +182,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    def do_get_participating_surfers(self, heat_id=None):
-        res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, heat_id).pop()
-
-        data = {}
-        for participant in res:
-            data.setdefault('surfer_ids', []).append(participant.get('surfer_id'))
-            data.setdefault('surfer_colors', []).append(participant.get('surfer_color'))
-        return json.dumps(data)
-
-    @cherrypy.expose
     def do_set_participating_surfers(self, json_data=None, heat_id=None, surfer_ids=None, surfer_colors=None):
         surfer_ids = json.loads(surfer_ids)
         if surfer_colors is not None:
@@ -236,6 +229,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         import utils
         surfers = utils.read_surfers('tmp_surfers.csv')
         for sid, surfer in surfers.items():
+            print surfer, type(surfer)
             print 'Inserting surfer {}'.format(surfer['name']),
             res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, surfer).pop(0)
             print 'done. {}'.format(res)
