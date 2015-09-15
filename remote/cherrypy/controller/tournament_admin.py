@@ -234,3 +234,24 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, surfer).pop(0)
             print 'done. {}'.format(res)
         return
+
+
+
+    @cherrypy.expose
+    @cherrypy.tools.render(template='tournament_admin/edit_judges.html')
+    def judges(self):
+        context = self._standard_env()
+        return context
+
+
+    @cherrypy.expose
+    def do_get_active_judges(self, heat_id=None):
+        judges = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, heat_id).pop()
+        print '***JUDGES FOR HEAT'
+        print judges
+        return json.dumps(judges)
+
+    @cherrypy.expose
+    def do_get_judges(self):
+        judges = [{'first_name': 'Dario', 'last_name': 'Goetz', 'id': 0}]
+        return json.dumps(judges)

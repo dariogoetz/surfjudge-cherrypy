@@ -48,12 +48,13 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
         surfer_data = heat_info['participants']
+        ids = map(str, surfer_data.get('surfer_ids', []))
         colors = map(str, surfer_data.get('surfer_colors', []))
         colors_hex = map(str, surfer_data.get('surfer_colors_hex', []))
         data['judge_name'] = '{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name'])
+        data['surfers'] = dict(zip(ids, colors))
         data['surfer_color_names'] = colors
         data['surfer_color_colors'] = dict(zip(colors, colors_hex))
-        data['n_surfers'] = len(data['surfer_color_names'])
         data['number_of_waves'] = int(heat_info['number_of_waves'])
         return data
 
