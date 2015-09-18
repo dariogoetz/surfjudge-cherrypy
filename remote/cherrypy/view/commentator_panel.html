@@ -1,17 +1,16 @@
 {% extends "base_template.html" %}
 
-{% block nav_items %}['#nav_item_judge_tools']{% endblock nav_items %}
+{% block nav_items %}['#nav_item_commentator_panel']{% endblock nav_items %} 
 
-{% block title %}UI for Judges{% endblock title %}
+{% block title %}UI for Commentator {% endblock title %}
 
 
 {% block javascript %}
 {{ super() }}
 
-<script type="text/javascript">
+<script type="text/javascript"> //script from judge panel
 var MISSED = -1
 var INTERFERENCE = -2
-
 
 //Variables that need to be defined by Contest Operators*****
 var max_no_of_waves={{ number_of_waves }};
@@ -28,54 +27,6 @@ for (var surfer_color_idx = 0; surfer_color_idx < surfer_color_names.length; sur
 {
     surfer_scores[surfer_color_names[surfer_color_idx]] = [];
 }
-
-function transform_score_index_to_field_id(color,surfer_score_index)
-{
-	return color + "_" + surfer_score_index;
-}
-
-function mark_field_as_best(field_id)
-{
-		document.getElementById(field_id).style.backgroundColor = "#DDDDF1";
-		//document.getElementById(field_id).style.border = "solid black 2px";
-}
-
-function mark_field_as_active(field_id)
-{
-	document.getElementById(field_id).style.backgroundColor = surfer_colors_hex[current_surfer];
-	// document.getElementById(field_id).style.border = "solid black 2px";
-}
-
-function mark_field_as_inactive(field_id)
-{
-	document.getElementById(field_id).style.backgroundColor = "#FFFFFF";
-	document.getElementById(field_id).style.border = "solid black 1px";
-}
-function mark_best_field_of_surfer(color)
- {
-	var best_score=0;
-	var best_score_id="none";
-	for (var surfer_score_index = 0; surfer_score_index < surfer_scores[color].length; surfer_score_index++)
-	 {
-        var score = parseFloat(surfer_scores[color][surfer_score_index]);
-		if (score < 0) // Check if field contains valid score i.e. not a missed of interference
-        {
-        }
-        else
-        {
-            if (score >= best_score)
-            {
-                best_score = score;
-                best_score_id = transform_score_index_to_field_id(color,surfer_score_index);
-            }
-        }
-		var field_id=transform_score_index_to_field_id(color, surfer_score_index);
-		mark_field_as_inactive(field_id);
-	}
-    if ( !(best_score_id === "none") )
-	     mark_field_as_best(best_score_id);
-}
-
 
 function sync_with_server()
 {
@@ -104,153 +55,150 @@ function sync_with_server()
                 }
             }
         }
-        update_fields();
     });
 }
 
-function toggle_visibility()
+// script for commentator panel // TO DO This script assumes that only one heat is active at a time!
+
+function get_active_judges()    
+// This function returns a list with the IDs of the judges that are in the active heat. The IDs are integers
+// It also  global variables: active_heat_data and active_heat_id and active_judges
 {
     $.get('do_get_active_heat_info', function(data)
-    {
-        var server_data = $.parseJSON(data);
-        if ($.isEmptyObject(server_data)) //if user is not active in any heat
+    {  
+        active_heat_data = $.parseJSON(data); // this is a global variable, it is an object
+        active_heat_id=active_heat_data[0]['heat_id']; // this is a global variable, it is a number
+        active_judges={}; // this is a global variable, it is an object with numbers
+        for (var judge_id_index in active_heat_data[0]['judges'])
         {
-           $('#display_this_if_some_heat_active').hide();
-           $('#display_this_if_no_heat_active').show();
-
-        }
-        else // if user is active in any heat
-        {
-            $('#display_this_if_some_heat_active').show();
-            $('#display_this_if_no_heat_active').hide();
+            active_judges[judge_id_index]=active_heat_data[0]['judges'][judge_id_index]['judge_id']; // This is a global variable, an object that contains the active judge ids as numbers
         }
     });
 }
 
-function update_fields()
+function build_average_scores()
 {
-	clear_fields();
-	for (var color in surfer_scores)
-	{
-		for (surfer_score_index = 0; surfer_score_index < surfer_scores[color].length; surfer_score_index++)
-		{
-			var field_id = transform_score_index_to_field_id(color,surfer_score_index);
-			var text_box = document.getElementById(field_id);
-			text_box.value=surfer_scores[color][surfer_score_index];
-		}
-		mark_best_field_of_surfer(color);
-	}
-}
-
-function clear_fields()
-{
-	for (var color in surfer_scores)
-	{
-		for (var j = 0; j<max_no_of_waves;j++)
-		{
-			var field_id=transform_score_index_to_field_id(color,j);
-			var text_box = document.getElementById(field_id);
-			text_box.value="";
-            mark_field_as_inactive(field_id);
-		}
-	}
-
-}
-
-function number_write(x)
-{
-	if(current_input_field!="none")
-	{
-		var text_box = document.getElementById(current_input_field);
-        var text_box_value = parseFloat(text_box.value);
-		if(x===MISSED)
-        {
-            text_box.value="M";
-        }
-        else if(x===INTERFERENCE)
-        {
-            text_box.value="I";
-        }
-        else if(!isNaN(text_box_value) && x>=0 && x<=9)
-		{
-			var input = text_box_value * 10 + 0.1 * x;
-			if (input<=10)
-			{
-				text_box.value = input.toFixed(1);
-			}
-		}
-        else if (text_box.value==="")
-        {
-            text_box.value = (x*0.1).toFixed(1);
-        }
-	}
-}
-
-function number_clear()
-{
-	if(current_input_field != "none")
-	{
-		document.getElementById(current_input_field).value = "";
-	}
-}
-
-function set_input_field(color)
-{
-	//cancel();
-    if (current_input_field === 'none')
+    number_of_logged_waves={}; //[judge_id][color]
+    current_scores={}; //current_scores['surfer_id']['judege_id'][wave_no]This is a global variable it is an object filled with objects that contain numbers 
+    minimum_of_logged_waves={};  
+    data_from_server=[]; // this variable is used to store data from the server within this function
+    var counter=0; // This is the index for the list "data_for_table"
+    
+    // Build empty list of objects for the score-table:
+    data_for_table = [];
+    
+    for (var surfer_id_index in surfer_color_obj)
     {
-        current_input_field= transform_score_index_to_field_id(color,surfer_scores[color].length);
-        current_surfer=color;
-        mark_field_as_active(current_input_field);
+        data_for_table[counter] ={'color':'none', 'first_name':'none', 'last_name':'none','total_score'='none', 'needs/leads by':'none'};
+        // Introduce fields for the best waves that enter the total score of a surfer
+        for (var best_waves_index; best_waves_index < number_of_best_waves; best_waves_index++) //TODO number_of_best_waves aus Server holen
+        {
+            best_waves_index_string=best_waves_index.toString();
+            data_for_table[counter]['Best Wave '+best_waves_index_string]='-';
+        }
+        
+        // Introduce fields for each wave that has been scored by the judges
+        for (var counter_index_waves=0; counter_index_waves < max_no_of_waves; counter_index_waves++) 
+        {        
+            var counter_index_waves_string = counter_index_waves.toString();
+            data_for_table[counter][counter_index_waves_string]='-';
+        }
+        
+        // Create an object that has all scored stored in such a way, that the average scores can be calculated easily
+        for (var judge_id_index in active_judges)
+        {
+            var judge_id= active_judges[judge_id_index]
+            $.get('do_query_scores',{'heat_id':active_heat_id, 'judge_id':judge_id_index}, function(data) // TODO und DARIO_FRAGEN: wie uebergebe ich Parameter? Muss JUdge index und heat id ein Integer oder ein String sein?
+            {
+                data_from_server=$.ParseJSON(data);
+                current_scores[surfer_id_index] ={};             
+                current_scores[surfer_id_index][judge_id_index]={};
+            }
+        }
+        counter=counter+1;
     }
-}
-function enter_score()
-{
-	if(current_input_field != "none" )
-	{
-		var text_box = document.getElementById(current_input_field);
-        var content_of_text_box=parseFloat(text_box.value); // Konvertiert den String aus dem Input Feld in eine Zahl vom Typ Float
-		if (text_box.value==="M")
-        {
-            surfer_scores[current_surfer][surfer_scores[current_surfer].length]=MISSED;
-        }
-        else if (text_box.value==="I")
-        {
-            surfer_scores[current_surfer][surfer_scores[current_surfer].length]=INTERFERENCE;
-        }
-		else if(!isNaN(content_of_text_box) && content_of_text_box >=0 && content_of_text_box<=10)
-		{
-			surfer_scores[current_surfer][surfer_scores[current_surfer].length]=content_of_text_box;
-		}
-        else
-        {
-            text_box.value = "";
-        }
-        mark_field_as_inactive(current_input_field);
-	}
-    sync_with_server();
-    mark_best_field_of_surfer(current_surfer);
-    current_surfer="none";
-	current_input_field="none";
- }
-
-function cancel()
-{
-    number_clear();
-    if (current_input_field != 'none')
+    // Fill object current scores with data
+    for (var counter_index_json; counter_index_json < data_from_server.length; counter_index_json++)
+                {
+                    var surfer_id= data_from_server<[counter_index_json]['surfer_id'];
+                    var surfer_id_string=surfer_id.toString();
+                    var judge_id = data_from_server[counter_index_json]['judge_id'];
+                    var judge_id_string= judge_id.toString();
+                    var wave_number = data_from_server[counter_index_json]['wave_no'];
+                    var wave_number_string = wave_number.toString();
+                    current_scores[surfer_id_string][judge_id_string][wave_number_string]=data_from_server[counter_index_json]['score']
+                }
+    // Count how many waves have been scored for each surfer by all judges
+    for (var surfer_id_index in current_scores)
     {
-        mark_field_as_inactive(current_input_field);
+        for (var judge_id_index in current_scores[surfer_id_index])
+        {
+            minimum_of_logged_waves={};
+            minimum_of_logged_waves{surfer_id}=0;
+            if (minimum_of_logged_waves[surfer_id_index] > Object.keys(current_scores[surfer_id_index][judge_id]).length)
+            {
+                minimum_of_logged_waves[surfer_id_index]=Object.keys(current_scores[surfer_id_index][judge_id]).length;
+            }   
+        }
     }
-    current_surfer="none";
-	current_input_field="none";
-}
-function make_buttons_quadratic()
-{
-    var cw = $('.quadratic').width();
-    $('.quadratic').height(cw);
+    
+    // Build average scores for each surfer
+   var average_scores={};
+   for (var surfer_id_index in current_scores)
+    {
+        average_scores[surfer_id_index]={};
+        var average_counter=0;
+        for (var wave_index; wave_index < minimum_of_logged_waves[surfer_id_index]; wave_index++)
+        {
+            average_scores[surfer_id_index][wave_number_string]=0;
+            for (var judge_id_index in active_judges)
+            {
+                var wave_index_string = wave_index.toString();
+                if(current_scores[surfer_id_index][judge_id_index][wave_index_string]!= MISSED)
+                {
+                    average_counter=average_counter+1;
+                    average_scores[surfer_id_index][wave_number_string]=average_scores[surfer_id_index][wave_number_string]+current_scores[surfer_id_index][judge_id_index][wave_number_string]
+                }
+                
+            }
+            average_scores[surfer_id_index][wave_number_string]=average_scores[surfer_id_index][wave_number_string]/average_counter;
+        }
+    }
+    
+    // Write data from average_scores in data for table
+    counter=0;
+    var top_waves=[];
+    for (var surfer_id_index in surfer_color_obj)
+    {
+        var number_of_best_waves_available = Math.min(number_of_best_waves,minimum_of_logged_waves[surfer_id_index]);
+        for(var wave_index in average_scores[surfer_id_index])
+        {
+            data_for_table[counter]['first_name']= // TODO function(surfer_id_index)
+            data_for_table[counter]['last_name']= // TODO  function(surfer_id_index)
+            data_for_table[counter]['color']=surfer_color_obj[surfer_id_index]
+            data_for_table[counter][wave_index]=average_scores[surfer_id_index][wave_index]
+        }
+        // find the best n waves and write them in data_for_table
+        
+        for(var best_waves_index=0; best_waves_index < number_of_best_waves_available-1)
+        {
+            for (var waves_index=1; waves_index<=minimum_of_logged_waves[surfer_id_index])
+                {
+                    for (backwards_counter=0; backwards_counter <= best_waves_index)
+                    {
+                        
+                    }
+                }            
+           // top_waves[best_waves_index]=0;
+        }
+        
+    }
+    
+    
 }
 </script>
-<script>
+
+<script> // script with function for loaded document
 	$(document).ready(function()
     {
         sync_with_server();
@@ -259,10 +207,9 @@ function make_buttons_quadratic()
         $.get('do_get_active_heat_info', function(server_data){
             var data = $.parseJSON(server_data);
             $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Event: ' + data['event_name'] + ' Heat: ' + data['heat_name']);
-            console.log(data);
         });
         setInterval(toggle_visibility, 5000);
-        
+        get_active_judges();
     });
 </script>
 {% endblock javascript %}
