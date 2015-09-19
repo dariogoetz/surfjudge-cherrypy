@@ -72,10 +72,13 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         return data
 
     @cherrypy.expose
-    @require(has_roles(KEY_ROLE_JUDGE, KEY_ROLE_COMMENTATOR))
+    @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_COMMENTATOR))
     def do_query_scores(self, heat_id = None, judge_id = None):
         if judge_id is None:
             judge_id = cherrypy.session.get(KEY_JUDGE_ID)
+            if judge_id is None:
+                print 'Error in "do_query_scores": No judge_id specified and is no judge'
+                return '[]'
         else:
             roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
             if not KEY_COMMENTATOR in roles:
@@ -92,7 +95,11 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                 return '[]'
             heat_id = heats.values()[0][KEY_HEAT_ID]
 
+
         query_info = {KEY_HEAT_ID: int(heat_id)}
+
+        if judge_id is not None:
+            query_info[KEY_JUDGE_ID] = int(judge_id)
 
         scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
@@ -112,7 +119,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    @require(has_roles(KEY_ROLE_JUDGE))
+    @require(has_all_roles(KEY_ROLE_JUDGE))
     def do_insert_score(self, score = None, heat_id = None):
         if score is None:
             return
@@ -175,7 +182,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    def do_get_active_heats(self, **kwargs):
+    def do_get_all_active_heats(self, **kwargs):
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
         return json.dumps(heat_info.values())
 

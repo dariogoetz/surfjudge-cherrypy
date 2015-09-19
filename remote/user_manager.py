@@ -16,7 +16,7 @@ class UserManager(object):
     '''
 
     def __init__(self):
-        self._critical_section = threading.Lock()
+        self._critical_section = threading.RLock()
 
 
         self.__active_users = {}
@@ -133,7 +133,9 @@ class UserManager(object):
             roles = []
 
         with self._critical_section:
-            self.__registered_users.setdefault(username, {})[KEY_ROLES] = roles
+            if username in self.__registered_users:
+                roles = set(self.__registered_users.setdefault(username, {})[KEY_ROLES]) | set(roles)
+            self.__registered_users.setdefault(username, {})[KEY_ROLES] = list(roles)
 
         hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
         self._set_hashed_pw(username, hashed_pw)
@@ -189,9 +191,42 @@ class UserManager(object):
             if username in self.__registered_users:
                 print('Resetting password for "{}".'.format(username))
             self.__registered_users.setdefault(username, {})[KEY_PASSWORD] = hashed_pw
+            self._write_to_disk()
 
-            with open(self.__registered_users.config_filename, 'w') as f:
-                self.__registered_users.write(f)
 
         return
 
+
+    def _write_to_disk(self):
+        with self._critical_section:
+            with open(self.__registered_users.config_filename, 'w') as f:
+                self.__registered_users.write(f)
+        return
+
+
+    def add_role_to_user(self, username, role):
+        if not username in self.__registered_users:
+            print 'user manager: user "{}" should be registered as judge but there is no such user'.format(username)
+            return False
+
+        with self._critical_section:
+            roles = self.__registered_users.setdefault(username, {})[KEY_ROLES]
+            if role in roles:
+                return True
+            self.__registered_users.setdefault(username, {})[KEY_ROLES].append(role)
+            self._write_to_disk()
+        return True
+
+
+    def remove_role_from_user(self, username, role):
+        if not username in self.__registered_users:
+            print 'user manager: user "{}" should be unregistered as judge but there is no such user'.format(username)
+            return False
+
+        with self._critical_section:
+            roles = self.__registered_users.setdefault(username, {})[KEY_ROLES]
+            if role not in roles:
+                return True
+            self.__registered_users.setdefault(username, {})[KEY_ROLES].remove(role)
+            self._write_to_disk()
+        return True

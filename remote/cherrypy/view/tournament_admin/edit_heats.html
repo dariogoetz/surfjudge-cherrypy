@@ -405,6 +405,8 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
     var date = $('#modal_date_input').val();
     var start_time = '18:00'//$('#modal_start_time_input').val(); // TODO: still need time picker
     var number_of_waves = $('#modal_nwaves').val();
+    if (number_of_waves==='')
+         number_of_waves = 10;
     var additional_info = $('#modal_additional_info').val();
     var tournament_id = $('#selected_tournament').data('select');
     var category_id = $('#selected_category').data('select');

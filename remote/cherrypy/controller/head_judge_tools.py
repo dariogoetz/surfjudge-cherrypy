@@ -110,6 +110,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
             color = participant.get('surfer_color')
             color_hex = colors.get(color, {}).get('HEX')
             data.setdefault('surfer_ids', []).append(id)
+            # TODO: insert 'surfer_names'
             data.setdefault('surfer_colors', []).append(color)
             data.setdefault('surfer_colors_hex', []).append(color_hex)
         return json.dumps(data)

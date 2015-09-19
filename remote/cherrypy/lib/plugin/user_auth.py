@@ -21,6 +21,9 @@ class UserAuthenticationPlugin(plugins.SimplePlugin):
         self.bus.subscribe(KEY_ENGINE_USER_LOGIN,  self.login_user)
         self.bus.subscribe(KEY_ENGINE_USER_LOGOUT, self.logout_user)
         self.bus.subscribe(KEY_ENGINE_USER_REGISTER, self.register_user)
+        self.bus.subscribe(KEY_ENGINE_USER_ADD_ROLE, self.add_role_to_user)
+        self.bus.subscribe(KEY_ENGINE_USER_REMOVE_ROLE, self.remove_role_from_user)
+
         return
 
     def stop(self):
@@ -29,6 +32,8 @@ class UserAuthenticationPlugin(plugins.SimplePlugin):
         self.bus.unsubscribe(KEY_ENGINE_USER_LOGIN,  self.login_user)
         self.bus.unsubscribe(KEY_ENGINE_USER_LOGOUT, self.logout_user)
         self.bus.unsubscribe(KEY_ENGINE_USER_REGISTER, self.register_user)
+        self.bus.unsubscribe(KEY_ENGINE_USER_ADD_ROLE, self.add_role_to_user)
+        self.bus.unsubscribe(KEY_ENGINE_USER_REMOVE_ROLE, self.remove_role_from_user)
         return
 
 
@@ -44,3 +49,9 @@ class UserAuthenticationPlugin(plugins.SimplePlugin):
 
     def register_user(self, username, password, roles):
         return self.user_manager.register_user(username, password, roles)
+
+    def add_role_to_user(self, username, role):
+        return self.user_manager.add_role_to_user(username, role)
+
+    def remove_role_from_user(self, username, role):
+        return self.user_manager.remove_role_from_user(username, role)

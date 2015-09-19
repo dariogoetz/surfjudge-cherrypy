@@ -37,7 +37,7 @@ class AuthenticationController(CherrypyWebInterface):
             cherrypy.session[KEY_USERNAME] = username
             cherrypy.session[KEY_USER_INFO] = user_info
             if KEY_ROLE_JUDGE in user_info.get(KEY_ROLES):
-                judge_ids = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID, username).pop()
+                judge_ids = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID_FOR_USERNAME, username).pop()
                 if len(judge_ids) > 0:
                     cherrypy.session[KEY_JUDGE_ID] = judge_ids[0]['id']
 
@@ -82,7 +82,7 @@ class AuthenticationController(CherrypyWebInterface):
     # functions as website as well as POST request leading to website, if unsuccessful
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/login_form.html')
-    def login(self, username = None, password = None, from_page = '/'):
+    def login(self, username = None, password = None, from_page = '/judge_waiting'):
         env = self._standard_env()
         message = ''
         if cherrypy.request.method == 'POST':
@@ -141,6 +141,4 @@ class AuthenticationController(CherrypyWebInterface):
             message = 'Logout unsuccessful!'
 
         env = self._standard_env()
-        print message
-        env['message'] = message
-        return env
+        raise cherrypy.HTTPRedirect('/auth/login')

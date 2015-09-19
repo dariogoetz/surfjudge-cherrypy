@@ -95,7 +95,7 @@
  });
 
  function refresh_activity(){
-     $.get('/do_get_active_heats', function(data){
+     $.get('/do_get_all_active_heats', function(data){
          var active_heats = JSON.parse(data);
          $('.heat_activity_button').addClass('btn-default');
          $('.heat_activity_button').removeClass('btn-success');

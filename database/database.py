@@ -148,12 +148,30 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     ############ judge interface ##############
 
-    def get_judge_id(self, username):
+    def get_judge_id_for_username(self, username):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
         self.__access_queue.put( (self._get_judge_id, username, pipe_send), block=True )
         res = pipe_recv.recv()
         return res
 
+    def get_judges(self, query_info):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_judges, query_info, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
+
+    def insert_judge(self, judge):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._insert_judge, judge, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
+    def delete_judge(self, judge):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        del_judge = lambda data: self._delete_from_db(data, 'judges')
+        self.__access_queue.put( (del_judge, judge, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
 
     ############ surfers interface ##############
     def get_surfers(self, query_info):
@@ -188,10 +206,18 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
+
     ############ joins #################
     def get_judge_activities(self, query_info):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
         self.__access_queue.put( (self._get_judge_activities, query_info, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
+
+
+    def set_judge_activities(self, data):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._set_judge_activities, data, pipe_send), block=True )
         res = pipe_recv.recv()
         return res
 
@@ -242,7 +268,6 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def _get_scores(self, query_info, cols = None):
         res = self._query_db(query_info, 'scores', cols = cols)
-        print res
         return res
 
 
@@ -315,9 +340,29 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         return
 
 
+
     def _get_judge_id(self, username):
         query_info = {'username': username}
         return self._query_db(query_info, 'judges', cols = ['id'])
+
+    def _get_judges(self, query_info):
+        return self._query_db(query_info, 'judges')
+
+    def _insert_judge(self, judge):
+        if 'id' not in judge or judge['id'] is None:
+            # generate new id
+            n_judges = self._db_info.setdefault('n_judges', 0)
+            judge['id'] = n_judges
+            self._db_info['n_judges'] += 1
+            self._write_db_info()
+        # check if id exists
+        if len(self._get_judges({'username': judge.get('username')})) > 0:
+            self._modify_in_db({'username': judge.get('username')}, judge, 'judges')
+        else:
+            self._insert_into_db(judge, 'judges')
+        return
+
+
 
 
     def _get_surfers(self, query_info):
@@ -364,6 +409,17 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
                 'heats.name AS heat_name',
                 'heats.additional_info AS heat_additional_info']
         return self._query_join(query_info, 'judges', 'id', 'judge_id', 'judge_activities', 'heat_id', 'id', 'heats', cols=cols)
+
+    def _set_judge_activities(self, data):
+        heat_id = data['heat_id']
+        judges = data['judges']
+        if len(self._get_judge_activities({'heat_id': heat_id})) > 0:
+            self._delete_from_db({'heat_id': heat_id}, 'judge_activities')
+        for judge_id in judges:
+            self._insert_into_db({'heat_id': heat_id, 'judge_id': judge_id}, 'judge_activities')
+        return
+
+
 
     def _get_judges_for_heat(self, heat_id):
         query_info = {'heats': {'id': heat_id}}

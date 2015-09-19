@@ -20,7 +20,7 @@ def require(*conditions):
 
 
 
-def has_roles(*roles):
+def has_all_roles(*roles):
     def check():
         is_okay = True
         for role in roles:
@@ -30,6 +30,15 @@ def has_roles(*roles):
         return is_okay
     return check
 
+def has_one_role(*roles):
+    def check():
+        is_okay = False
+        for role in roles:
+            if role in cherrypy.request.user_info.get(KEY_ROLES, []):
+                is_okay = True
+                break
+        return is_okay
+    return check
 
 def is_admin():
     def check():

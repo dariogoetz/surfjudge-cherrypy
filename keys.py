@@ -34,6 +34,8 @@ KEY_ENGINE_USER_LOGIN = 'login-user'
 KEY_ENGINE_USER_LOGOUT = 'logout-user'
 KEY_ENGINE_USER_REGISTER = 'register-user'
 KEY_ENGINE_USER_INFO = 'lookup-user-info'
+KEY_ENGINE_USER_ADD_ROLE = 'add-role-user'
+KEY_ENGINE_USER_REMOVE_ROLE = 'remove-role-user'
 
 
 ################################
@@ -55,7 +57,7 @@ KEY_ENGINE_DB_RETRIEVE_HEATS = 'db_retrieve_heats'
 KEY_ENGINE_DB_INSERT_HEAT = 'db_insert_heat'
 KEY_ENGINE_DB_DELETE_HEAT = 'db_delete_heat'
 
-KEY_ENGINE_DB_RETRIEVE_JUDGE_ID = 'db_retrieve_judge_id'
+KEY_ENGINE_DB_RETRIEVE_JUDGE_ID_FOR_USERNAME = 'db_retrieve_judge_id'
 
 KEY_ENGINE_DB_RETRIEVE_SURFERS = 'db_retrieve_surfers'
 KEY_ENGINE_DB_INSERT_SURFER = 'db_insert_surfer'
@@ -64,8 +66,12 @@ KEY_ENGINE_DB_DELETE_SURFER = 'db_delete_surfer'
 KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS = 'db_retrieve_participants'
 KEY_ENGINE_DB_SET_PARTICIPANTS = 'db_set_participants'
 
+KEY_ENGINE_DB_RETRIEVE_JUDGES = 'db_retrieve_judges'
+KEY_ENGINE_DB_INSERT_JUDGE = 'db_insert_judge'
+KEY_ENGINE_DB_DELETE_JUDGE = 'db_delete_judge'
 
 KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES = 'db_retrieve_judge_activities'
+KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES = 'db_set_judge_activities'
 KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT = 'db_retrieve_judges_for_heat'
 KEY_ENGINE_DB_RETRIEVE_HEAT_INFO = 'db_retrieve_heat_info'
 

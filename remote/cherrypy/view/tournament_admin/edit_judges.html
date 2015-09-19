@@ -25,6 +25,7 @@
 {% endblock css %}
 
 {% block content %}
+<h2>Active Judges in Heat</h2>
 
 <div class="container-fluid">
     <div class="row">
@@ -90,8 +91,31 @@
                 </tr>
             </thead>
         </table>
-        <button type="button" id="new_btn" class="btn btn-primary btn-lg">New Judge</button>
     </div>
+</div>
+
+<br><br>
+<h2>Judges</h2>
+
+<!-- All judges table -->
+<div class="container-fluid">
+    <table class="table table-striped"
+           id="judges_table"
+           data-toggle="table"
+           data-url="{{ mount_loc }}/do_get_judges"
+           data-sort-name="name"
+           date-sort-order="asc">
+        <thead>
+            <tr>
+                <th data-field="id">ID (for admin)</th>
+                <th data-field="first_name" data-sortable="true">First Name</th>
+                <th data-field="last_name" data-sortable="true">Last Name</th>
+                <th data-field="username" data-sortable="true">Login</th>
+                <th data-field="additional_info" data-sortable="true">Additional Info</th>
+            </tr>
+        </thead>
+    </table>
+    <button type="button" id="new_btn" class="btn btn-primary btn-lg">New Judge</button>
 </div>
 {% endblock content %}
 
@@ -99,17 +123,74 @@
 
 {% block modals %}
 
+<!-- Edit judge modal -->
+<div class="modal fade" id="edit_judge_modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title">Edit Judge</h4>
+          </div> <!-- /.modal-header -->
+
+          <div class="modal-body">
+              <div class="well">
+
+                  <h4>Judge Details</h4>
+                  <div class="form-horizontal">
+                      <div class="form-group">
+                          <label class="col-sm-2 control-label">Judge ID</label>
+                          <div class="col-sm-10">
+                              <input id="modal_judge_id" name="judge_id" class="form-control">
+                          </div>
+                      </div>
+                      <div class="form-group">
+                          <label class="col-sm-2 control-label">Judge name</label>
+                          <div class="col-sm-5">
+                              <input type="text" id="modal_judge_first_name" name="judge_first_name" class="form-control" placeholder="First Name">
+                          </div>
+                          <div class="col-sm-5">
+                              <input type="text" id="modal_judge_last_name" name="judge_last_name" class="form-control" placeholder="Last Name">
+                          </div>
+                      </div>
+                      <div class="form-group">
+                          <label class="col-sm-2 control-label">Login</label>
+                          <div class="col-sm-10">
+                              <input id="modal_judge_login" name="judge_login" class="form-control">
+                          </div>
+                      </div>
+
+                      <div class="form-group">
+                          <label class="col-sm-2 control-label">Additional Info</label>
+                          <div class="col-sm-10">
+                              <input type="text" id ="modal_additional_info" name="modal_additional_info" class="form-control" placeholder="Additional Info">
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div><!-- /.modal-body -->
+          <div class="modal-footer">
+              <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button id="judge_delete" class="btn btn-danger pull-left">Delete</button>
+              <button id="judge_submit" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+          </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
 <!-- Edit active_judges modal -->
 <div class="modal fade" id="edit_active_judges_modal">
     <div class="modal-dialog">
       <div class="modal-content">
-
           <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
               <h4 class="modal-title">Edit Judges for Heat</h4>
           </div> <!-- /.modal-header -->
 
           <div class="modal-body">
+              <input type="hidden" id="modal_heat_id">
+
               <div class="well">
 
                   <!-- judges duallistbox -->
@@ -118,13 +199,11 @@
                       </select>
                   </div>
               </div>
-
           </div><!-- /.modal-body -->
           <div class="modal-footer">
               <button class="btn btn-default" data-dismiss="modal">Cancel</button>
               <button id="active_judges_submit" class="btn btn-primary" data-dismiss="modal">Save changes</button>
           </div>
-
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
@@ -202,18 +281,25 @@
 </script>
 
 <script>
- // ***** NEW JUDGE BUTTON *****
-function fill_modal(heat_id){
+ function fill_active_judges_modal(heat_id){
+  $('#modal_heat_id').val(heat_id);
   refresh_active_judges(heat_id);
 }
 
+ function fill_edit_judge_modal(judge_id, judge_first_name, judge_last_name, judge_login, additional_info){
+     $('#modal_judge_id').val(judge_id);
+     $('#modal_judge_first_name').val(judge_first_name);
+     $('#modal_judge_last_name').val(judge_last_name);
+     $('#modal_judge_login').val(judge_login);
+     $('#modal_additional_info').val(additional_info);
+}
 
 function refresh_active_judges(heat_id){
-    $.getJSON('{{ mount_loc }}/do_get_active_judges', {heat_id: heat_id}, function(active_judges_data){
+    $.getJSON('{{ mount_loc }}/do_get_active_judges', {heat_id: heat_id}, function(active_judges){
         $.getJSON( '{{ mount_loc }}/do_get_judges', function(judges_data){
 
             // fill judges_select in active judges modal
-            $('#judges_select').empty();
+            $('#active_judges_select').empty();
             for (idx in judges_data){
                 var judge_id = judges_data[idx]['id'];
                 var judge_first_name = judges_data[idx]['first_name'];
@@ -222,10 +308,9 @@ function refresh_active_judges(heat_id){
                 $('<option />', {value: judge_id, text: judge_first_name+' '+judge_last_name}).appendTo($('#active_judges_select'));
             }
 
-            var active_judge_ids = active_judges_data['judge_ids'];
-            for (idx in active_judge_ids){
+            for (idx in active_judges){
                 // activate in active_judges_select
-                $('#active_judges_select option[value='+active_judge_ids[idx]+']').prop('selected', true)
+                $('#active_judges_select option[value='+active_judges[idx]['judge_id']+']').prop('selected', true)
             };
             active_judges_dlb.bootstrapDualListbox('refresh');
         });
@@ -234,16 +319,25 @@ function refresh_active_judges(heat_id){
 
 // register functionality for "new judge" button
 $('#new_btn').on('click', function(){
-  fill_modal(null);
-  $('#edit_active_judges_modal').modal('toggle');
-  });
-
+  fill_edit_judge_modal(null, null, null, null, null);
+  $('#edit_judge_modal').modal('toggle');
+ });
 
 // register functionality for selecting heats from table
 $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
     if (typeof(row) !== 'undefined'){
-        fill_modal(row['id']);
+        fill_active_judges_modal(row['id']);
         $('#edit_active_judges_modal').modal('toggle');
+        console.log('blubb');
+    };
+});
+
+
+// register functionality for selecting heats from table
+$('#judges_table').on('click-row.bs.table', function (e, row, $element) {
+    if (typeof(row) !== 'undefined'){
+        fill_edit_judge_modal(row['id'], row['first_name'], row['last_name'], row['username'], row['additional_info']);
+        $('#edit_judge_modal').modal('toggle');
     };
 });
 </script>
@@ -257,14 +351,51 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 {% endblock javascript %}
 
 
+
+
 {% block modal_javascript %}
 <script src="/static/bootstrap_duallistbox/jquery.bootstrap-duallistbox.min.js"></script>
-
 <script>
-    var active_judges_dlb = $('#active_judges_select').bootstrapDualListbox(
+
+ $('#active_judges_submit').on('click', function(){
+    var heat_id = $('#modal_heat_id').val();
+    var judge_ids = []
+    $('#bootstrap-duallistbox-selected-list_active_judges option').each(function(){
+        judge_ids.push( parseInt(this.value) );
+    });
+    judge_ids = JSON.stringify(judge_ids);
+    $.post('{{ mount_loc }}/do_set_active_judges', {heat_id: heat_id, judge_ids: judge_ids});
+ });
+
+
+
+ // ***** MODAL internals *****
+$('#judge_submit').on('click', function(){
+    var judge_id = $('#modal_judge_id').val();
+    var judge_first_name = $('#modal_judge_first_name').val();
+    var judge_last_name = $('#modal_judge_last_name').val();
+    var judge_login = $('#modal_judge_login').val();
+    var additional_info = $('#modal_additional_info').val();
+
+
+    $.post('{{ mount_loc }}/do_edit_judge', {id: judge_id, first_name: judge_first_name, last_name: judge_last_name, username: judge_login, additional_info: additional_info});
+    $('#judges_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_judges'});
+  });
+
+  $('#judge_delete').on('click', function(){
+      var judge_id = $('#modal_judge_id').val();
+      var judge_login = $('#modal_judge_login').val();
+
+      $.post('{{ mount_loc }}/do_delete_judge', {id: judge_id, username: judge_login});
+      $('#edit_judge_modal').modal('toggle');
+      $('#judges_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_judges'});
+ });
+
+
+var active_judges_dlb = $('#active_judges_select').bootstrapDualListbox(
     {nonSelectedListLabel: 'Unselected judges',
     selectedListLabel: 'Selected judges'}
-    );
+);
 
 </script>
 

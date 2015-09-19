@@ -32,7 +32,7 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.subscribe(KEY_ENGINE_DB_INSERT_HEAT, self.insert_heat)
         self.bus.subscribe(KEY_ENGINE_DB_DELETE_HEAT, self.delete_heat)
 
-        self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID, self.get_judge_id)
+        self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID_FOR_USERNAME, self.get_judge_id_for_username)
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_SURFERS, self.get_surfers)
         self.bus.subscribe(KEY_ENGINE_DB_INSERT_SURFER, self.insert_surfer)
@@ -41,7 +41,13 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, self.get_participants)
         self.bus.subscribe(KEY_ENGINE_DB_SET_PARTICIPANTS, self.set_participants)
 
+        self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES, self.get_judges)
+        self.bus.subscribe(KEY_ENGINE_DB_INSERT_JUDGE, self.insert_judge)
+        self.bus.subscribe(KEY_ENGINE_DB_DELETE_JUDGE, self.delete_judge)
+
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
+        self.bus.subscribe(KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES, self.set_judge_activities)
+
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, self.get_heat_info)
         return
@@ -63,7 +69,7 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_HEAT, self.insert_heat)
         self.bus.unsubscribe(KEY_ENGINE_DB_DELETE_HEAT, self.delete_heat)
 
-        self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID, self.get_judge_id)
+        self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ID_FOR_USERNAME, self.get_judge_id_for_username)
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_SURFERS, self.get_surfers)
         self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_SURFER, self.insert_surfer)
@@ -72,7 +78,13 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, self.get_participants)
         self.bus.unsubscribe(KEY_ENGINE_DB_SET_PARTICIPANTS, self.set_participants)
 
+        self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES, self.get_judges)
+        self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_JUDGE, self.insert_judge)
+        self.bus.unsubscribe(KEY_ENGINE_DB_DELETE_JUDGE, self.delete_judge)
+
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
+        self.bus.unsubscribe(KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES, self.set_judge_activities)
+
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, self.get_heat_info)
         return
@@ -124,8 +136,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
         res = self.database.delete_heat(heat)
         return res
 
-    def get_judge_id(self, username):
-        res = self.database.get_judge_id(username)
+    def get_judge_id_for_username(self, username):
+        res = self.database.get_judge_id_for_username(username)
         return res
 
 
@@ -151,9 +163,27 @@ class DBAccessPlugin(plugins.SimplePlugin):
         return res
 
 
+    def get_judges(self, query_info):
+        res = self.database.get_judges(query_info)
+        return res
+
+    def insert_judge(self, judge):
+        res = self.database.insert_judge(judge)
+        return res
+
+    def delete_judge(self, judge):
+        res = self.database.delete_judge(judge)
+        return res
+
+
     def get_judge_activities(self, query_info):
         res = self.database.get_judge_activities(query_info)
         return res
+
+    def set_judge_activities(self, data):
+        res = self.database.set_judge_activities(data)
+        return res
+
 
     def get_judges_for_heat(self, heat_id):
         res = self.database.get_judges_for_heat(heat_id)

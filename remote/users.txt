@@ -6,7 +6,13 @@ password = $2a$12$lJbHDGCtrQt2CnV9nFRgFOLVEm8fywQXuqjKjYcmTqYqH7DfpyYdy
 roles = ac_admin, ac_judge, ac_headjudge, ac_commentator
 [jcr]
 password = $2a$12$If7O5tlYJE43LuAIv6r5GuyAc8wdOJ90RiZS0BSCMkSZ4v/2x6Ejy
-roles = ac_admin, ac_judge, ac_headjudge, ac_commentator
+roles = ac_admin, ac_headjudge, ac_commentator, ac_judge
 [test]
 roles = ,
 password = $2a$12$C6x4qlpgw4vFQomlOkoMD.sY.ba5DXHz6FpcmtF.P9Wrr9fRrOT46
+[nk]
+roles = ac_admin, ac_judge
+password = $2b$12$xTI6rdtxLR5i99H7K7R0sOQ7qK6gozreAgcXTcGgxBHK8AxNJMZrS
+[jr]
+roles = ac_judge,
+password = $2b$12$ZH3ZI0t/Jib0cg5KH2qqgOTIFBgpUpRFNq4c8juVV1BjgaEFjExjS

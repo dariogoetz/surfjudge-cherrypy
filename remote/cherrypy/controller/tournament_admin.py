@@ -245,13 +245,59 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    def do_get_active_judges(self, heat_id=None):
+    def do_get_active_judges(self, heat_id=None, **kwargs):
         judges = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, heat_id).pop()
-        print '***JUDGES FOR HEAT'
-        print judges
         return json.dumps(judges)
 
     @cherrypy.expose
-    def do_get_judges(self):
-        judges = [{'first_name': 'Dario', 'last_name': 'Goetz', 'id': 0}]
+    def do_set_active_judges(self, heat_id=None, judge_ids=None):
+        if heat_id is None:
+            return
+        if judge_ids is None:
+            judge_ids = []
+        else:
+            judge_ids = json.loads(judge_ids)
+        data = {'heat_id': int(heat_id), 'judges': judge_ids}
+        cherrypy.engine.publish(KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES, data).pop()
+        return
+
+
+
+    @cherrypy.expose
+    def do_get_judges(self, **kwargs):
+        judges = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES, {}).pop()
         return json.dumps(judges)
+
+    @cherrypy.expose
+    def do_edit_judge(self, json_data=None, id=None, first_name=None, last_name=None, username=None, additional_info=None):
+        #TODO: check user roles for ac_judge and add if required
+        if username is None:
+            return
+
+        cherrypy.engine.publish(KEY_ENGINE_USER_ADD_ROLE, username, KEY_ROLE_JUDGE)
+        print 'editing judge'
+        # data is a json with the fields?
+        if json_data is not None:
+            data = json.loads(json_data)
+        else:
+            data = {}
+            data['id'] = int(id) if len(id) > 0 else None
+            data['first_name'] = first_name.encode()
+            data['last_name'] = last_name.encode()
+            data['name'] = '{} {}'.format(first_name, last_name)
+            data['username'] = username.encode()
+            data['additional_info'] = additional_info.encode()
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_JUDGE, data)
+        return json.dumps(res)
+
+    @cherrypy.expose
+    def do_delete_judge(self, id=None, username=None):
+        # TODO: check user roles for ac_judge and delete if required
+        if username is None:
+            return
+
+        cherrypy.engine.publish(KEY_ENGINE_USER_REMOVE_ROLE, username, KEY_ROLE_JUDGE)
+        if id is None:
+            return
+        cherrypy.engine.publish(KEY_ENGINE_DB_DELETE_JUDGE, {'id': id}).pop(0)
+        return

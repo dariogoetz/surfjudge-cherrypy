@@ -59,11 +59,23 @@
                     <li id='nav_item_logout' class="pull-right"><a href="/auth/logout">Logout</a></li>
                     {% endif %}
                     {% if global_is_admin %}
-                    <li id='nav_item_tournament_admin'><a href="/tournament_admin/tournaments">Tournament Admin</a></li>
-                    <li id='nav_item_register'><a href="/auth/register">Register User</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Admin <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+
+                            <li id='nav_item_tournament_admin'><a href="/tournament_admin/tournaments">Tournament Admin</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li id='nav_item_register'><a href="/auth/register">Register User</a></li>
+
+                        </ul>
+
+                    </li>
                     {% else %}
+                    {% if not global_logged_in %}
                     <li id='nav_item_register'><a href="/auth/register">Register</a></li>
                     {% endif %}
+                    {% endif %}
+                    </li>
                 </ul>
             </div>
         </div>
