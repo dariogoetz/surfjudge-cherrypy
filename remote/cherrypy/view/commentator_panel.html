@@ -16,6 +16,7 @@ var INTERFERENCE = -2
 var max_no_of_waves={{ number_of_waves }};
 var surfer_colors_hex={{ surfer_color_colors }};
 var surfer_color_names = {{ surfer_color_names }};
+<<<<<<< Updated upstream
 
 
 // script for commentator panel // TO DO This script assumes that only one heat is active at a time!
@@ -81,6 +82,18 @@ function create_data_for_table()
         var surfer_id_string=surfer_id.toString();
         // Create an object that has all scored waves stored in such a way, that the average scores can be calculated easily
         for (var judge_id_string in active_judges)
+=======
+for (var surfer_color_idx = 0; surfer_color_idx < surfer_color_names.length; surfer_color_idx++)
+{
+    surfer_scores[surfer_color_names[surfer_color_idx]] = [];
+}
+
+function sync_with_server()
+{
+    $.get('do_query_scores', function(data){
+        var server_data = $.parseJSON(data); //server_data is a javascript object
+        for (var color in surfer_scores)
+>>>>>>> Stashed changes
         {
             var judge_id= active_judges[judge_id_string]; // judge_id is an integer
             $.get('do_query_scores',{'heat_id':active_heat_id, 'judge_id':judge_id}, function(data)
@@ -118,6 +131,7 @@ function create_data_for_table()
                 minimum_of_logged_waves[surfer_id]=Object.keys(current_scores[surfer_id][judge_id]).length;
             }
         }
+<<<<<<< Updated upstream
     }
     
    //~~~~~~~~~~~~~~~~ Build average scores for each surfer and find the best two waves TODO: find best n waves
@@ -203,14 +217,98 @@ function create_data_for_table()
     }
     json_for_commentator_table=JSON.stringify(data_for_table);
     
+=======
+    });
+}
+
+// script for commentator panel // TO DO This script assumes that only one heat is active at a time!
+
+function get_active_judges()    
+// This function returns a list with the IDs of the judges that are in the active heat. The IDs are integers
+// It also  global variables: active_heat_data and active_heat_id and active_judges
+{
+    $.get('do_get_active_heat_info', function(data)
+    {  
+        active_heat_data = $.parseJSON(data); // this is a global variable, it is an object
+        active_heat_id=active_heat_data[0]['heat_id']; // this is a global variable, it is a number
+        active_judges={}; // this is a global variable, it is an object with numbers
+        for (var judge_id_index in active_heat_data[0]['judges'])
+        {
+            active_judges[judge_id_index]=active_heat_data[0]['judges'][judge_id_index]['judge_id']; // This is a global variable, an object that contains the active judge ids as numbers
+        }
+    });
+}
+
+function build_average_scores()
+{
+    number_of_logged_waves={}; //[judge_id][color]
+    current_scores={}; //current_scores['judge_id']['color'][integer]This is a global variable it is an object filled with objects that contain numbers 
+    minimum_of_logged_waves={};  
+    data_from_server=[]; // this variable is used to store data from the server within this function
+    var counter=0; // This is the index for the list "data_for_table"
+    
+    // Build empty list of objects for the score-table
+    data_for_table = {};
+    
+    for (var surfer_id_index in colors_by_id)
+    {
+        data_for_table[counter] ={'color':colors_by_id[surfer_id_index], 'first_name':'none', 'last_name':'none','total_score'='none', 'needs/leads by':'none'};
+        for (var best_waves_index;best_waves_index < number_of_best_waves;best_waves_index++)
+        {
+        best_waves_index
+        data_for_table[counter][]
+        }
+        for (var counter_index_waves=0; counter_index_waves < max_no_of_waves; counter_index_waves++) 
+        {        
+            var counter_index_waves_string = counter_index_waves.toString();
+            var not_a_number=NaN;
+                data_for_table[counter][counter_index_waves_string]=not_a_number;
+        }
+        
+        for (var judge_id_index in active_judges)
+        {
+            var judge_id= active_judges[judge_id_index]
+            $.get('do_query_scores',{'heat_id':active_heat_id, 'judge_id':judge_id_index}, function(data) // TODO und DARIO_FRAGEN: wie uebergebe ich Parameter? Muss JUdge index und heat id ein Integer oder ein String sein?
+            {
+                data_from_server=$.ParseJSON(data);
+                current_scores[surfer_color_names[surfer_id_index]] ={};             
+                current_scores[surfer_color_names[surfer_id_index]][judge_id_index]=NaN;
+                number_of_logged_waves[judge_id_index]={};
+                number_of_logged_waves[judge_id_index][surfer_color_names[surfer_id_index]]=current_scores[judge_id_index][surfer_color_names[surfer_id_index]].length;
+                for (var counter_index_json in data_from_server)
+                {
+                    if (data_from_server[counter_index_json]['color']{surfer_color_names[surfer_id_index]})
+                }
+            }
+        }
+        counter=counter+1;
+    }
+    
+    
+    
+    
+        
+>>>>>>> Stashed changes
 }
 </script>
 
 <script> // script with function for loaded document
 	$(document).ready(function()
     {
+<<<<<<< Updated upstream
         create_data_for_table();
         $('#commentator_table').bootstrapTable('load',data_for_table);
+=======
+        sync_with_server();
+        make_buttons_quadratic();
+        $(window).resize(make_buttons_quadratic);
+        $.get('do_get_active_heat_info', function(server_data){
+            var data = $.parseJSON(server_data);
+            $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Event: ' + data['event_name'] + ' Heat: ' + data['heat_name']);
+        });
+        setInterval(toggle_visibility, 5000);
+        get_active_judges();
+>>>>>>> Stashed changes
     });
 </script>
 {% endblock javascript %}
