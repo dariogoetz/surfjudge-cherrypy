@@ -16,7 +16,6 @@ var INTERFERENCE = -2
 var max_no_of_waves={{ number_of_waves }};
 var surfer_colors_hex={{ surfer_color_colors }};
 var surfer_color_names = {{ surfer_color_names }};
-<<<<<<< Updated upstream
 
 
 // script for commentator panel // TO DO This script assumes that only one heat is active at a time!
@@ -27,10 +26,10 @@ var active_heat_id='none';
 var active_heat_data=[];
 var active_judges ={};
 var active_surfers={};
-var test_var=0;
 ////----------------------------////
-function create_data_for_table()
+$(document).ready(function()
 {
+
     $.get('do_get_all_active_heats',function(data)
     {  
         active_heat_data = $.parseJSON(data); // this is a global variable, it is an object
@@ -41,276 +40,172 @@ function create_data_for_table()
             active_judges[judge_id_index]=active_heat_data[0]['judges'][judge_id_index]['judge_id']; // This is a global variable, an object that contains the active judge ids as numbers
         }
         active_surfers=active_heat_data[0]['participants'];
-        test_var=1;
-    });
-    console.log(test_var);
-   
-    for (var surfer_id_index in active_surfers['surfer_ids'])
-    {
-        var surfer_id=active_surfers['surfer_ids'][surfer_id_index];
-        data_for_table[surfer_id_index]={'surfer_color':'-', 'surfer_name':'-', 'total_score':'-', 'needs':'-'};
-        // Introduce fields for the best waves that enter the total score of a surfer
-        for (var best_waves_index=1; best_waves_index < number_of_best_waves; best_waves_index++) //TODO number_of_best_waves aus Server holen
+       
+        for (var surfer_id_index in active_surfers['surfer_ids'])
         {
-            best_waves_index_string=best_waves_index.toString();
-            data_for_table[surfer_id_index]['best_wave_'+best_waves_index_string]='-';
+            var surfer_id=active_surfers['surfer_ids'][surfer_id_index];
+            data_for_table[surfer_id_index]={'surfer_color':'-', 'surfer_name':'-', 'total_score':'-', 'needs':'-'};
+            // Introduce fields for the best waves that enter the total score of a surfer
+            for (var best_waves_index=1; best_waves_index <= number_of_best_waves; best_waves_index++) //TODO number_of_best_waves aus Server holen
+            {
+                best_waves_index_string=best_waves_index.toString();
+                data_for_table[surfer_id_index]['best_wave_'+best_waves_index_string]='-';
+            }
+            // Introduce fields for each wave that has been scored by the judges
+            for (var counter_index_waves=1; counter_index_waves <= active_heat_data[0]['number_of_waves']; counter_index_waves++) 
+            {        
+                var counter_index_waves_string = counter_index_waves.toString();
+                data_for_table[surfer_id_index][counter_index_waves_string]='-';
+            }
+        }
+
+        var number_of_logged_waves={}; //[judge_id][color]
+        var current_scores={}; //current_scores['surfer_id']['judge_id'][wave_no]This is a global variable it is an object filled with objects that contain numbers 
+        var minimum_of_logged_waves={};  
+        var data_from_server=[]; // this variable is used to store data from the server that comes from do_query_scores
+        var counter=0; // This is the index for the list "data_for_table"
+        var top_waves={}; // topwaves{surfer_id}{wave_index =1,2} This variable is needed in the function that finds the best waves of each surfer
+        var key_of_best_wave='none'; //This variable is needed in the function that finds the best waves of each surfer)
+        var average_scores={};
+        var leader_id='none'; // ID of the surfer that leads the current heat. It is needed to find the value of the variable "needs"
+        var json_for_commentator_table='none'; // Global variable, a string that contains the data for the commentator table in json format. It must be saved to a .txt file
+    
+        for (var surfer_id_index in active_surfers['surfer_ids'])
+        {
+            var surfer_id=active_surfers['surfer_ids'][surfer_id_index]; // surfer_id is an integer number
+            var surfer_id_string=surfer_id.toString();
+            // Create an object that has all scored waves stored in such a way, that the average scores can be calculated easily
+            for (var judge_id_string in active_judges)
+            {
+                var judge_id= active_judges[judge_id_string]; // judge_id is an integer
+                $.get('do_query_scores',{'heat_id':active_heat_id, 'judge_id':judge_id}, function(data)
+                {
+                    data_from_server=$.ParseJSON(data);
+                    current_scores[surfer_id_string] ={};             
+                    current_scores[surfer_id_string][judge_id_string]={};
+                });
+            }
         }
         
-        // Introduce fields for each wave that has been scored by the judges
-        for (var counter_index_waves=1; counter_index_waves < active_heat_data[0]['number_of_waves']; counter_index_waves++) 
-        {        
-            var counter_index_waves_string = counter_index_waves.toString();
-            data_for_table[surfer_id_index][counter_index_waves_string]='-';
-        }
-    }
-
-
-    var number_of_logged_waves={}; //[judge_id][color]
-    var current_scores={}; //current_scores['surfer_id']['judge_id'][wave_no]This is a global variable it is an object filled with objects that contain numbers 
-    var minimum_of_logged_waves={};  
-    var data_from_server=[]; // this variable is used to store data from the server that comes from do_query_scores
-    var counter=0; // This is the index for the list "data_for_table"
-    var top_waves={}; // topwaves{surfer_id}{wave_index =1,2} This variable is needed in the function that finds the best waves of each surfer
-    var key_of_best_wave='none'; //This variable is needed in the function that finds the best waves of each surfer)
-    var average_scores={};
-    var leader_id='none'; // ID of the surfer that leads the current heat. It is needed to find the value of the variable "needs"
-    var json_for_commentator_table='none'; // Global variable, a string that contains the data for the commentator table in json format. It must be saved to a .txt file
-    
-    for (var surfer_id_index in active_surfers['surfer_ids'])
-    {
-        var surfer_id=active_surfers['surfer_ids'][surfer_id_index]; // surfer_id is an integer number
-        var surfer_id_string=surfer_id.toString();
-        // Create an object that has all scored waves stored in such a way, that the average scores can be calculated easily
-        for (var judge_id_string in active_judges)
-=======
-for (var surfer_color_idx = 0; surfer_color_idx < surfer_color_names.length; surfer_color_idx++)
-{
-    surfer_scores[surfer_color_names[surfer_color_idx]] = [];
-}
-
-function sync_with_server()
-{
-    $.get('do_query_scores', function(data){
-        var server_data = $.parseJSON(data); //server_data is a javascript object
-        for (var color in surfer_scores)
->>>>>>> Stashed changes
+        // Fill object current_scores with data
+        for (var counter_index_json=0; counter_index_json < data_from_server.length; counter_index_json++)
+                    {
+                        var surfer_id= data_from_server[counter_index_json]['surfer_id'];
+                        var surfer_id_string=surfer_id.toString();
+                        var judge_id = data_from_server[counter_index_json]['judge_id'];
+                        var judge_id_string= judge_id.toString();
+                        var wave_number = data_from_server[counter_index_json]['wave'];
+                        var wave_number_string = wave_number.toString();
+                        current_scores[surfer_id_string][judge_id_string][wave_number_string]=data_from_server[counter_index_json]['score']
+                    }
+        // Count for each surfer the number of waves where a score is available from every judge
+        for (var surfer_id in current_scores)
         {
-            var judge_id= active_judges[judge_id_string]; // judge_id is an integer
-            $.get('do_query_scores',{'heat_id':active_heat_id, 'judge_id':judge_id}, function(data)
-            {
-                data_from_server=$.ParseJSON(data);
-                current_scores[surfer_id_string] ={};             
-                current_scores[surfer_id_string][judge_id_string]={};
-            });
-        }
-    }
-    
-    // Fill object current_scores with data
-    for (var counter_index_json=0; counter_index_json < data_from_server.length; counter_index_json++)
-                {
-                    var surfer_id= data_from_server[counter_index_json]['surfer_id'];
-                    var surfer_id_string=surfer_id.toString();
-                    var judge_id = data_from_server[counter_index_json]['judge_id'];
-                    var judge_id_string= judge_id.toString();
-                    var wave_number = data_from_server[counter_index_json]['wave'];
-                    var wave_number_string = wave_number.toString();
-                    current_scores[surfer_id_string][judge_id_string][wave_number_string]=data_from_server[counter_index_json]['score']
-                }
-    // Count for each surfer the number of waves where a score is available from every judge
-    for (var surfer_id in current_scores)
-    {
-        minimum_of_logged_waves[surfer_id]='none';
-        for (var judge_id in current_scores[surfer_id])
-        {
-            if (minimum_of_logged_waves='none')
-            {
-                minimum_of_logged_waves=Object.keys(current_scores[surfer_id][judge_id].length);
-            }
-            else if (minimum_of_logged_waves[surfer_id] > Object.keys(current_scores[surfer_id][judge_id]).length)
-            {
-                minimum_of_logged_waves[surfer_id]=Object.keys(current_scores[surfer_id][judge_id]).length;
-            }
-        }
-<<<<<<< Updated upstream
-    }
-    
-   //~~~~~~~~~~~~~~~~ Build average scores for each surfer and find the best two waves TODO: find best n waves
-   for (var surfer_id in current_scores)
-    {
-        average_scores[surfer_id]={};
-        var average_counter=0;
-        for (var wave_index=1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
-        {
-            var wave_number_string = wave_index.toString();
-            average_scores[surfer_id][wave_number_string]=0;
+            minimum_of_logged_waves[surfer_id]='none';
             for (var judge_id in current_scores[surfer_id])
             {
-                if(current_scores[surfer_id][judge_id][wave_number_string]!= MISSED && !isNaN(current_scores[surfer_id][judge_id][wave_number_string]))
+                if (minimum_of_logged_waves='none')
                 {
-                    average_counter=average_counter+1;
-                    average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]+current_scores[surfer_id][judge_id][wave_number_string];
-                }  
-            }
-            average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]/average_counter;
-        }
-        
-        // find the best 2 waves and write them in data_for_table TODO: Introduce best n waves
-        top_waves[surfer_id]=[];
-        top_waves[surfer_id][0]=0;
-        top_waves[surfer_id][1]=0;
-        // var number_of_best_waves_available = Math.min(number_of_best_waves,minimum_of_logged_waves[surfer_id]); // Not sure if I need thsi later
-        
-        //// Find the best wave    
-        for (var wave_index in average_scores[surfer_id])
-        {
-            if(top_waves[surfer_id][0]<average_scores[surfer_id][wave_index])
-            {
-                top_waves[surfer_id][0]=average_scores[surfer_id][wave_index];
-                best_wave_index=wave_index;
-            }
-        }
-        ////Find second-best wave
-        for (wave_index in average_scores[surfer_id])
-        {
-            if(wave_index != key_of_best_wave && top_waves[surfer_id][1]< average_scores[surfer_id][wave_index])
-            {
-                top_waves[surfer_id][1]=average_scores[surfer_id][wave_index];
-            }
-        }
-    }
-    // Find current leader
-    for(surfer_id in top_waves)
-    {
-        if(leader_id='none')
-        {
-            leader_id=surfer_id;
-        }
-        else if(topwaves[surfer_id][0]+topwaves[surfer_id][1] > topwaves[leader_id][0]+topwaves[leader_id][1] )
-        {
-            leader_id=surfer_id;
-        }
-        
-    }
-    
-    // Calculate the current needs[surfer_id];
-    for(var surfer_id in average_scores)
-    {
-        needs[surfer_id]=topwaves[leader][0]+topwaves[leader_id][1]-top_waves[surfer_id][0];
-    }
-    
-    // Write data from average_scores and top_waves in data for table  
-    for (var active_surfers_index in active_surfers)
-    {
-        var surfer_id=active_surfers['surfer_ids'][active_surfers_index];
-        var surfer_id_string=surfer_id.toString();
-        data_for_table[active_surfers_index]['surfer_name']=active_surfers['surfer_names'][active_surfers_index];
-        data_for_table[active_surfers_index]['surfer_color']=active_surfers['surfer_colors'][active_surfers_index];
-        data_for_table[active_surfers_index]['best_wave_'+'1']=top_waves[surfer_id_string][0];
-        data_for_table[active_surfers_index]['best_wave_'+'2']=top_waves[surfer_id_string][1];
-        data_for_table[active_surfers_index]['total_score']=top_waves[surfer_id_string][0]+top_waves[surfer_id_string][1];
-        data_for_table[active_surfers_index]['needs']=needs_[surfer_id_string];
-        for(var wave_index in average_scores[surfer_id])
-        {
-            data_for_table[active_surfers_index][wave_index]=average_scores[surfer_id][wave_index];
-            console.log(data_for_table);
-        }      
-    }
-    json_for_commentator_table=JSON.stringify(data_for_table);
-    
-=======
-    });
-}
-
-// script for commentator panel // TO DO This script assumes that only one heat is active at a time!
-
-function get_active_judges()    
-// This function returns a list with the IDs of the judges that are in the active heat. The IDs are integers
-// It also  global variables: active_heat_data and active_heat_id and active_judges
-{
-    $.get('do_get_active_heat_info', function(data)
-    {  
-        active_heat_data = $.parseJSON(data); // this is a global variable, it is an object
-        active_heat_id=active_heat_data[0]['heat_id']; // this is a global variable, it is a number
-        active_judges={}; // this is a global variable, it is an object with numbers
-        for (var judge_id_index in active_heat_data[0]['judges'])
-        {
-            active_judges[judge_id_index]=active_heat_data[0]['judges'][judge_id_index]['judge_id']; // This is a global variable, an object that contains the active judge ids as numbers
-        }
-    });
-}
-
-function build_average_scores()
-{
-    number_of_logged_waves={}; //[judge_id][color]
-    current_scores={}; //current_scores['judge_id']['color'][integer]This is a global variable it is an object filled with objects that contain numbers 
-    minimum_of_logged_waves={};  
-    data_from_server=[]; // this variable is used to store data from the server within this function
-    var counter=0; // This is the index for the list "data_for_table"
-    
-    // Build empty list of objects for the score-table
-    data_for_table = {};
-    
-    for (var surfer_id_index in colors_by_id)
-    {
-        data_for_table[counter] ={'color':colors_by_id[surfer_id_index], 'first_name':'none', 'last_name':'none','total_score'='none', 'needs/leads by':'none'};
-        for (var best_waves_index;best_waves_index < number_of_best_waves;best_waves_index++)
-        {
-        best_waves_index
-        data_for_table[counter][]
-        }
-        for (var counter_index_waves=0; counter_index_waves < max_no_of_waves; counter_index_waves++) 
-        {        
-            var counter_index_waves_string = counter_index_waves.toString();
-            var not_a_number=NaN;
-                data_for_table[counter][counter_index_waves_string]=not_a_number;
-        }
-        
-        for (var judge_id_index in active_judges)
-        {
-            var judge_id= active_judges[judge_id_index]
-            $.get('do_query_scores',{'heat_id':active_heat_id, 'judge_id':judge_id_index}, function(data) // TODO und DARIO_FRAGEN: wie uebergebe ich Parameter? Muss JUdge index und heat id ein Integer oder ein String sein?
-            {
-                data_from_server=$.ParseJSON(data);
-                current_scores[surfer_color_names[surfer_id_index]] ={};             
-                current_scores[surfer_color_names[surfer_id_index]][judge_id_index]=NaN;
-                number_of_logged_waves[judge_id_index]={};
-                number_of_logged_waves[judge_id_index][surfer_color_names[surfer_id_index]]=current_scores[judge_id_index][surfer_color_names[surfer_id_index]].length;
-                for (var counter_index_json in data_from_server)
+                    minimum_of_logged_waves=Object.keys(current_scores[surfer_id][judge_id].length);
+                }
+                else if (minimum_of_logged_waves[surfer_id] > Object.keys(current_scores[surfer_id][judge_id]).length)
                 {
-                    if (data_from_server[counter_index_json]['color']{surfer_color_names[surfer_id_index]})
+                    minimum_of_logged_waves[surfer_id]=Object.keys(current_scores[surfer_id][judge_id]).length;
                 }
             }
         }
-        counter=counter+1;
-    }
     
-    
-    
-    
+        //~~~~~~~~~~~~~~~~ Build average scores for each surfer and find the best two waves TODO: find best n waves
+        for (var surfer_id in current_scores)
+        {
+            average_scores[surfer_id]={};
+            var average_counter=0;
+            for (var wave_index=1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
+            {
+                var wave_number_string = wave_index.toString();
+                average_scores[surfer_id][wave_number_string]=0;
+                for (var judge_id in current_scores[surfer_id])
+                {
+                    if(current_scores[surfer_id][judge_id][wave_number_string]!= MISSED && !isNaN(current_scores[surfer_id][judge_id][wave_number_string]))
+                    {
+                        average_counter=average_counter+1;
+                        average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]+current_scores[surfer_id][judge_id][wave_number_string];
+                    }  
+                }
+                average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]/average_counter;
+            }
         
->>>>>>> Stashed changes
-}
+            // find the best 2 waves and write them in data_for_table TODO: Introduce best n waves
+            top_waves[surfer_id]=[];
+            top_waves[surfer_id][0]=0;
+            top_waves[surfer_id][1]=0;
+            // var number_of_best_waves_available = Math.min(number_of_best_waves,minimum_of_logged_waves[surfer_id]); // Not sure if I need thsi later
+        
+            //// Find the best wave    
+            for (var wave_index in average_scores[surfer_id])
+            {
+                if(top_waves[surfer_id][0]<average_scores[surfer_id][wave_index])
+                {
+                    top_waves[surfer_id][0]=average_scores[surfer_id][wave_index];
+                    best_wave_index=wave_index;
+                }
+            }
+            ////Find second-best wave
+            for (wave_index in average_scores[surfer_id])
+            {
+                if(wave_index != key_of_best_wave && top_waves[surfer_id][1]< average_scores[surfer_id][wave_index])
+                {
+                    top_waves[surfer_id][1]=average_scores[surfer_id][wave_index];
+                }
+            }
+        }
+        // Find current leader
+        for(surfer_id in top_waves)
+        {
+            if(leader_id='none')
+            {
+                leader_id=surfer_id;
+            }
+            else if(topwaves[surfer_id][0]+topwaves[surfer_id][1] > topwaves[leader_id][0]+topwaves[leader_id][1] )
+            {
+                leader_id=surfer_id;
+            }
+        
+        }
+    
+        // Calculate the current needs[surfer_id];
+        for(var surfer_id in average_scores)
+        {
+            needs[surfer_id]=topwaves[leader][0]+topwaves[leader_id][1]-top_waves[surfer_id][0];
+        }
+    
+        // Write data from average_scores and top_waves in data for table  
+        console.log(active_surfers);
+        for (var active_surfers_index in active_surfers['surfer_ids'])
+        {
+            console.log(active_surfers_index);
+            var surfer_id=active_surfers['surfer_ids'][active_surfers_index];
+            var surfer_id_string=surfer_id.toString();
+            // data_for_table[active_surfers_index]['surfer_name']=active_surfers['surfer_names'][active_surfers_index]; // TODO THis line works when names is available
+            data_for_table[active_surfers_index]['surfer_color']=active_surfers['surfer_colors'][active_surfers_index];
+            //data_for_table[active_surfers_index]['best_wave_'+'1']=top_waves[surfer_id_string][0];
+            //data_for_table[active_surfers_index]['best_wave_'+'2']=top_waves[surfer_id_string][1];
+            //data_for_table[active_surfers_index]['total_score']=top_waves[surfer_id_string][0]+top_waves[surfer_id_string][1];
+            //data_for_table[active_surfers_index]['needs']=needs[surfer_id_string];
+            for(var wave_index in average_scores[surfer_id_string])
+            {
+                data_for_table[active_surfers_index][wave_index]=average_scores[surfer_id_string][wave_index];
+                console.log(data_for_table);
+            }      
+        }
+        console.log(data_for_table);
+        $('#commentator_table').bootstrapTable('load',data_for_table);
+    });
+});   
+
 </script>
 
-<script> // script with function for loaded document
-	$(document).ready(function()
-    {
-<<<<<<< Updated upstream
-        create_data_for_table();
-        $('#commentator_table').bootstrapTable('load',data_for_table);
-=======
-        sync_with_server();
-        make_buttons_quadratic();
-        $(window).resize(make_buttons_quadratic);
-        $.get('do_get_active_heat_info', function(server_data){
-            var data = $.parseJSON(server_data);
-            $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Event: ' + data['event_name'] + ' Heat: ' + data['heat_name']);
-        });
-        setInterval(toggle_visibility, 5000);
-        get_active_judges();
->>>>>>> Stashed changes
-    });
-</script>
+
 {% endblock javascript %}
 
 {% block css %}
