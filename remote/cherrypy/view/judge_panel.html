@@ -346,23 +346,24 @@ function make_buttons_quadratic()
         </tr>
 
     {% for surfer_color in surfer_color_names %}
-    <tr>
-        <td>
-            <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000" onclick="set_input_field( '{{ surfer_color }}' )" id="{{ surfer_color }}_enter"><b>{{ surfer_color }}</b></button>
-        </td>
-        {% for wave_idx in range(  number_of_waves ) %}
-        <td>
-            <div class="form-inline">
-                <div class="input-group input-group-lg">
-                    <input class="form-control"  type="text" id="{{ surfer_color }}_{{wave_idx}}" readonly />
+        <tr>
+            <td>
+                <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000" onclick="set_input_field( '{{ surfer_color }}' )" id="{{ surfer_color }}_enter"><b>{{ surfer_color }}</b></button>
+            </td>
+            {% for wave_idx in range(  number_of_waves ) %}
+            <td>
+                <div class="form-inline">
+                    <div class="input-group input-group-lg">
+                        <input class="form-control"  type="text" id="{{ surfer_color }}_{{wave_idx}}" readonly />
+                    </div>
                 </div>
-            </div>
-        </td>
-        {% endfor %}
+            </td>
+            {% endfor %}
 
-    </tr>
-    {% endfor %}
-</table>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
 
 <div class="btn-toolbar" role="toolbar">
     {% for number_index in range(10) %}
