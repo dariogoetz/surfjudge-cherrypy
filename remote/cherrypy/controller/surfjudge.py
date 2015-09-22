@@ -96,7 +96,8 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             heat_id = heats.values()[0][KEY_HEAT_ID]
 
 
-        query_info = {KEY_HEAT_ID: int(heat_id)}
+        heat_id = int(heat_id)
+        query_info = {KEY_HEAT_ID: heat_id}
 
         if judge_id is not None:
             query_info[KEY_JUDGE_ID] = int(judge_id)
