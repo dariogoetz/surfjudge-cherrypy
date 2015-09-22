@@ -81,7 +81,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                 return '[]'
         else:
             roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
-            if not KEY_COMMENTATOR in roles:
+            if not KEY_ROLE_COMMENTATOR in roles:
                 print 'Error in "do_query_scores": judge_id specified but is no commentator'
                 return '[]'
 
