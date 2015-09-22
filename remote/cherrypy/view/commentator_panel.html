@@ -80,7 +80,7 @@ $(document).ready(function()
                 var judge_id= active_judges[judge_id_string]; // judge_id is an integer
                 $.get('do_query_scores',{'heat_id':active_heat_id, 'judge_id':judge_id}, function(data)
                 {
-                    data_from_server=$.ParseJSON(data);
+                    data_from_server=$.parseJSON(data);
                     current_scores[surfer_id_string] ={};             
                     current_scores[surfer_id_string][judge_id_string]={};
                 });
@@ -199,7 +199,7 @@ $(document).ready(function()
             }      
         }
         console.log(data_for_table);
-        $('#commentator_table').bootstrapTable('load',data_for_table);
+        $('#commentator_table').bootstrapTable('load',data_for_table).bootstrapTable('refresh');
     });
 });   
 
@@ -216,16 +216,8 @@ $(document).ready(function()
 
 
 {% block content %}
-<div class="container-fluid" id="display_this_if_some_heat_active" style="display:none">
-    <div class="col-md-8">
-        <div class="alert alert-success" role="alert">
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            <span class="sr-only">Selected Category:</span>
-            <span id="active_heat"></span>
-        </div>
-    </div>
-    
-<table class="table table-striped"
+<div class="container-fluid" id="table_div" >
+   <table class="table table-striped"
        id="commentator_table"
        data-toggle="table"
        data-sort-name="total_score"
@@ -244,6 +236,8 @@ $(document).ready(function()
         </tr>
     </thead>
 </table>
+</div>    
+
 <br />
 <div class="btn-toolbar" role="toolbar">
 <button class="enter_button" onclick="location.reload(true);">Update</button> <!-- This button reloads the page from server-->
