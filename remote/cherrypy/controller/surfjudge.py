@@ -103,6 +103,9 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
         scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        if heat_info is None:
+            return '[]'
+
         participants = heat_info['participants']
         id2color = dict(zip(participants['surfer_ids'], participants['surfer_colors']))
 
