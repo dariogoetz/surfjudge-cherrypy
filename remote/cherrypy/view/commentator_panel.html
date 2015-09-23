@@ -70,36 +70,41 @@ $(document).ready(function()
         var leader_id='none'; // ID of the surfer that leads the current heat. It is needed to find the value of the variable "needs"
         var json_for_commentator_table='none'; // Global variable, a string that contains the data for the commentator table in json format. It must be saved to a .txt file
     
-        for (var surfer_id_index in active_surfers['surfer_ids'])
+        for (var judge_id_string in active_judges)
         {
-            var surfer_id=active_surfers['surfer_ids'][surfer_id_index]; // surfer_id is an integer number
-            var surfer_id_string=surfer_id.toString();
+            var judge_id= active_judges[judge_id_string]; // judge_id is an integer
             // Create an object that has all scored waves stored in such a way, that the average scores can be calculated easily
-            for (var judge_id_string in active_judges)
+            $.get('do_query_scores',{'heat_id':active_heat_id, 'judge_id':judge_id}, function(data)
             {
-                var judge_id= active_judges[judge_id_string]; // judge_id is an integer
-                $.get('do_query_scores',{'heat_id':active_heat_id, 'judge_id':judge_id}, function(data)
+                data_from_server=$.parseJSON(data);
+                for (var surfer_id_index in active_surfers['surfer_ids'])
                 {
-                    data_from_server=$.parseJSON(data);
+                    var surfer_id=active_surfers['surfer_ids'][surfer_id_index]; // surfer_id is an integer number
+                    var surfer_id_string=surfer_id.toString();
                     current_scores[surfer_id_string] ={};             
                     current_scores[surfer_id_string][judge_id_string]={};
-                });
-            }
-        }
-        
-        // Fill object current_scores with data
-        for (var counter_index_json=0; counter_index_json < data_from_server.length; counter_index_json++)
-                    {
-                        var surfer_id= data_from_server[counter_index_json]['surfer_id'];
-                        var surfer_id_string=surfer_id.toString();
-                        var judge_id = data_from_server[counter_index_json]['judge_id'];
-                        var judge_id_string= judge_id.toString();
-                        var wave_number = data_from_server[counter_index_json]['wave'];
-                        var wave_number_string = wave_number.toString();
-                        current_scores[surfer_id_string][judge_id_string][wave_number_string]=data_from_server[counter_index_json]['score']
+                }
+                
+                // Fill object current_scores with data
+                for (var loop_index=0; loop_index < active_surfers['surfer_ids'].length; loop_index++)
+                {
+                    var surfer_id=active_surfers['surfer_ids'][loop_index];
+                    var color_index=active_surfers['surfer_colors'][loop_index];
+                    var surfer_id_string=surfer_id.toString();
+                    
+                    for (var wave_index=0; wave_index < data_from_server[color_index].length; wave_index++)
+                    { 
+                        var wave_number=wave_index+1;
+                        var wave_number_string = wave_number.toString();                      
+                        current_scores[surfer_id_string][judge_id_string][wave_number_string]=data_from_server[color_index][wave_index];
                     }
+                }
+            });
+        }
+        // Bis hier hin ist alles ok! Problem sind for x in objecr schleifen statt loops
         // Count for each surfer the number of waves where a score is available from every judge
-        for (var surfer_id in current_scores)
+        
+        for(var surfer_id in current_scores)
         {
             minimum_of_logged_waves[surfer_id]='none';
             for (var judge_id in current_scores[surfer_id])
@@ -114,7 +119,7 @@ $(document).ready(function()
                 }
             }
         }
-    
+        console.log(current_scores);
         //~~~~~~~~~~~~~~~~ Build average scores for each surfer and find the best two waves TODO: find best n waves
         for (var surfer_id in current_scores)
         {
@@ -134,7 +139,6 @@ $(document).ready(function()
                 }
                 average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]/average_counter;
             }
-        
             // find the best 2 waves and write them in data_for_table TODO: Introduce best n waves
             top_waves[surfer_id]=[];
             top_waves[surfer_id][0]=0;
@@ -180,10 +184,9 @@ $(document).ready(function()
         }
     
         // Write data from average_scores and top_waves in data for table  
-        console.log(active_surfers);
         for (var active_surfers_index in active_surfers['surfer_ids'])
         {
-            console.log(active_surfers_index);
+            
             var surfer_id=active_surfers['surfer_ids'][active_surfers_index];
             var surfer_id_string=surfer_id.toString();
             // data_for_table[active_surfers_index]['surfer_name']=active_surfers['surfer_names'][active_surfers_index]; // TODO THis line works when names is available
@@ -195,10 +198,10 @@ $(document).ready(function()
             for(var wave_index in average_scores[surfer_id_string])
             {
                 data_for_table[active_surfers_index][wave_index]=average_scores[surfer_id_string][wave_index];
-                console.log(data_for_table);
+                
             }      
         }
-        console.log(data_for_table);
+       
         $('#commentator_table').bootstrapTable('load',data_for_table).bootstrapTable('refresh');
     });
 });   
