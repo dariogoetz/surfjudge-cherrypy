@@ -386,7 +386,16 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def _get_participants(self, heat_id):
         query_info = {'heat_id': heat_id}
-        return self._query_db(query_info, 'participants')
+        cols = ['participants.heat_id AS heat_id',
+                'participants.surfer_color AS surfer_color',
+                'participants.surfer_id AS surfer_id',
+                'surfers.first_name AS first_name',
+                'surfers.last_name AS last_name',
+                'surfers.name AS name',
+                'surfers.country AS country',
+                'surfers.additional_info AS additional_info']
+        return self._query_join(query_info, 'participants', 'surfer_id', 'id', 'surfers', cols=cols)
+        #return self._query_db(query_info, 'participants')
 
     def _set_participants(self, data):
         heat_id = data['heat_id']
@@ -521,7 +530,6 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         except Exception as e:
             print 'Error executing sql command "{}": {}'.format(sql_command, e)
             res = []
-        print res
         return res
 
 

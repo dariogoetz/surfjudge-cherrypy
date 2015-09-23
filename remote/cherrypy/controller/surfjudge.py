@@ -48,9 +48,9 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
         surfer_data = heat_info['participants']
-        ids = map(str, surfer_data.get('surfer_ids', []))
-        colors = map(str, surfer_data.get('surfer_colors', []))
-        colors_hex = map(str, surfer_data.get('surfer_colors_hex', []))
+        ids = map(str, surfer_data.get('surfer_id', []))
+        colors = map(str, surfer_data.get('surfer_color', []))
+        colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
         data['judge_name'] = '{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name'])
         data['surfers'] = dict(zip(ids, colors))
         data['surfer_color_names'] = colors
@@ -108,7 +108,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             return '[]'
 
         participants = heat_info['participants']
-        id2color = dict(zip(participants['surfer_ids'], participants['surfer_colors']))
+        id2color = dict(zip(participants['surfer_id'], participants['surfer_color']))
 
         out_scores = {}
         for score in scores:
@@ -118,7 +118,6 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             sorted_pairs = sorted(out_scores[color], key=lambda x: x[0])
             out_scores[color] = [score for (wave, score) in sorted_pairs]
 
-        print json.dumps(out_scores)
         return json.dumps(out_scores)
 
 
@@ -130,7 +129,6 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         #score = score.encode('utf-8')
         score = json.loads(score)
         db_data = score
-        print 'score to be inserted'
         print score
 
         judge_id = cherrypy.session.get(KEY_JUDGE_ID)
@@ -159,7 +157,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         db_data['heat_id'] = int(heat_id)
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
         participants = heat_info['participants']
-        color2id = dict(zip(participants['surfer_colors'], participants['surfer_ids']))
+        color2id = dict(zip(participants['surfer_color'], participants['surfer_id']))
         db_data['surfer_id'] = int(color2id[score['color']])
         del db_data['color']
 

@@ -24,7 +24,6 @@
     {% for panel in panels %}
     {{ panel }}
     {% endfor %}
-
 </div>
 
 {% endblock content %}
@@ -38,6 +37,14 @@
      refresh_tournaments_dropdown();
  });
 
+
+ function add_panel(tournament_id){
+     $.get('{{ mount_loc }}/get_tournament_activity_panel', {tournament_id: tournament_id}, function(data){
+         $('#activity_panels').append(data);
+         $('#tournaments_dropdown_list .dropdown_'+tournament_id).remove();
+     });
+ }
+
  function refresh_tournaments_dropdown(){
      // fill dropdown with tournament names
      $.get('/tournament_admin/do_get_tournaments', function(data){
@@ -48,22 +55,22 @@
          }
 
          tournaments.sort(comp_func);
-
          // fill dropdown list with sorted tournament names
          $('#tournaments_dropdown_list').empty();
          for (i in tournaments){
-             $('#tournaments_dropdown_list').append('<li><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
+             $('#tournaments_dropdown_list').append('<li class="dropdown_' + tournaments[i]['id'] + '" ><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
          };
+
+         // remove already active panels from dropdown
+         $('#activity_panels > .panel').each(function(index, value){
+             $('#tournaments_dropdown_list .dropdown_'+$(value).data('index')).remove();
+         });
      });
  };
 
  $('#tournaments_dropdown_list').on('click', '.select', function(e){
-     $.get('{{ mount_loc }}/get_tournament_activity_panel', {tournament_id: $(this).data('index')}, function(data){
-         $('#activity_panels').append(data);
-     });
+     add_panel($(this).data('index'));
  });
-
-
 </script>
 
 <script>
@@ -101,7 +108,6 @@
          $('.heat_activity_button').removeClass('btn-success');
          $('.heat_activity_button').data('status', 'inactive');
          for (id in active_heats){
-             console.log(active_heats[id]['heat_id']);
              var button_id = '#heat_activity_button_'+active_heats[id]['heat_id'];
              $(button_id).addClass('btn-success');
              $(button_id).removeClass('btn-default');

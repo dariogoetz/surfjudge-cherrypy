@@ -83,6 +83,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
             return ''
 
         context['tournament_name'] = heat_info[0]['tournament_name']
+        context['tournament_id'] = heat_info[0]['tournament_id']
         categories = {}
         cid2heats = {}
         for heat in heat_info:
@@ -106,11 +107,13 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
         colors = utils.read_lycra_colors('lycra_colors.csv')
         data = {}
         for participant in res:
-            id = participant.get('surfer_id')
+            for key, val in participant.items():
+                data.setdefault(key, []).append(val)
+            #id = participant.get('surfer_id')
             color = participant.get('surfer_color')
             color_hex = colors.get(color, {}).get('HEX')
-            data.setdefault('surfer_ids', []).append(id)
-            # TODO: insert 'surfer_names'
-            data.setdefault('surfer_colors', []).append(color)
-            data.setdefault('surfer_colors_hex', []).append(color_hex)
+            #data.setdefault('surfer_ids', []).append(id)
+            ## TODO: insert 'surfer_names'
+            #data.setdefault('surfer_colors', []).append(color)
+            data.setdefault('surfer_color_hex', []).append(color_hex)
         return json.dumps(data)
