@@ -206,21 +206,23 @@ function fill_modal(heat_id, heat_name, date, start_time, n_waves, additional_in
      $('#participants_table tbody').append(row);
  }
 
-function refresh_participants(heat_id){
-    $.getJSON('/headjudge/do_get_participating_surfers', {heat_id: heat_id}, function(participants_data){
-        $.getJSON( '{{ mount_loc }}/do_get_surfers', function(surfer_data){
+ function refresh_participants(heat_id){
+     $.getJSON( '{{ mount_loc }}/do_get_surfers', function(surfer_data){
+         // fill participants_select in participant modal
+         $('#participants_table > tbody').empty();
+         $('#participants_select').empty();
+         for (idx in surfer_data){
+             var surfer_id = surfer_data[idx]['id'];
+             var surfer_name = surfer_data[idx]['name'];
+             $('<option />', {value: surfer_id, text: surfer_name}).appendTo($('#participants_select'));
+         }
+         participants_dlb.bootstrapDualListbox('refresh');
+         if (heat_id === null)
+             return;
 
-            // fill participants_select in participant modal
-            $('#participants_select').empty();
-            for (idx in surfer_data){
-                var surfer_id = surfer_data[idx]['id'];
-                var surfer_name = surfer_data[idx]['name'];
-                $('<option />', {value: surfer_id, text: surfer_name}).appendTo($('#participants_select'));
-            }
-
-            var participant_ids = participants_data['surfer_ids'];
-            var participant_colors = participants_data['surfer_colors'];
-            $('#participants_table > tbody').empty();
+         $.getJSON('/headjudge/do_get_participating_surfers', {heat_id: heat_id}, function(participants_data){
+            var participant_ids = participants_data['surfer_id'];
+            var participant_colors = participants_data['surfer_color'];
             for (idx in participant_ids){
                 var surfer_id = participant_ids[idx];
                 var surfer_color = participant_colors[idx];

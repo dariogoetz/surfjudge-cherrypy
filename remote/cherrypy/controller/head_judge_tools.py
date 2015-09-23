@@ -102,6 +102,10 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     def do_get_participating_surfers(self, heat_id=None):
+        if heat_id == '':
+            return json.dumps({'surfer_id': [],
+                    'surfer_color': []})
+        heat_id = int(heat_id)
         res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, heat_id).pop()
         import utils
         colors = utils.read_lycra_colors('lycra_colors.csv')

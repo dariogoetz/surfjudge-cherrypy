@@ -385,7 +385,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
     def _get_participants(self, heat_id):
-        query_info = {'heat_id': heat_id}
+        query_info = {'participants': {'heat_id': heat_id}}
         cols = ['participants.heat_id AS heat_id',
                 'participants.surfer_color AS surfer_color',
                 'participants.surfer_id AS surfer_id',
