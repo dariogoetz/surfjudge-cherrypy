@@ -73,28 +73,30 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_COMMENTATOR))
-    def do_query_scores(self, heat_id = None, judge_id = None):
-        if judge_id is None:
+    def do_query_scores(self, heat_id = None, judge_id = None, get_for_all_judges = None):
+        roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
+
+        if get_for_all_judges and KEY_ROLE_COMMENTATOR in roles:
+            judge_id = None
+        elif judge_id is None:
             judge_id = cherrypy.session.get(KEY_JUDGE_ID)
             if judge_id is None:
                 print 'Error in "do_query_scores": No judge_id specified and is no judge'
                 return '[]'
         else:
-            roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
             if not KEY_ROLE_COMMENTATOR in roles:
                 print 'Error in "do_query_scores": judge_id specified but is no commentator'
                 return '[]'
 
         if heat_id is None:
             if judge_id is None:
-                print 'Error in "do_query_scores": Not registered as judge'
+                print 'Error in "do_query_scores": No heat_id provided and no judge_id either (is probably commentator and requested for all judges)'
                 return '[]'
             heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
             if len(heats) == 0:
                 print 'Error in "do_query_scores": No heat specified and no active heat available'
                 return '[]'
             heat_id = heats.values()[0][KEY_HEAT_ID]
-
 
         heat_id = int(heat_id)
         query_info = {KEY_HEAT_ID: heat_id}
@@ -112,14 +114,17 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
         out_scores = {}
         for score in scores:
-            out_scores.setdefault(id2color[int(score['surfer_id'])], []).append( (score['wave'], score['score']) )
+            out_scores.setdefault(score['judge_id'], {}).setdefault(id2color[int(score['surfer_id'])], []).append( (score['wave'], score['score']) )
 
-        for color in out_scores:
-            sorted_pairs = sorted(out_scores[color], key=lambda x: x[0])
-            out_scores[color] = [score for (wave, score) in sorted_pairs]
+        for jid, s in out_scores.items():
+            for color, vals in s.items():
+                sorted_pairs = sorted(vals, key=lambda x: x[0])
+                out_scores[jid][color] = [score for (wave, score) in sorted_pairs]
 
+        if judge_id is not None:
+            # not all judges scores were requested
+            out_scores = out_scores[judge_id]
         return json.dumps(out_scores)
-
 
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_JUDGE))
