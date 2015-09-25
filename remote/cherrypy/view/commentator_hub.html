@@ -22,10 +22,10 @@ var active_judges ={};
 var active_surfers={};
  ////----------------------------////
 
-function activate_commentator_panel(){
+function activate_commentator_panel(active_heat_id){
     data_for_table = []; // Global variable, a list of objects that contain the heat data to be displayed in a table
     number_of_best_waves=2; // Global variable TODO: Get variable from server
-    active_heat_id='none';
+    //active_heat_id='none';
     active_heat_data=[];
     active_judges ={};
     active_surfers={};
@@ -33,7 +33,7 @@ function activate_commentator_panel(){
     $.get('do_get_all_active_heats',function(data)
     {
         active_heat_data = $.parseJSON(data); // this is a global variable, it is an object
-        active_heat_id=active_heat_data[0]['heat_id']; // this is a global variable, it is a number
+        //active_heat_id=active_heat_data[0]['heat_id']; // this is a global variable, it is a number
         active_judges={}; // global variable it is an object with numbers
         for (var judge_id_index in active_heat_data[0]['judges'])
         {
@@ -202,7 +202,6 @@ function activate_commentator_panel(){
             }
             $('#commentator_table').bootstrapTable();
             $('#commentator_table').bootstrapTable('load',data_for_table).bootstrapTable('refresh');
-            console.log('refresh');
         });
     });
 }
@@ -235,13 +234,13 @@ function toggle_panel(heat_id){
     $.get('/do_get_commentator_panel', {heat_id: heat_id}, function(data){
         if (data != ''){
             $('#commentator_panel').append(data);
-            activate_commentator_panel();
+            activate_commentator_panel(heat_id);
         }
      });
  }
 
   $('#active_heats_dropdown_list').on('click', '.select', function(e){
-     toggle_panel($(this).data('index'));
+      toggle_panel($(this).data('index'));
  });
 </script>
 {% endblock javascript %}

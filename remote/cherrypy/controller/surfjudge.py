@@ -125,7 +125,10 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             return '[]'
 
         participants = heat_info['participants']
-        id2color = dict(zip(participants['surfer_id'], participants['surfer_color']))
+        if 'surfer_id' not in participants or 'surfer_color' not in participants:
+            print 'do_query_scores: no participants'
+            return '[]'
+        id2color = dict(zip(participants.get('surfer_id', []), participants.get('surfer_color', [])))
 
         out_scores = {}
         for score in scores:
