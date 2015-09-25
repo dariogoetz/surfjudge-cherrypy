@@ -13,11 +13,12 @@
 {{ super() }}
 
 <link href="/static/datepicker/css/datepicker.css" rel="stylesheet">
+<link href="/static/bootstrap-timepicker/css/bootstrap-timepicker.min.css" rel="stylesheet">
 <link href="/static/bootstrap_duallistbox/bootstrap-duallistbox.min.css" rel="stylesheet">
 
 <style>
 .datepicker{z-index:1151 !important;}
-
+.timepicker{z-index:1151 !important;}
 .scrollable-menu{
     height: auto;
     max-height: 200px;
@@ -103,8 +104,6 @@
 {% block javascript %}
 {{ super() }}
 
-<script src="/static/datepicker/js/bootstrap-datepicker.js"></script>
-
 <script>
  // ***** DROPDOWN *****
 
@@ -180,7 +179,12 @@ function fill_modal(heat_id, heat_name, date, start_time, n_waves, additional_in
   if (date == null){
     $('#modal_date_picker').data('datepicker').setValue('');
   } else {
-    $('#modal_date_picker').data('datepicker').setValue(start_date);
+    $('#modal_date_picker').data('datepicker').setValue(date);
+  }
+  if (date == null){
+    $('#modal_time_picker').timepicker('setTime', '');
+  } else {
+    $('#modal_time_picker').timepicker('setTime', start_time);
   }
     // time picker
   $('#modal_nwaves').val(n_waves);
@@ -283,7 +287,6 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 
 
           <div class="well">
-              <h4>Heat Details</h4>
               <div class="form-horizontal">
                   <div class="form-group">
                       <label class="col-sm-2 control-label">Heat name</label>
@@ -295,16 +298,19 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
                   <div class="form-group">
                       <label class="col-sm-2 control-label">Date</label>
                       <div class="row">
-                        <div class="col-sm-4">
+                        <div class="col-sm-5">
 
 			              <div class="input-group date" id="modal_date_picker" data-date="" data-date-format="dd.mm.yyyy">
-				              <input class="form-control" id="modal_date_input" name="date_begin" size="16" type="text" placeholder="Date start" readonly>
+				              <input class="form-control" id="modal_date_input" size="16" type="text" placeholder="Date start" readonly>
 				              <span class="input-group-addon add-on"><i class="glyphicon glyphicon-calendar"></i></span>
 			              </div>
                         </div>
-                      <div class="col-sm-4">
-                          Need time picker
-                      </div>
+                        <div class="col-sm-4">
+                            <div class="input-group bootstrap-timepicker timepicker">
+                                <input id="modal_time_picker" data-minute-step="15" data-show-meridian="false" class="form-control" type="text">
+				              <span class="input-group-addon add-on"><i class="glyphicon glyphicon-time"></i></span>
+                            </div>
+                        </div>
                       </div>
                   </div>
 
@@ -396,7 +402,10 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 
 {% block modal_javascript %}
 <!-- modal scripts -->
-<script  src="/static/plusminusinput/plusminusinput.js"></script>
+
+<script src="/static/datepicker/js/bootstrap-datepicker.js"></script>
+<script src="/static/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="/static/plusminusinput/plusminusinput.js"></script>
 <script src="/static/bootstrap_duallistbox/jquery.bootstrap-duallistbox.min.js"></script>
 
 <script>
@@ -405,7 +414,7 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
     var heat_id = $('#modal_heat_id').val();
     var heat_name = $('#modal_heat_name').val();
     var date = $('#modal_date_input').val();
-    var start_time = '18:00'//$('#modal_start_time_input').val(); // TODO: still need time picker
+    var start_time = $('#modal_time_picker').val();
     var number_of_waves = $('#modal_nwaves').val();
     if (number_of_waves==='')
          number_of_waves = 10;
@@ -467,14 +476,13 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 <!-- enable datepickers in modal window -->
 <script>
  // ***** DATEPICKER *****
-var nowTemp = new Date();
-var start_date = new Date(nowTemp.getFullYear(), nowTemp.getMonth(), nowTemp.getDate(), 0,0,0,0);
 
 $('#modal_date_picker').datepicker({weekStart: 1})
   .on('changeDate', function(ev){
-    start_date = ev.date;
     $('#modal_date_picker').datepicker('hide');
   });
+$('#modal_time_picker').timepicker();
+
 </script>
 
 <script>
