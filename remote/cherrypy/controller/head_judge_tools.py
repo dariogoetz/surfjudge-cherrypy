@@ -9,8 +9,8 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    @cherrypy.tools.render(template = 'headjudge/headjudge_panel.html')
-    def index(self):
+    @cherrypy.tools.render(template = 'headjudge/start_stop_heats.html')
+    def start_stop_heats(self):
         context = self._standard_env()
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
         tournaments = set()
@@ -20,6 +20,40 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
             panel_html = self.render_html(context = self.get_tournament_activity_panel(tournament_id), template = 'headjudge/activity_panel.html')
             context.setdefault('panels', []).append(panel_html)
         return context
+
+    @cherrypy.expose
+    @cherrypy.tools.render(template = 'headjudge/judge_activities.html')
+    def judge_activities(self):
+        judge_id = cherrypy.session.get(KEY_JUDGE_ID)
+        heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
+        data = self._standard_env()
+        if len(heats) > 0:
+            heat_id = int(heats.keys()[0])
+        else:
+            return ''
+
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        surfer_data = heat_info['participants']
+        ids = map(str, surfer_data.get('surfer_id', []))
+        colors = map(str, surfer_data.get('surfer_color', []))
+        colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
+        data['judge_name'] = '{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name'])
+        data['surfers'] = dict(zip(ids, colors))
+        data['surfer_color_names'] = colors
+        data['surfer_color_colors'] = dict(zip(colors, colors_hex))
+        data['number_of_waves'] = int(heat_info['number_of_waves'])
+
+        #heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
+        #tournaments = set()
+        #for heat in heat_info.values():
+        #    tournaments.add(heat['tournament_id'])
+        #for tournament_id in tournaments:
+        #    panel_html = self.render_html(context = self.get_tournament_activity_panel(tournament_id), template = 'headjudge/activity_panel.html')
+        #    context.setdefault('panels', []).append(panel_html)
+        return data
+
+
+
 
 
     ##############

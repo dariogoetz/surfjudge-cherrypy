@@ -338,7 +338,7 @@ function make_buttons_quadratic()
     <table class="table">
         <tr>
             <td><b>Wave</b></td>
-            {% for wave_idx in range(  number_of_waves ) %}
+            {% for wave_idx in range( number_of_waves ) %}
             <td align="center">
                 <b>{{ loop.index }}</b>
             </td>
@@ -350,7 +350,7 @@ function make_buttons_quadratic()
             <td>
                 <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000" onclick="set_input_field( '{{ surfer_color }}' )" id="{{ surfer_color }}_enter"><b>{{ surfer_color }}</b></button>
             </td>
-            {% for wave_idx in range(  number_of_waves ) %}
+            {% for wave_idx in range( number_of_waves ) %}
             <td>
                 <div class="form-inline">
                     <div class="input-group input-group-lg">
