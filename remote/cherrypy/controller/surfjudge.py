@@ -21,7 +21,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             query_info = {KEY_HEAT_ID: int(heat_id)}
             # TODO: maybe store current scores in state object for faster access
             scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
-            heat['scores'] = scores
+            heat['scores'] = json.loads(self.do_query_scores(heat_id=heat_id, get_for_all_judges=1))
         context['active_heats'] = heats_info
         return context
 
@@ -42,7 +42,6 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         data = self._standard_env()
         if len(heats) > 0:
             heat_id = int(heats.keys()[0])
-
         else:
             return ''
 
@@ -60,16 +59,32 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     #@require(is_admin()) # later ask for judge or similar
-    @cherrypy.tools.render(template='commentator_panel.html')
-    def commentator_panel(self):
+    @cherrypy.tools.render(template='commentator_hub.html')
+    def commentator_hub(self):
         data = self._standard_env()
-        data['judge_name'] = 'Christian'
-        data['judge_number'] = '1234'
-        data['surfer_color_names'] = ['red', 'blue', 'green']
-        data['surfer_color_colors'] = {'red': '#FF8888', 'blue': '#8888FF', 'green': '#88FF88'}
-        data['n_surfers'] = len(data['surfer_color_names'])
-        data['number_of_waves'] = 10
         return data
+
+    @cherrypy.expose
+    #@require(is_admin()) # later ask for judge or similar
+    @cherrypy.tools.render(template='commentator_panel.html')
+    def do_get_commentator_panel(self, heat_id=None):
+        if heat_id is None:
+            return ''
+        heat_id = int(heat_id)
+
+        data = self._standard_env()
+
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        surfer_data = heat_info['participants']
+        ids = map(str, surfer_data.get('surfer_id', []))
+        colors = map(str, surfer_data.get('surfer_color', []))
+        colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
+        data['surfers'] = dict(zip(ids, colors))
+        data['surfer_color_names'] = colors
+        data['surfer_color_colors'] = dict(zip(colors, colors_hex))
+        data['number_of_waves'] = int(heat_info['number_of_waves'])
+        return data
+
 
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_COMMENTATOR))
