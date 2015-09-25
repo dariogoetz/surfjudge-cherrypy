@@ -102,7 +102,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     def do_get_participating_surfers(self, heat_id=None):
-        if heat_id == '':
+        if heat_id == '' or heat_id is None:
             return json.dumps({'surfer_id': [],
                     'surfer_color': []})
         heat_id = int(heat_id)
