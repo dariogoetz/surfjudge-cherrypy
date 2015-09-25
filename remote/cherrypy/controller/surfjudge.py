@@ -123,7 +123,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
         if judge_id is not None:
             # not all judges scores were requested
-            out_scores = out_scores[judge_id]
+            out_scores = out_scores.get(judge_id, {})
         return json.dumps(out_scores)
 
     @cherrypy.expose

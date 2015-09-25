@@ -431,7 +431,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
     def _get_judges_for_heat(self, heat_id):
-        query_info = {'heats': {'id': heat_id}}
+        query_info = {'judge_activities': {'heat_id': heat_id}}
         return self._query_join(query_info, 'judges', 'id', 'judge_id', 'judge_activities')
 
 

@@ -246,6 +246,10 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     def do_get_active_judges(self, heat_id=None, **kwargs):
+        if heat_id is None:
+            print 'do_get_active_judges: No heat_id specified'
+            return '[]'
+        heat_id=int(heat_id)
         judges = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, heat_id).pop()
         return json.dumps(judges)
 
