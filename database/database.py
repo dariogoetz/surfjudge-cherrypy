@@ -84,11 +84,6 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             res = {}
         return res
 
-    def _write_db_info(self):
-        filename = _CONFIG['db_info']['filename']
-        with open(filename, 'wb') as fp:
-            json.dump(self._db_info, fp)
-        return
 
 
 
@@ -306,7 +301,6 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             n_tournaments = self._db_info.setdefault('n_tournaments', 0)
             tournament['id'] = n_tournaments
             self._db_info['n_tournaments'] += 1
-            self._write_db_info()
         # check if id exists
         if len(self._get_tournaments({'id': tournament.get('id')})) > 0:
             self._modify_in_db({'id': tournament.get('id')}, tournament, 'tournaments')
@@ -324,7 +318,6 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             n_categories = self._db_info.setdefault('n_categories', 0)
             category['id'] = n_categories
             self._db_info['n_categories'] += 1
-            self._write_db_info()
         # check if id exists
         if len(self._get_categories({'id': category.get('id')})) > 0:
             self._modify_in_db({'id': category.get('id')}, category, 'categories')
@@ -349,7 +342,6 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             n_heats = self._db_info.setdefault('n_heats', 0)
             heat['id'] = n_heats
             self._db_info['n_heats'] += 1
-            self._write_db_info()
         # check if id exists
         if len(self._get_heats({'id': heat.get('id')})) > 0:
             self._modify_in_db({'id': heat.get('id')}, heat, 'heats')
@@ -372,7 +364,6 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             n_judges = self._db_info.setdefault('n_judges', 0)
             judge['id'] = n_judges
             self._db_info['n_judges'] += 1
-            self._write_db_info()
         # check if id exists
         if len(self._get_judges({'username': judge.get('username')})) > 0:
             self._modify_in_db({'username': judge.get('username')}, judge, 'judges')

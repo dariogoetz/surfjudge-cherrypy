@@ -1,6 +1,6 @@
 {% extends "base_dashboard.html" %}
 
-{% block nav_items %}['#nav_item_headjudge']{% endblock nav_items %}
+{% block nav_items %}['#sidebar_item_edit_judge_activities']{% endblock nav_items %}
 
 {% block title %}Edit Surfers{% endblock title %}
 
@@ -30,7 +30,7 @@
         <div class="col-md-3">
             <div class="dropdown">
                 <div class="btn-group">
-                <button id="tournaments_dropdown_select" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button id="tournaments_dropdown_select" class="btn btn-dropdown dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span id="tournaments_dropdown_label">Tournament</span>&nbsp;<span class="caret"></span>
                 </button>
                 <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="tournaments_dropdown_label">
@@ -42,7 +42,7 @@
         <div class="col-md-3">
             <div class="dropdown">
                 <div class="btn-group">
-                <button id="categories_dropdown_select" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button id="categories_dropdown_select" class="btn btn-dropdown dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span id="categories_dropdown_label">Category</span>&nbsp;<span class="caret"></span>
                 </button>
                 <ul id="categories_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="categories_dropdown_label">
