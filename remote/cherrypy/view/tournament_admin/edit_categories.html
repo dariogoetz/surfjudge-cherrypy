@@ -24,25 +24,20 @@
         <div class="col-md-2">
             <div class="dropdown">
                 <div class="btn-group">
-                <button id="tournaments_dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Tournaments <span class="caret"></span>
+                <button id="tournaments_dropdown_select" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span id="tournaments_dropdown_label">Tournament</span>&nbsp;<span class="caret"></span>
                 </button>
                 <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="tournaments_dropdown_label">
                 </ul>
                 </div>
             </div>
         </div>
-        <div class="col-md-5">
-            <div class="alert alert-success" role="alert">
-                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                <span class="sr-only">Selected Tournament:</span>
-                <span id="selected_tournament">No tournament selected</span>
-            </div>
-        </div>
     </div>
+    <br>
 
 
     <div id="data_section" style="display:none">
+        <button type="button" id="new_btn" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-plus">&nbsp;</span>New Category</button>
         <table class="table table-striped"
                id="data_table"
                data-toggle="table"
@@ -57,7 +52,6 @@
                 </tr>
             </thead>
         </table>
-        <button type="button" id="new_btn" class="btn btn-primary btn-lg">New Category</button>
     </div>
 </div>
 
@@ -124,7 +118,7 @@
   var id = $('#modal_id').val();
   var name = $('#modal_name').val();
   var additional_info = $('#modal_additional_info').val();
-  var tournament_id = $('#selected_tournament').data('select');
+  var tournament_id = $('#tournaments_dropdown_select').data('select');
   if (id == null && name.length == 0) {
     alert('Empty field "Category Name"');
     return
@@ -137,7 +131,7 @@
 
 $('#modal_delete').on('click', function(){
     var id = $('#modal_id').val();
-    var tournament_id = $('#selected_tournament').data('select');
+    var tournament_id = $('#tournaments_dropdown_select').data('select');
     $.post('{{ mount_loc }}/do_delete_category', {id: id});
     $('#edit_modal').modal('toggle');
     $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
@@ -165,8 +159,8 @@ $('#modal_delete').on('click', function(){
              $('#tournaments_dropdown_list').append('<li><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
          };
      });
-     $('#selected_tournament').html('No tournament selected');
-     $('#selected_tournament').data('select', null);
+     $('#tournaments_dropdown_label').html('Tournament');
+     $('#tournaments_dropdown_select').data('select', null);
      $('#data_section').hide();
  };
 
@@ -176,14 +170,14 @@ $('#modal_delete').on('click', function(){
 
  $('#tournaments_dropdown_list').on('click', '.select', function(e){
      tid =  $(this).data('index');
-     $('#selected_tournament').html('Tournament "<b>' + $(this).data('name') + '</b>" selected');
-     $('#selected_tournament').data('select', tid);
+     $('#tournaments_dropdown_label').html('Tournament <b>' + $(this).data('name') + '</b>');
+     $('#tournaments_dropdown_select').data('select', tid);
 
      refresh_data_table();
  });
 
  function refresh_data_table(){
-     var tid = $('#selected_tournament').data('select');
+     var tid = $('#tournaments_dropdown_select').data('select');
      query = {}
      if (typeof tid !== 'undefined')
          query['tournament_id'] = tid;

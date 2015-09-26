@@ -243,6 +243,11 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         context = self._standard_env()
         return context
 
+    @cherrypy.expose
+    @cherrypy.tools.render(template='tournament_admin/judge_activities.html')
+    def judge_activities(self):
+        context = self._standard_env()
+        return context
 
     @cherrypy.expose
     def do_get_active_judges(self, heat_id=None, **kwargs):

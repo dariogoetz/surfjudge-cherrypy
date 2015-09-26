@@ -25,80 +25,12 @@
 {% endblock css %}
 
 {% block content %}
-<h2>Active Judges in Heat</h2>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2">
-            <div class="dropdown">
-                <div class="btn-group">
-                <button id="tournaments_dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Tournaments <span class="caret"></span>
-                </button>
-                <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="tournaments_dropdown_label">
-                </ul>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-5">
-            <div class="alert alert-success" role="alert">
-                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                <span class="sr-only">Selected Tournament:</span>
-                <span id="selected_tournament">No tournament selected</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-2">
-            <div class="dropdown">
-                <div class="btn-group">
-                <button id="categories_dropdown_label" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Categories <span class="caret"></span>
-                </button>
-                <ul id="categories_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="categories_dropdown_label">
-                </ul>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-5">
-            <div class="alert alert-success" role="alert">
-                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                <span class="sr-only">Selected Category:</span>
-                <span id="selected_category">No category selected</span>
-            </div>
-        </div>
-    </div>
-
-
-
-
-    <div id="data_section"  style="display:none">
-        <table class="table table-striped"
-               id="heats_table"
-               data-toggle="table"
-               data-url="{{ mount_loc }}/do_get_heats"
-               data-sort-name="name"
-               date-sort-order="asc">
-            <thead>
-                <tr>
-                    <th data-field="id">ID (for admin)</th>
-                    <th data-field="name" data-sortable="true">Heat Name</th>
-                    <th data-field="date" data-sortable="true">Date</th>
-                    <th data-field="start_time" data-sortable="true">Start Time</th>
-                    <th data-field="number_of_waves" data-sortable="true">Number of Waves</th>
-                    <th data-field="additional_info">Additional Info</th>
-                </tr>
-            </thead>
-        </table>
-    </div>
-</div>
-
-<br><br>
 <h2>Judges</h2>
 
 <!-- All judges table -->
 <div class="container-fluid">
+    <button type="button" id="new_btn" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-plus">&nbsp;</span>New Judge</button>
     <table class="table table-striped"
            id="judges_table"
            data-toggle="table"
@@ -115,7 +47,6 @@
             </tr>
         </thead>
     </table>
-    <button type="button" id="new_btn" class="btn btn-primary btn-lg">New Judge</button>
 </div>
 {% endblock content %}
 
@@ -178,114 +109,13 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
-
-<!-- Edit active_judges modal -->
-<div class="modal fade" id="edit_active_judges_modal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-          <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-              <h4 class="modal-title">Edit Judges for Heat</h4>
-          </div> <!-- /.modal-header -->
-
-          <div class="modal-body">
-              <input type="hidden" id="modal_heat_id">
-
-              <div class="well">
-
-                  <!-- judges duallistbox -->
-                  <div class="row">
-                      <select multiple="multiple" size="10" name="active_judges" id="active_judges_select">
-                      </select>
-                  </div>
-              </div>
-          </div><!-- /.modal-body -->
-          <div class="modal-footer">
-              <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-              <button id="active_judges_submit" class="btn btn-primary" data-dismiss="modal">Save changes</button>
-          </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
 {% endblock modals %}
 
 
 {% block javascript %}
 {{ super() }}
-<script>
- // ***** DROPDOWN *****
-
- function refresh_tournaments(){
-     // fill dropdown with tournament names
-     $.get('{{ mount_loc }}/do_get_tournaments', function(data){
-         var tournaments = JSON.parse(data);
-         // sort
-         function comp_func(a,b){
-             return (b['start_datetime'] < a['start_datetime']) ? 1 : -1;
-         }
-
-         tournaments.sort(comp_func);
-
-         // fill dropdown list with sorted tournament names
-         $('#tournaments_dropdown_list').empty();
-         for (i in tournaments){
-             $('#tournaments_dropdown_list').append('<li><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
-         };
-     });
-     $('#selected_tournament').html('No tournament selected');
-     $('#selected_tournament').data('select', null);
-     refresh_categories();
-     $('#data_section').hide();
- };
-
- function refresh_categories(tournament_id){
-     if (typeof tournament_id !== 'undefined'){
-         $.get('{{ mount_loc }}/do_get_categories',{tournament_id: tournament_id}, function(data){
-             var categories = JSON.parse(data);
-             $('#categories_dropdown_list').empty();
-             for (i in categories){
-                 $('#categories_dropdown_list').append('<li><a class="select" href="#" data-name="' + categories[i]['name'] + '" data-index=' + categories[i]['id'] + '>' + categories[i]['name'] + '</a></li>');
-             };
-         });
-     };
-     $('#selected_category').html('No category selected');
-     $('#selected_category').data('select', null);
-     $('#data_section').hide();
- };
-
-
- $('#tournaments_dropdown_list').on('click', '.select', function(e){
-     tid =  $(this).data('index');
-     $('#selected_tournament').html('Tournament "<b>' + $(this).data('name') + '</b>" selected');
-     $('#selected_tournament').data('select', tid);
-     refresh_categories(tid);
- });
- $('#categories_dropdown_list').on('click', '.select', function(e){
-     $('#selected_category').html('Category "<b>' + $(this).data('name') + '</b>" selected');
-     $('#selected_category').data('select', $(this).data('index'));
-     refresh_data_table();
- });
-
- function refresh_data_table(){
-     var tid = $('#selected_tournament').data('select');
-     var cid = $('#selected_category').data('select');
-     query = {}
-     if (typeof cid !== 'undefined')
-         query['category_id'] = cid;
-
-     $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: query});
-     $('#data_section').show();
- };
-
-</script>
 
 <script>
- function fill_active_judges_modal(heat_id){
-  $('#modal_heat_id').val(heat_id);
-  refresh_active_judges(heat_id);
-}
-
  function fill_edit_judge_modal(judge_id, judge_first_name, judge_last_name, judge_login, additional_info){
      $('#modal_judge_id').val(judge_id);
      $('#modal_judge_first_name').val(judge_first_name);
@@ -294,28 +124,6 @@
      $('#modal_additional_info').val(additional_info);
 }
 
-function refresh_active_judges(heat_id){
-    $.getJSON('{{ mount_loc }}/do_get_active_judges', {heat_id: heat_id}, function(active_judges){
-        $.getJSON( '{{ mount_loc }}/do_get_judges', function(judges_data){
-
-            // fill judges_select in active judges modal
-            $('#active_judges_select').empty();
-            for (idx in judges_data){
-                var judge_id = judges_data[idx]['id'];
-                var judge_first_name = judges_data[idx]['first_name'];
-                var judge_last_name = judges_data[idx]['last_name'];
-
-                $('<option />', {value: judge_id, text: judge_first_name+' '+judge_last_name}).appendTo($('#active_judges_select'));
-            }
-
-            for (idx in active_judges){
-                // activate in active_judges_select
-                $('#active_judges_select option[value='+active_judges[idx]['judge_id']+']').prop('selected', true)
-            };
-            active_judges_dlb.bootstrapDualListbox('refresh');
-        });
-    });
- }
 
 // register functionality for "new judge" button
 $('#new_btn').on('click', function(){
@@ -323,16 +131,9 @@ $('#new_btn').on('click', function(){
   $('#edit_judge_modal').modal('toggle');
  });
 
-// register functionality for selecting heats from table
-$('#heats_table').on('click-row.bs.table', function (e, row, $element) {
-    if (typeof(row) !== 'undefined'){
-        fill_active_judges_modal(row['id']);
-        $('#edit_active_judges_modal').modal('toggle');
-    };
-});
 
 
-// register functionality for selecting heats from table
+// register functionality for selecting judge from table
 $('#judges_table').on('click-row.bs.table', function (e, row, $element) {
     if (typeof(row) !== 'undefined'){
         fill_edit_judge_modal(row['id'], row['first_name'], row['last_name'], row['username'], row['additional_info']);
@@ -341,32 +142,14 @@ $('#judges_table').on('click-row.bs.table', function (e, row, $element) {
 });
 </script>
 
-<script>
- $(document).ready(function(){
-     refresh_tournaments();
- });
-</script>
-
 {% endblock javascript %}
 
 
 
 
 {% block modal_javascript %}
-<script src="/static/bootstrap_duallistbox/jquery.bootstrap-duallistbox.min.js"></script>
+
 <script>
-
- $('#active_judges_submit').on('click', function(){
-    var heat_id = $('#modal_heat_id').val();
-    var judge_ids = []
-    $('#bootstrap-duallistbox-selected-list_active_judges option').each(function(){
-        judge_ids.push( parseInt(this.value) );
-    });
-    judge_ids = JSON.stringify(judge_ids);
-    $.post('{{ mount_loc }}/do_set_active_judges', {heat_id: heat_id, judge_ids: judge_ids});
- });
-
-
 
  // ***** MODAL internals *****
 $('#judge_submit').on('click', function(){
@@ -389,12 +172,6 @@ $('#judge_submit').on('click', function(){
       $('#edit_judge_modal').modal('toggle');
       $('#judges_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_judges'});
  });
-
-
-var active_judges_dlb = $('#active_judges_select').bootstrapDualListbox(
-    {nonSelectedListLabel: 'Unselected judges',
-    selectedListLabel: 'Selected judges'}
-);
 
 </script>
 
