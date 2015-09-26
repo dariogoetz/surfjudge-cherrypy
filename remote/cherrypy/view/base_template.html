@@ -20,6 +20,44 @@
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
+
+
+     @media (max-width: 950px) {
+         .navbar-header {
+             float: none;
+         }
+         .navbar-left,.navbar-right {
+             float: none !important;
+         }
+         .navbar-toggle {
+             display: block;
+         }
+         .navbar-collapse {
+             border-top: 1px solid transparent;
+             box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+         }
+         .navbar-fixed-top {
+		     top: 0;
+		     border-width: 0 0 1px;
+	     }
+         .navbar-collapse.collapse {
+             display: none!important;
+         }
+         .navbar-nav {
+             float: none!important;
+		     margin-top: 7.5px;
+	     }
+	     .navbar-nav>li {
+             float: none;
+         }
+         .navbar-nav>li>a {
+             padding-top: 10px;
+             padding-bottom: 10px;
+         }
+         .collapse.in{
+  		     display:block !important;
+	     }
+     }
     </style>
     {% endblock css %}
     {% endblock header %}
@@ -27,8 +65,8 @@
 
   <body>
     <!-- Navigation bar -->
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-        <div class="container-fluid">
+    <nav class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container-fluid col-md-12">
             <!-- The following gives three lines if navbar is collapsed -->
             <div class="navbar-header">
                 {% block navbar_header %}
@@ -39,36 +77,36 @@
                     <span class="icon-bar"></span>
                 </button>
                 {% endblock navbar_header %}
-                <a class="navbar-brand" href="/">Surfjudge 3000</a>
+                <a class="navbar-brand" href="/"><img src="/static/img/SurfjudgeLogo.png" style="width: 50px;height:auto"></a>
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
-                    <li id='nav_item_home'><a href="/"><span class="glyphicon glyphicon-home"></span>&nbsp;&nbsp;Home</a></li>
+                    <li id='nav_item_home'><a href="/"><span class="glyphicon glyphicon-home">&nbsp;</span>Home</a></li>
                     {% if not global_logged_in %}
-                    <li id='nav_item_login'><a href="/auth/login">Login</a></li>
-                    <li id='nav_item_register'><a href="/auth/register">Register</a></li>
+                    <li id='nav_item_login'><a href="/auth/login"><span class="glyphicon glyphicon-play-circle">&nbsp;</span>Login</a></li>
+                    <li id='nav_item_register'><a href="/auth/register"><span class="glyphicon glyphicon-user">&nbsp;</span>Register</a></li>
                     {% else %}
                     {% if global_is_judge %}
-                    <li id='nav_item_judge_tools'><a href="/judge_waiting"><span class="glyphicon glyphicon-play"></span>&nbsp;&nbsp;Judge Tools</a></li>
+                    <li id='nav_item_judge_tools'><a href="/judge_waiting"><span class="glyphicon glyphicon-play">&nbsp;</span>Judge Tools</a></li>
                     {% endif %}
                     {% if global_is_commentator %}
-                    <li id='nav_item_commentator_panel'><a href="/commentator_hub"><span class="glyphicon glyphicon-eye-open"></span>&nbsp;&nbsp;Commentator</a></li>
+                    <li id='nav_item_commentator_panel'><a href="/commentator_hub"><span class="glyphicon glyphicon-eye-open">&nbsp;</span>Commentator</a></li>
                     {% endif %}
                     {% if global_is_headjudge %}
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-info-sign"></span>&nbsp;&nbsp;Headjudge<span class="caret"></span></a>
+                    <li class="dropdown" id='nav_item_headjudge'>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-info-sign">&nbsp;</span>Headjudge<span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li id='nav_item_headjudge_panel'><a href="/headjudge/start_stop_heats">Start/Stop Heats</a></li>
-                            <li id='nav_item_headjudge_panel'><a href="/headjudge/judge_activities">Judging Activities</a></li>
+                            <li><a href="/headjudge/start_stop_heats">Start/Stop Heats</a></li>
+                            <li><a href="/headjudge/judge_activities">Judging Activities</a></li>
                         </ul>
                     </li>
                     {% endif %}
                     {% if global_is_admin %}
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-cog"></span>&nbsp;&nbsp;Admin<span class="caret"></span></a>
+                    <li class="dropdown" id='nav_item_tournament_admin'>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-cog">&nbsp;</span>Admin<span class="caret"></span></a>
                         <ul class="dropdown-menu">
 
-                            <li id='nav_item_tournament_admin'><a href="/tournament_admin/tournaments">Tournament Admin</a></li>
+                            <li><a href="/tournament_admin/tournaments">Tournament Admin</a></li>
                             <li role="separator" class="divider"></li>
                             <li id='nav_item_register'><a href="/auth/register">Register User</a></li>
                         </ul>
@@ -78,8 +116,8 @@
                 </ul>
                 {% if global_logged_in %}
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;{{ global_username }}</a></li>
-                    <li id='nav_item_logout'><a href="/auth/logout"><span class="glyphicon glyphicon-off"></span>&nbsp;&nbsp;Logout</a></li>
+                    <li><a><span class="glyphicon glyphicon-user">&nbsp;</span>{{ global_username }}</a></li>
+                    <li id='nav_item_logout'><a href="/auth/logout"><span class="glyphicon glyphicon-off">&nbsp;</span>Logout</a></li>
                 </ul>
                 {% endif %}
             </div>

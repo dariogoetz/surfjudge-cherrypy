@@ -26,8 +26,6 @@
 
 {% block content %}
 
-<h2>Judges</h2>
-
 <!-- All judges table -->
 <div class="container-fluid">
     <button type="button" id="new_btn" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-plus">&nbsp;</span>New Judge</button>
@@ -172,6 +170,12 @@ $('#judge_submit').on('click', function(){
       $('#edit_judge_modal').modal('toggle');
       $('#judges_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_judges'});
  });
+
+
+var active_judges_dlb = $('#active_judges_select').bootstrapDualListbox(
+    {nonSelectedListLabel: 'Unselected judges',
+    selectedListLabel: 'Selected judges'}
+);
 
 </script>
 

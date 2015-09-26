@@ -52,7 +52,25 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         self._thread = threading.Thread(target=self._run)
         self._thread.start()
 
-        self._db_info = self._read_db_info()
+        print 'database: Initializing ID pointers'
+        tournaments = self.get_tournaments({})
+        n_tournaments = max([t['id'] for t in tournaments])
+        categories = self.get_categories({})
+        n_categories = max([t['id'] for t in categories])
+        heats = self.get_heats({})
+        n_heats = max([t['id'] for t in heats])
+        surfers = self.get_surfers({})
+        n_surfers = max([t['id'] for t in surfers])
+        judges = self.get_judges({})
+        n_judges = max([t['id'] for t in judges])
+
+        self._db_info = {'n_tournaments': n_tournaments,
+                         'n_categories': n_categories,
+                         'n_heats': n_heats,
+                         'n_surfers': n_surfers,
+                         'n_judges': n_judges,}
+
+        #self._db_info = self._read_db_info()
 
         return
 
@@ -371,11 +389,17 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def _insert_surfer(self, surfer):
         if 'id' not in surfer or surfer['id'] is None:
-            # generate new id
-            n_surfers = self._db_info.setdefault('n_surfers', 0)
-            surfer['id'] = n_surfers
-            self._db_info['n_surfers'] += 1
-            self._write_db_info()
+            #check if surfer already exists
+            existing_surfers = self._get_surfers({'first_name': surfer.get('first_name', ''), 'last_name': surfer.get('last_name', '')})
+            if len(existing_surfers) > 0:
+                print 'database: Surfer "{} {}" already exists!'.format(surfer.get('first_name', ''), surfer.get('last_name', ''))
+                surfer['id'] = existing_surfers[0].get('id')
+            else:
+                # generate new id
+                n_surfers = self._db_info.setdefault('n_surfers', 0)
+                surfer['id'] = n_surfers
+                self._db_info['n_surfers'] += 1
+
         # check if id exists
         if len(self._get_surfers({'id': surfer.get('id')})) > 0:
             self._modify_in_db({'id': surfer.get('id')}, surfer, 'surfers')

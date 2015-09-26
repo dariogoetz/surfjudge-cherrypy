@@ -5,7 +5,7 @@ def read_surfers(filename):
     with open(filename, 'rb') as fp:
         surfer_reader = csv.DictReader(fp, delimiter=';')
         for row in surfer_reader:
-            res.setdefault(int(row['id']), row)
+            res.setdefault('{} {}'.format(row['first_name'], row['last_name']), row)
     return res
 
 def read_lycra_colors(filename):
@@ -15,3 +15,7 @@ def read_lycra_colors(filename):
         for row in colors:
             res.setdefault(row['COLOR'], row)
     return res
+
+
+def write_csv(data):
+    pass

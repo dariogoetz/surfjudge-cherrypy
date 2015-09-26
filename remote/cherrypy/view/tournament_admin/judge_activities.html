@@ -1,6 +1,6 @@
 {% extends "base_dashboard.html" %}
 
-{% block nav_items %}['#nav_item_tournament_admin', '#sidebar_item_edit_judge_activities']{% endblock nav_items %}
+{% block nav_items %}['#nav_item_headjudge']{% endblock nav_items %}
 
 {% block title %}Edit Surfers{% endblock title %}
 
@@ -25,15 +25,13 @@
 {% endblock css %}
 
 {% block content %}
-<h2>Active Judges in Heat</h2>
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-3">
             <div class="dropdown">
                 <div class="btn-group">
                 <button id="tournaments_dropdown_select" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span id="tournaments_dropdown_label">Tournaments</span>&nbsp;<span class="caret"></span>
+                    <span id="tournaments_dropdown_label">Tournament</span>&nbsp;<span class="caret"></span>
                 </button>
                 <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="tournaments_dropdown_label">
                 </ul>
@@ -45,7 +43,7 @@
             <div class="dropdown">
                 <div class="btn-group">
                 <button id="categories_dropdown_select" class="btn btn-small dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span id="categories_dropdown_label">Categories</span>&nbsp;<span class="caret"></span>
+                    <span id="categories_dropdown_label">Category</span>&nbsp;<span class="caret"></span>
                 </button>
                 <ul id="categories_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="categories_dropdown_label">
                 </ul>

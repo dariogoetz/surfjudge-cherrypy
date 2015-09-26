@@ -229,10 +229,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         import utils
         surfers = utils.read_surfers('tmp_surfers.csv')
         for sid, surfer in surfers.items():
-            print surfer, type(surfer)
-            print 'Inserting surfer {}'.format(surfer['name']),
             res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, surfer).pop(0)
-            print 'done. {}'.format(res)
         return
 
 

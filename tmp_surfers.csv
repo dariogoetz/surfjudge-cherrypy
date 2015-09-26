@@ -1,5 +1,5 @@
-id;first_name;last_name;name;country;additional_info
-1;Dario;Goetz;Dario Goetz;Germany;
-2;Christian;Reiher;Christian Reiher;Germany;
-3;Nicolas;Kuhnen;Nicolas Kuhnen;Spain;
-4;Julian;Rommel;Julian Rommel;Gernany;
+first_name;last_name;name;country;additional_info
+Dario;Goetz;Dario Goetz;Germany;
+Christian;Reiher;Christian Reiher;Germany;
+Nicolas;Kuhnen;Nicolas Kuhnen;Spain;
+Julian;Rommel;Julian Rommel;Gernany;
