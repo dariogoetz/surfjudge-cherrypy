@@ -27,8 +27,8 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    @cherrypy.tools.render(template='judge_waiting.html')
-    def judge_waiting(self):
+    @cherrypy.tools.render(template='judge_hub.html')
+    def judge_hub(self):
         data = self._standard_env()
         return data
 
@@ -36,14 +36,20 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     #@require(is_admin()) # later ask for judge or similar
     @cherrypy.tools.render(template='judge_panel.html')
-    def judge_panel(self):
+    def do_get_judge_panel(self, heat_id = None):
+        if heat_id is None:
+            return ''
+
+        heat_id = int(heat_id)
         judge_id = cherrypy.session.get(KEY_JUDGE_ID)
         heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
         data = self._standard_env()
-        if len(heats) > 0:
-            heat_id = int(heats.keys()[0])
-        else:
+        if len(heats) == 0:
             return ''
+
+        if heat_id not in [h['heat_id'] for h in heats.values()]:
+            print 'do_get_judge_panel: Is not judge for requested heat_id'
+            return 'res'
 
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
         surfer_data = heat_info['participants']
@@ -79,6 +85,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         ids = map(str, surfer_data.get('surfer_id', []))
         colors = map(str, surfer_data.get('surfer_color', []))
         colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
+        data['heat_id'] = heat_id
         data['surfers'] = dict(zip(ids, colors))
         data['surfer_color_names'] = colors
         data['surfer_color_colors'] = dict(zip(colors, colors_hex))
@@ -142,6 +149,8 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         if judge_id is not None:
             # not all judges scores were requested
             out_scores = out_scores.get(judge_id, {})
+        else:
+            # filter out only judges that are active for that heat
         return json.dumps(out_scores)
 
     @cherrypy.expose

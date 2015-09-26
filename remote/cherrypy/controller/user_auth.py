@@ -82,7 +82,7 @@ class AuthenticationController(CherrypyWebInterface):
     # functions as website as well as POST request leading to website, if unsuccessful
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/login_form.html')
-    def login(self, username = None, password = None, from_page = '/judge_waiting'):
+    def login(self, username = None, password = None, from_page = '/judge_hub'):
         env = self._standard_env()
         message = ''
         if cherrypy.request.method == 'POST':
