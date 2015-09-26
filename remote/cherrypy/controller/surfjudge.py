@@ -151,6 +151,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             out_scores = out_scores.get(judge_id, {})
         else:
             # filter out only judges that are active for that heat
+            pass
         return json.dumps(out_scores)
 
     @cherrypy.expose
