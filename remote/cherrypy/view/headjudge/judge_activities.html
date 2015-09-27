@@ -8,9 +8,10 @@
 
 {% block content %}
 <div class="container-fluid"">
-    <table class="table">
+    <table class= "table table-bordered">
         <tr>
-            <td><b>Wave</b></td>
+            <th><b>Wave</b></th>
+            <th><b>Judge</b></th>
             {% for wave_idx in range( number_of_waves ) %}
             <td align="center" colspan="2">
                 <b>{{ loop.index }}</b>
