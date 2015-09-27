@@ -168,7 +168,6 @@ function fill_modal(heat_id, heat_name, date, start_time, n_waves, additional_in
     $('#modal_date_picker').data('datepicker').setValue(date);
   }
   if (date == null){
-    $('#modal_time_picker').timepicker('setTime', '');
   } else {
     $('#modal_time_picker').timepicker('setTime', start_time);
   }
@@ -339,7 +338,7 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
                   <tbody>
                   </tbody>
               </table>
-              <a href="#edit_participants_modal" class="btn btn-standard" data-toggle="modal"> Edit Participants</a>
+              <a id="edit_participants_btn" href="#edit_participants_modal" class="btn btn-standard" data-toggle="modal">Edit Participants</a>
           </div>
 
       </div><!-- /.modal-body -->
@@ -397,6 +396,10 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 <script>
  // ***** MODAL internals *****
  $('#modal_submit').on('click', function(){
+     upload_heat_details();
+});
+
+function upload_heat_details(){
     var heat_id = $('#modal_heat_id').val();
     var heat_name = $('#modal_heat_name').val();
     var date = $('#modal_date_input').val();
@@ -413,25 +416,25 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
         alert('Empty field "Heat Name"');
         return
     };
+    var heat_data = {heat_id: heat_id, heat_name: heat_name, tournament_id: tournament_id, category_id: category_id, date: date, start_time: start_time, number_of_waves: number_of_waves, additional_info: additional_info}
 
-    $.post('{{ mount_loc }}/do_edit_heat', {heat_id: heat_id, heat_name: heat_name, tournament_id: tournament_id, category_id: category_id, date: date, start_time: start_time, number_of_waves: number_of_waves, additional_info: additional_info});
-    //$('#edit_heat_modal').modal('toggle');
-    $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
+    $.post('{{ mount_loc }}/do_edit_heat', heat_data, function(hid){
+        $('#modal_heat_id').val(hid);
+        $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
 
-     // push participants to server (here with colors)
-     var surfer_ids = [];
-     var surfer_colors = [];
-     $('#participants_table select option:selected').each(function(){
-         surfer_colors.push( $(this).val() );
-         surfer_ids.push( $(this).parent().data('surfer_id') );
-     });
-     surfer_ids = JSON.stringify(surfer_ids);
-     surfer_colors = JSON.stringify(surfer_colors);
+        // push participants to server (here with colors)
+        var surfer_ids = [];
+        var surfer_colors = [];
+        $('#participants_table select option:selected').each(function(){
+            surfer_colors.push( $(this).val() );
+            surfer_ids.push( $(this).parent().data('surfer_id') );
+        });
+        surfer_ids = JSON.stringify(surfer_ids);
+        surfer_colors = JSON.stringify(surfer_colors);
 
-     $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: heat_id, surfer_ids: surfer_ids, surfer_colors: surfer_colors});
-
-
-  });
+        $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: hid, surfer_ids: surfer_ids, surfer_colors: surfer_colors});
+    });
+  }
 
   $('#participants_submit').on('click', function(){
       // push participants to server (here yet without colors)
@@ -445,6 +448,10 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
       $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: heat_id, surfer_ids: surfer_ids});
       refresh_participants(heat_id);
   });
+
+$('#edit_participants_btn').on('click', function(){
+    upload_heat_details();
+});
 
  $('#modal_delete').on('click', function(){
      var tournament_id = $('#tournaments_dropdown_select').data('select');

@@ -311,7 +311,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._modify_in_db({'id': tournament.get('id')}, tournament, 'tournaments')
         else:
             self._insert_into_db(tournament, 'tournaments')
-        return
+        return tournament['id']
 
 
     def _get_categories(self, query_info, cols=None):
@@ -328,7 +328,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._modify_in_db({'id': category.get('id')}, category, 'categories')
         else:
             self._insert_into_db(category, 'categories')
-        return
+        return category['id']
 
 
 
@@ -352,7 +352,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._modify_in_db({'id': heat.get('id')}, heat, 'heats')
         else:
             self._insert_into_db(heat, 'heats')
-        return
+        return heat['id']
 
 
 
@@ -374,7 +374,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._modify_in_db({'username': judge.get('username')}, judge, 'judges')
         else:
             self._insert_into_db(judge, 'judges')
-        return
+        return judge['id']
 
 
 
@@ -401,7 +401,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._modify_in_db({'id': surfer.get('id')}, surfer, 'surfers')
         else:
             self._insert_into_db(surfer, 'surfers')
-        return
+        return surfer['id']
 
 
     def _get_participants(self, heat_id):

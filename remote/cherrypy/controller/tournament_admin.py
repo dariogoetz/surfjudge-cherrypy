@@ -171,7 +171,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         data['start_datetime'] = dstr_and_tstr2dtstr(data['date'], data['start_time'])
 
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_HEAT, data).pop(0)
-        return res
+        return str(res)
 
 
     @cherrypy.expose
