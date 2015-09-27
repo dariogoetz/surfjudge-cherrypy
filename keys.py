@@ -1,4 +1,7 @@
 
+VAL_MISSED = -1
+VAL_INTERFERENCE = -2
+
 #########
 # roles #
 #########
