@@ -54,15 +54,15 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
         print 'database: Initializing ID pointers'
         tournaments = self.get_tournaments({})
-        n_tournaments = max([t['id'] for t in tournaments])
+        n_tournaments = max([t['id'] for t in tournaments]) + 1
         categories = self.get_categories({})
-        n_categories = max([t['id'] for t in categories])
+        n_categories = max([t['id'] for t in categories]) + 1
         heats = self.get_heats({})
-        n_heats = max([t['id'] for t in heats])
+        n_heats = max([t['id'] for t in heats]) + 1
         surfers = self.get_surfers({})
-        n_surfers = max([t['id'] for t in surfers])
+        n_surfers = max([t['id'] for t in surfers]) + 1
         judges = self.get_judges({})
-        n_judges = max([t['id'] for t in judges])
+        n_judges = max([t['id'] for t in judges]) + 1
 
         self._db_info = {'n_tournaments': n_tournaments,
                          'n_categories': n_categories,
@@ -137,7 +137,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
-
+    def delete_category(self, category):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        del_category = lambda data: self._delete_from_db(data, 'categories')
+        self.__access_queue.put( (del_category, category, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
 
     ############ heats interface ##############
     def get_heats(self, query_info):
