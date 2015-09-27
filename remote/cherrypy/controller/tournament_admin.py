@@ -112,6 +112,13 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_CATEGORY, data).pop(0)
         return res
 
+    @cherrypy.expose
+    def do_delete_category(self, id=None):
+        if id is None:
+            return
+        category = {'id': id}
+        cherrypy.engine.publish(KEY_ENGINE_DB_DELETE_CATEGORY, category).pop(0)
+        return
 
 
     @cherrypy.expose

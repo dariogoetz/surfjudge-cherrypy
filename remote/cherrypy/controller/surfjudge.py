@@ -167,7 +167,6 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         #score = score.encode('utf-8')
         score = json.loads(score)
         db_data = score
-        print score
 
         judge_id = cherrypy.session.get(KEY_JUDGE_ID)
         if judge_id is None:
@@ -233,3 +232,63 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         env = {}
         env['message'] = msg
         return env
+
+    @cherrypy.expose
+    def export_scores(self, heat_id=None, n_best=2):
+        heat_id = int(heat_id)
+        query_info = {KEY_HEAT_ID: heat_id}
+        scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+
+        id2color = dict(zip(heat_info['participants'].get('surfer_id', []), heat_info['participants'].get('surfer_color', [])))
+
+        judges = set(heat_info.get('judges', []))
+        scores_by_surfer_wave = {}
+        scores_by_judge_id = {}
+        for score in scores:
+            if score[KEY_JUDGE_ID] not in judges:
+                continue
+            scores_by_surfer_wave.setdefault(score['surfer_id'], {}).setdefault(score['wave'], {})[score[KEY_JUDGE_ID]] = score
+            scores_by_judge_id.setdefault(score[KEY_JUDGE_ID], {}).setdefault(score['surfer_id'], {})[score['wave']] = score['score']
+            #filtered_scores.append(score)
+
+        average_scores = {}
+        for surfer_id, data in scores_by_surfer_wave.items():
+            for wave, judge_data in data.items():
+                if set(judge_data.keys()) != judges:
+                    print 'export_scores: not all judges gave score for wave {} of surfer {} --> ignoring'.format(wave, surfer_id)
+                    continue
+                s = []
+                for judge_id, score_data in judge_data.items():
+                    if score_data['score'] < 0:
+                        continue
+                    s.append(score_data['score'])
+                average_scores.setdefault(surfer_id, {})[wave] = float(sum(s)) / len(s)
+
+        best_scores = {}
+        for surfer_id, data in average_scores.items():
+            #best_scores.setdefault(surfer_id, {})['average'] = sorted(data.items(), key=lambda x: x[1], reverse=True)[:n_best]
+            for judge_id in scores_by_judge_id:
+                vals = scores_by_judge_id[judge_id][surfer_id]
+                best_scores.setdefault(surfer_id, {})[judge_id] = sorted(vals.items(), key=lambda x: x[1], reverse=True)[:n_best]
+
+        csv_out_data = []
+        labels_scores = ['{}. best wave score'.format(i+1) for i in range(n_best)]
+        labels_index = ['{}. best wave number'.format(i+1) for i in range(n_best)]
+        header = ['color', 'judge_id'] + labels_scores + labels_index
+        for surfer_id, data in best_scores.items():
+            for judge_id, vals in data.items():
+                res = {}
+                res['judge_id'] = judge_id
+                res['color'] = id2color.get(surfer_id, 'Error: Color not found')
+                indices, scores = zip(*vals)
+                for label_index, label_score, index, score in zip(labels_index, labels_scores, indices, scores):
+                    res[label_score] = score
+                    res[label_index] = index + 1
+                csv_out_data.append(res)
+
+        from csv import DictWriter
+        with open('export_heat_{}.csv'.format(heat_id), 'wb') as fp:
+            writer = DictWriter(fp, fieldnames=header, delimiter=';')
+            writer.writeheader()
+            writer.writerows(csv_out_data)
