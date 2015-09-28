@@ -240,6 +240,7 @@ function activate_commentator_panel(active_heat_id){
                                         }
                                     }
                                     average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]/average_counter;
+                                    average_scores[surfer_id][wave_number_string]= Math.round( average_scores[surfer_id][wave_number_string] * 10 ) / 10;
                                 }
                             }
                         }
@@ -248,6 +249,7 @@ function activate_commentator_panel(active_heat_id){
                     {
                         for (var surfer_id in current_scores)
                         {
+                            
                             average_scores[surfer_id]={};
                             if(minimum_of_logged_waves[surfer_id]!=0)
                             {
@@ -285,8 +287,11 @@ function activate_commentator_panel(active_heat_id){
                                             average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]+current_scores[surfer_id][judge_id][wave_number_string];
                                         }
                                     }
+                                    
                                     average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]/average_counter;
+                                    average_scores[surfer_id][wave_number_string]= Math.round( average_scores[surfer_id][wave_number_string] * 10 ) / 10;
                                 }
+                                
                             }
                         }    
                     }
@@ -333,10 +338,12 @@ function activate_commentator_panel(active_heat_id){
                         if(top_waves[surfer_id][1]!='-')
                         {
                             total_scores[surfer_id]=top_waves[surfer_id][0]+top_waves[surfer_id][1];
+                            total_scores[surfer_id]= Math.round( total_scores[surfer_id] * 10 ) / 10;
                         }
                         else
                         {
                             total_scores[surfer_id]=top_waves[surfer_id][0];
+                            total_scores[surfer_id]= Math.round( total_scores[surfer_id] * 10 ) / 10;
                         }   
                     }
                     
@@ -364,6 +371,7 @@ function activate_commentator_panel(active_heat_id){
                             needs[surfer_id]= Math.round( needs[surfer_id] * 10 ) / 10;
                         }
                     }
+                   
                     
                     console.log('active judges:');
                     console.log(active_judges);
