@@ -91,7 +91,39 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         data['surfer_color_colors'] = dict(zip(colors, colors_hex))
         data['number_of_waves'] = int(heat_info['number_of_waves'])
         return data
+    # --------------- Begin "Christians Misthaufen" --------------------------------------------------------------------
+    # Ich hab erstmal das Judge Panel kopiert, da drin aendere ich dann Krams wie ich es brauch!
+    @cherrypy.expose
+    #@require(is_admin()) # later ask for judge or similar
+    @cherrypy.tools.render(template='edit_scores_panel.html')
+    def do_get_editor_panel(self, heat_id = None): #--------editiert-------------
+        if heat_id is None:
+            return ''
 
+        heat_id = int(heat_id)
+        judge_id = cherrypy.session.get(KEY_JUDGE_ID) #------Frage: Der Admin ist doch vlt garnicht Judge, muss ich hier was aendern?
+        heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
+        data = self._standard_env()
+        if len(heats) == 0:
+            return ''
+
+        #if heat_id not in [h['heat_id'] for h in heats.values()]:         # Ich glaube den kram kann ich loeschen
+        #    print 'do_get_judge_panel: Is not judge for requested heat_id'
+        #    return 'res'
+
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        surfer_data = heat_info['participants']
+        ids = map(str, surfer_data.get('surfer_id', []))
+        colors = map(str, surfer_data.get('surfer_color', []))
+        colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
+        data['judge_ids'] = heat_info['judges'].keys() # ----------NEU----------- Mit der Zeile gibts im Jinja Template die variable {{judge_ids}}
+        data['judge_name'] = '{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name'])
+        data['surfers'] = dict(zip(ids, colors))
+        data['surfer_color_names'] = colors
+        data['surfer_color_colors'] = dict(zip(colors, colors_hex))
+        data['number_of_waves'] = int(heat_info['number_of_waves'])
+        return data
+    # --------------- End "Christians Misthaufen" --------------------------------------------------------------------
 
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_COMMENTATOR))
