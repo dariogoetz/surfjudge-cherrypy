@@ -1,0 +1,373 @@
+{% extends "base_template.html" %}
+
+{% block nav_items %}['#nav_item_judge_tools']{% endblock nav_items %}
+
+{% block title %}UI for Judges{% endblock title %}
+
+
+{% block css %}
+{{ super()}}
+<style type="text/css">
+.main_panel
+{
+	width:100%;
+	height:100%;
+	background-color:#FFFFFF;
+	padding:20px;
+}
+
+.number_button
+{
+	width:70px;
+	height:70px;
+	margin:10px;
+	float:left;
+	background-color:#AAAAAA;
+
+	font-size:36px;
+	text-align:center;
+}
+
+.text_box_inactive
+{
+	width:50px;
+	height:30px;
+	font-size:24px;
+	text-align:right;
+}
+
+.enter_wave
+{
+	width:100px;
+	height:30px;
+	font-size:14px;
+	text-align:left;
+	background-color:#AAAAAA;
+	border-style: solid;
+    border-width: 0px;
+}
+
+.cancel_button
+{
+	width:140px;
+	height:70px;
+	margin:10px;
+	float:left;
+	background-color:#AAAAAA;
+
+	font-size:25px;
+	text-align:center;
+}
+
+.enter_button
+{
+	width:140px;
+	height:70px;
+	margin:10px;
+	float:left;
+	background-color:#AAAAAA;
+
+	font-size:25px;
+	text-align:center;
+}
+</style>
+{% endblock css %}
+
+
+
+
+{% block javascript %}
+
+{{ super() }}
+
+<script type="text/javascript">
+var MISSED = -1;
+var INTERFERENCE = -2;
+//Variables that need to be defined by Contest Operators*****
+var max_no_of_waves= -1; // 10 is default value will be overwritten by toggle_visibility
+var surfer_colors_hex= []; //will be overwritten by toggle_visibility
+var surfer_color_names = {};
+var current_surfer="none";
+
+//Variables	that are needed to run the script, using variables from contest operator as parameters
+var current_input_field="none"; //This variables is a state variable telling the key board where to write input
+var surfer_scores={};// This variable contains for each surfer an array with his scored waves
+
+
+function activate_judge_panel(heat_id){
+    $.getJSON('do_get_active_heat_info', {heat_id: heat_id}, function(data){
+        max_no_of_waves = data['number_of_waves'];
+        surfer_colors_hex = []
+        var surfer_colors_hex_array = data['participants']['surfer_color_hex'];
+        surfer_color_names = data['participants']['surfer_color'];
+        current_surfer="none";
+        current_input_field='none';
+        surfer_scores={};
+         // Initialize colors in surfer_scores from jinja template
+        for (var surfer_color_idx = 0; surfer_color_idx < surfer_color_names.length; surfer_color_idx++)
+        {
+            surfer_colors_hex[surfer_color_names[surfer_color_idx]] = surfer_colors_hex_array[surfer_color_idx];
+            surfer_scores[surfer_color_names[surfer_color_idx]] = [];
+        }
+        sync_with_server();
+        make_buttons_quadratic();
+        $(window).resize(make_buttons_quadratic);
+        $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Category: ' + data['category_name'] + ' Heat: ' + data['heat_name']);
+    });
+ }
+
+
+
+
+
+
+
+function transform_score_index_to_field_id(color,surfer_score_index)
+{
+	return color + "_" + surfer_score_index;
+}
+
+function mark_field_as_best(field_id)
+{
+	document.getElementById(field_id).style.backgroundColor = "#DDDDF1";
+	//document.getElementById(field_id).style.border = "solid black 2px";
+}
+
+function mark_field_as_active(field_id)
+{
+	document.getElementById(field_id).style.backgroundColor = surfer_colors_hex[current_surfer];
+	// document.getElementById(field_id).style.border = "solid black 2px";
+}
+
+function mark_field_as_inactive(field_id)
+{
+	document.getElementById(field_id).style.backgroundColor = "#FFFFFF";
+	document.getElementById(field_id).style.border = "solid black 1px";
+}
+function mark_best_field_of_surfer(color)
+ {
+	var best_score=0;
+	var best_score_id="none";
+	for (var surfer_score_index = 0; surfer_score_index < surfer_scores[color].length; surfer_score_index++)
+	 {
+        var score = parseFloat(surfer_scores[color][surfer_score_index]);
+		if (score < 0) // Check if field contains valid score i.e. not a missed of interference
+        {
+        }
+        else
+        {
+            if (score >= best_score)
+            {
+                best_score = score;
+                best_score_id = transform_score_index_to_field_id(color,surfer_score_index);
+            }
+        }
+		var field_id=transform_score_index_to_field_id(color, surfer_score_index);
+		mark_field_as_inactive(field_id);
+	}
+    if ( !(best_score_id === "none") )
+	     mark_field_as_best(best_score_id);
+}
+
+
+function sync_with_server()
+{
+    $.getJSON('do_query_scores', function(server_data){
+        for (var color in surfer_scores)
+        {
+            var server_data_length=0;
+            if (color in server_data)
+            {
+                server_data_length=server_data[color].length;
+                for (var wave_index=0; wave_index < server_data[color].length; wave_index++)
+                {
+                    surfer_scores[color][wave_index] = server_data[color][wave_index];
+                }
+            }
+            if (surfer_scores[color].length > server_data_length)
+            {
+                for (var wave_index=server_data_length; wave_index < surfer_scores[color].length; wave_index++)
+                {
+                    var missed = (surfer_scores[color][wave_index] === MISSED);
+                    var interference = (surfer_scores[color][wave_index] === INTERFERENCE);
+                    var upload_data = {'color':color, 'score':surfer_scores[color][wave_index], 'wave':wave_index, 'missed': missed, 'interference': interference };
+                    var jsonyfied_upload_data= JSON.stringify(upload_data); //Transform object into JSON
+                    var data_to_be_uploaded = {'score':jsonyfied_upload_data};
+                    $.post('do_insert_score',data_to_be_uploaded);
+                }
+            }
+        }
+        update_fields();
+    });
+}
+
+function update_fields()
+{
+	clear_fields();
+	for (var color in surfer_scores)
+	{
+		for (surfer_score_index = 0; surfer_score_index < surfer_scores[color].length; surfer_score_index++)
+		{
+			var field_id = transform_score_index_to_field_id(color,surfer_score_index);
+			var text_box = document.getElementById(field_id);
+			text_box.value=surfer_scores[color][surfer_score_index];
+		}
+		mark_best_field_of_surfer(color);
+	}
+}
+
+function clear_fields()
+{
+	for (var color in surfer_scores)
+	{
+		for (var j = 0; j<max_no_of_waves;j++)
+		{
+			var field_id=transform_score_index_to_field_id(color,j);
+			var text_box = document.getElementById(field_id);
+			text_box.value="";
+            mark_field_as_inactive(field_id);
+		}
+	}
+
+}
+
+function number_write(x)
+{
+	if(current_input_field!="none")
+	{
+		var text_box = document.getElementById(current_input_field);
+        var text_box_value = parseFloat(text_box.value);
+		if(x===MISSED)
+        {
+            text_box.value="M";
+        }
+        else if(x===INTERFERENCE)
+        {
+            text_box.value="I";
+        }
+        else if(!isNaN(text_box_value) && x>=0 && x<=9)
+		{
+			var input = text_box_value * 10 + 0.1 * x;
+			if (input<=10)
+			{
+				text_box.value = input.toFixed(1);
+			}
+		}
+        else if (text_box.value==="")
+        {
+            text_box.value = (x*0.1).toFixed(1);
+        }
+	}
+}
+
+function number_clear()
+{
+	if(current_input_field != "none")
+	{
+		document.getElementById(current_input_field).value = "";
+	}
+}
+
+function set_input_field(color)
+{
+	//cancel();
+    if (current_input_field === 'none')
+    {
+        current_input_field= transform_score_index_to_field_id(color,surfer_scores[color].length);
+        current_surfer=color;
+        mark_field_as_active(current_input_field);
+    }
+}
+function enter_score()
+{
+	if(current_input_field != "none" )
+	{
+		var text_box = document.getElementById(current_input_field);
+        var content_of_text_box=parseFloat(text_box.value); // Konvertiert den String aus dem Input Feld in eine Zahl vom Typ Float
+		if (text_box.value==="M")
+        {
+            surfer_scores[current_surfer][surfer_scores[current_surfer].length]=MISSED;
+        }
+        else if (text_box.value==="I")
+        {
+            surfer_scores[current_surfer][surfer_scores[current_surfer].length]=INTERFERENCE;
+        }
+		else if(!isNaN(content_of_text_box) && content_of_text_box >=0 && content_of_text_box<=10)
+		{
+			surfer_scores[current_surfer][surfer_scores[current_surfer].length]=content_of_text_box;
+		}
+        else
+        {
+            text_box.value = "";
+        }
+        mark_field_as_inactive(current_input_field);
+	}
+    sync_with_server();
+    mark_best_field_of_surfer(current_surfer);
+    current_surfer="none";
+	current_input_field="none";
+ }
+
+function cancel()
+{
+    number_clear();
+    if (current_input_field != 'none')
+    {
+        mark_field_as_inactive(current_input_field);
+    }
+    current_surfer="none";
+	current_input_field="none";
+}
+function make_buttons_quadratic()
+{
+    var cw = $('.quadratic').width();
+    $('.quadratic').height(cw);
+}
+</script>
+
+<script>
+function toggle_visibility()
+{
+    $.getJSON('do_get_active_heat_info', function(active_heat_info)
+        {
+        if (! $.isEmptyObject(active_heat_info)){ //if user is not active in any heat
+            if ($('#judge_panel').data('status')==='inactive'){
+                var heat_id = active_heat_info['heat_id'];
+                $.get('/do_get_judge_panel', {heat_id: heat_id}, function(judge_panel){
+                    if (active_heat_info != ''){
+                        $('#judge_panel').append(judge_panel);
+                        $('#judge_panel').data('status', 'active');
+                        activate_judge_panel(heat_id);
+                        $('#waiting_banner').hide();
+                    }
+                });
+            }
+        } else {
+            $('#judge_panel').empty();
+            $('#judge_panel').data('status', 'inactive');
+            $('#waiting_banner').show();
+        }
+
+    });
+}
+
+</script>
+
+
+<script>
+	$(document).ready(function(){
+        toggle_visibility();
+        setInterval(toggle_visibility, 5000);
+    });
+</script>
+{% endblock javascript %}
+
+
+{% block content %}
+
+<div class="jumbotron" id="waiting_banner"><h1>Please wait for heat to start...</h1></div>
+
+
+<div class="container-fluid" id="judge_panel" data-status="inactive">
+</div>
+{% endblock content %}
