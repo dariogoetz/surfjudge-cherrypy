@@ -1,4 +1,58 @@
+<!--- TO-DOs -----------------------------------------------------------------------------------
+o   Jinja Variable number_of_judges erstellen
+o   Jinja Variable judge_ids erstellen
+o   Jinja Variable 1st_judge_id erstellen
+o   Jinja Varaible rest_judge_ids
+----------------------------------------------------------------------------------------------->
 
+{% extends "base_template.html" %}
+
+{% block nav_items %}['#nav_item_headjudge_judge_activities']{% endblock nav_items %}
+
+{% block title %}Judge Activities{% endblock title %}
+
+
+
+{% block content %}
+<div class="container-fluid"">
+    <table class= "table table-bordered">
+        <tr>
+            <th><b>Surfer</b></th>
+            <th><b>Judges</b></th>
+            {% for wave_idx in range( number_of_waves ) %}
+                <th align="center" colspan="2">
+                    {{ loop.index }}
+                </th>
+            {% endfor %}
+        </tr>
+
+        {% for surfer_color in surfer_color_names %}
+        
+            <tr><!-- This row is only for first judge and average scores -->
+                <td rowspan="{{number_of_judges}}">
+                    <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000" onclick="set_input_field( '{{ surfer_color }}' )" id="{{ surfer_color }}_enter"><b>{{ surfer_color }}</b></button>
+                </td>
+                <td>
+                    Judge: {{1st_judge_id}}
+                </td>
+                {% for wave_idx in range( number_of_waves ) %}
+                    <td vertical-align="middle" rowspan="{{number_of_judges}" id='average_{{surfer_color}}_{{wave_idx}}'> - </td>
+                    <td id='{{1st_judge_id}}_{{surfer_color}}_{{wave_idx}}'>-</td>
+                {% endfor %}
+            </tr>
+        {%endfor%}
+        
+        {% for judge_id in rest_judge_ids %}
+            <tr><!-- This row is only for rest_judges -->
+                <td>Judge: {{judge_id}}</td>
+                {% for wave_idx in range( number_of_waves ) %}
+                    <td id='{{judge_id}}_{{surfer_color}}_{{wave_idx}}'>-</td>
+                {% endfor %}
+            </tr>
+        {%endfor%}
+    </table>
+
+<!------------ Ab hier altes Commentator_panel----------------------------------------->
 <table class="table table-striped"
        id="commentator_table"
        data-toggle="table"
@@ -23,3 +77,6 @@
 <div class="btn-toolbar" role="toolbar">
     <button class="btn btn-lg btn-standard" onclick="activate_commentator_panel({{ heat_id }});"><span class="glyphicon glyphicon-refresh">&nbsp;</span>Update</button> <!-- This button reloads the page from server-->
 </div>
+
+
+
