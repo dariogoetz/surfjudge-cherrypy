@@ -4,6 +4,7 @@
     {% block header %}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="description" content="{{ description }}" >
     <meta name="author" content="Christian und Dario" >
     <meta name="viewport" content="width=device-width, user-scalable=no">
@@ -251,12 +252,13 @@
     <script src="/static/bootstrap_table/bootstrap-table.min.js"></script>
     <!-- The following sets the current navigation item as active -->
     <script>
-        $(document).ready(function() {
-            var elem_ids = {% block nav_items %}["#nav_item_home"]{% endblock nav_items %};
-            for (i=0; i<elem_ids.length; i++){
-                $(elem_ids[i]).addClass("active");
-            }
-        });
+     $(document).ready(function() {
+         window.scrollTo(0,1);
+         var elem_ids = {% block nav_items %}["#nav_item_home"]{% endblock nav_items %};
+         for (i=0; i<elem_ids.length; i++){
+             $(elem_ids[i]).addClass("active");
+         }
+     });
     </script>
     {% endblock javascript %}
 

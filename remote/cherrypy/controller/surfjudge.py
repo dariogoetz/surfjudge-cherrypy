@@ -91,46 +91,14 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         data['surfer_color_colors'] = dict(zip(colors, colors_hex))
         data['number_of_waves'] = int(heat_info['number_of_waves'])
         return data
-    # --------------- Begin "Christians Misthaufen" --------------------------------------------------------------------
-    # Ich hab erstmal das Judge Panel kopiert, da drin aendere ich dann Krams wie ich es brauch!
-    @cherrypy.expose
-    #@require(is_admin()) # later ask for judge or similar
-    @cherrypy.tools.render(template='edit_scores_panel.html')
-    def do_get_editor_panel(self, heat_id = None): #--------editiert-------------
-        if heat_id is None:
-            return ''
 
-        heat_id = int(heat_id)
-        judge_id = cherrypy.session.get(KEY_JUDGE_ID) #------Frage: Der Admin ist doch vlt garnicht Judge, muss ich hier was aendern?
-        heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
-        data = self._standard_env()
-        if len(heats) == 0:
-            return ''
-
-        #if heat_id not in [h['heat_id'] for h in heats.values()]:         # Ich glaube den kram kann ich loeschen
-        #    print 'do_get_judge_panel: Is not judge for requested heat_id'
-        #    return 'res'
-
-        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
-        surfer_data = heat_info['participants']
-        ids = map(str, surfer_data.get('surfer_id', []))
-        colors = map(str, surfer_data.get('surfer_color', []))
-        colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
-        data['judge_ids'] = heat_info['judges'].keys() # ----------NEU----------- Mit der Zeile gibts im Jinja Template die variable {{judge_ids}}
-        data['judge_name'] = '{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name'])
-        data['surfers'] = dict(zip(ids, colors))
-        data['surfer_color_names'] = colors
-        data['surfer_color_colors'] = dict(zip(colors, colors_hex))
-        data['number_of_waves'] = int(heat_info['number_of_waves'])
-        return data
-    # --------------- End "Christians Misthaufen" --------------------------------------------------------------------
 
     @cherrypy.expose
-    @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_COMMENTATOR))
+    #@require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_COMMENTATOR, KEY_ROLE_ADMIN))
     def do_query_scores(self, heat_id = None, judge_id = None, get_for_all_judges = None):
         roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
 
-        if get_for_all_judges and KEY_ROLE_COMMENTATOR in roles:
+        if get_for_all_judges and (KEY_ROLE_COMMENTATOR in roles or KEY_ROLE_ADMIN in roles):
             judge_id = None
         elif judge_id is None:
             judge_id = cherrypy.session.get(KEY_JUDGE_ID)
@@ -138,7 +106,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                 print 'Error in "do_query_scores": No judge_id specified and is no judge'
                 return '[]'
         else:
-            if not KEY_ROLE_COMMENTATOR in roles:
+            if not KEY_ROLE_COMMENTATOR in roles and not KEY_ROLE_ADMIN in roles:
                 print 'Error in "do_query_scores": judge_id specified but is no commentator'
                 return '[]'
 
@@ -159,7 +127,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             query_info[KEY_JUDGE_ID] = int(judge_id)
 
         scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
-        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        heat_info = self.collect_heat_info(heat_id)
         if heat_info is None:
             return '[]'
 
@@ -192,18 +160,25 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         return json.dumps(out_scores)
 
     @cherrypy.expose
-    @require(has_all_roles(KEY_ROLE_JUDGE))
-    def do_insert_score(self, score = None, heat_id = None):
+    @require(has_one_role(KEY_ROLE_JUDGE))
+    def do_insert_score(self, score = None, heat_id = None, judge_id = None):
         if score is None:
             return
         #score = score.encode('utf-8')
         score = json.loads(score)
         db_data = score
 
-        judge_id = cherrypy.session.get(KEY_JUDGE_ID)
+        if judge_id is not None:
+            # check if user is admin, else he is not allowed to set a judge_id
+            roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
+            if KEY_ROLE_ADMIN not in roles:
+                judge_id = None
         if judge_id is None:
-            print 'Error: Not registered as judge'
-            return
+            judge_id = cherrypy.session.get(KEY_JUDGE_ID)
+            if judge_id is None:
+                print 'Error: Not registered as judge'
+                return
+
         db_data['judge_id'] = judge_id
 
         # TODO: get heat_id for judge_id from state-manager
@@ -235,6 +210,39 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_one_role(KEY_ROLE_ADMIN))
+    def do_modify_score(self, score = None, heat_id = None, judge_id = None):
+        if score is None:
+            print 'do_modify_score: No score given'
+            return
+
+        score = json.loads(score)
+        db_data = score
+
+        if judge_id is None:
+            print 'do_modify_score: No judge id specified'
+            return
+
+        if heat_id is None:
+            print 'do_modify_score: No heat_id specified'
+            return
+
+        heat_id = int(heat_id)
+
+        db_data['judge_id'] = judge_id
+
+        db_data['heat_id'] = heat_id
+        heat_info = self.collect_heat_info(heat_id)
+        participants = heat_info['participants']
+        color2id = dict(zip(participants['surfer_color'], participants['surfer_id']))
+        db_data['surfer_id'] = int(color2id[score['color']])
+        del db_data['color']
+
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SCORE, db_data).pop()
+        return res
+
+
+    @cherrypy.expose
     def do_get_active_heat_info(self, heat_id = None, **kwargs):
         if heat_id is not None:
             heat_id = int(heat_id)
@@ -251,6 +259,15 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
         return json.dumps(heat_info)
 
+    @cherrypy.expose
+    #@require(has_all_roles(KEY_ROLE_ADMIN))
+    def do_get_heat_info(self, heat_id = None, **kwargs):
+        if heat_id is not None:
+            heat_id = int(heat_id)
+        else:
+            return ''
+        heat_info = self.collect_heat_info(heat_id)
+        return json.dumps(heat_info)
 
     @cherrypy.expose
     def do_get_all_active_heats(self, **kwargs):
@@ -266,11 +283,11 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         return env
 
     @cherrypy.expose
-    def export_scores(self, heat_id=None, n_best_waves=2):
+    def export_scores(self, heat_id=None, n_best_waves=2, mode='judge_sheet'):
         heat_id = int(heat_id)
         query_info = {KEY_HEAT_ID: heat_id}
         scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
-        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        heat_info = self.collect_heat_info(heat_id)#cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
 
         id2color = dict(zip(heat_info['participants'].get('surfer_id', []), heat_info['participants'].get('surfer_color', [])))
 
@@ -322,34 +339,39 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                 best_scores_by_judge.setdefault(surfer_id, {})[judge_id] = sorted(vals.items(), key=lambda x: x[1], reverse=True)[:n_best_waves]
                 all_scores.setdefault(surfer_id, {})[judge_id] = sorted(vals.items(), key=lambda x: x[0])
 
-
-        # export heat sheet
         from csv import DictWriter
-        csv_out_data = []
-        labels_scores = ['{}. wave'.format(i+1) for i in range(heat_info['number_of_waves'])]
-        header = ['color', 'judge_id'] + labels_scores
-        for surfer_id, data in all_scores.items():
-            for judge_id, vals in data.items():
-                res = {}
-                res['judge_id'] = judge_id
-                res['color'] = id2color.get(surfer_id, 'Error: Color not found')
-                indices, scores = zip(*vals)
-                for label_score, score in zip(labels_scores, scores):
-                    res[label_score] = score
-                csv_out_data.append(res)
-
-            with open('export_heat_{}_heat_sheet.csv'.format(heat_id), 'wb') as fp:
-                writer = DictWriter(fp, fieldnames=header, delimiter=';')
-                writer.writeheader()
-                writer.writerows(csv_out_data)
-
-
-        # export best wave csvs
-        for filename, base_data, n_best in [('export_heat_{}_best_judge_waves.csv'.format(heat_id), best_scores_by_judge, n_best_waves),
-                                       ('export_heat_{}_best_average_waves.csv'.format(heat_id), best_scores_average, n_best_waves)]:
+        # export heat sheet
+        if mode == 'judge_sheet':
             csv_out_data = []
-            labels_scores = ['{}. best wave score'.format(i+1) for i in range(n_best)]
-            labels_index = ['{}. best wave number'.format(i+1) for i in range(n_best)]
+            labels_scores = ['{}. wave'.format(i+1) for i in range(heat_info['number_of_waves'])]
+            header = ['color', 'judge_id'] + labels_scores
+            for surfer_id, data in all_scores.items():
+                for judge_id, vals in data.items():
+                    res = {}
+                    res['judge_id'] = judge_id
+                    res['color'] = id2color.get(surfer_id, 'Error: Color not found')
+                    indices, scores = zip(*vals)
+                    for label_score, score in zip(labels_scores, scores):
+                        res[label_score] = score
+                    csv_out_data.append(res)
+
+                with open('export_heat_{}_heat_sheet.csv'.format(heat_id), 'wb') as fp:
+                    writer = DictWriter(fp, fieldnames=header, delimiter=';')
+                    writer.writeheader()
+                    writer.writerows(csv_out_data)
+
+
+        elif mode == 'best_waves' or mode == 'averaged_scores':
+            if mode == 'best_waves':
+                filename = 'export_heat_{}_best_judge_waves.csv'.format(heat_id)
+                base_data = best_scores_by_judge
+            else:
+                filename = 'export_heat_{}_best_average_waves.csv'.format(heat_id)
+                base_data = best_scores_average
+
+            csv_out_data = []
+            labels_scores = ['{}. best wave score'.format(i+1) for i in range(n_best_waves)]
+            labels_index = ['{}. best wave number'.format(i+1) for i in range(n_best_waves)]
             header = ['color', 'judge_id'] + labels_scores + labels_index
             for surfer_id, data in base_data.items():
                 for judge_id, vals in data.items():
@@ -358,7 +380,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                     res['color'] = id2color.get(surfer_id, 'Error: Color not found')
                     indices, scores = zip(*vals)
                     for label_index, label_score, index, score in zip(labels_index, labels_scores, indices, scores):
-                        res[label_score] = score
+                        res[label_score] = '%.2f' % score
                         res[label_index] = index + 1
                     csv_out_data.append(res)
 

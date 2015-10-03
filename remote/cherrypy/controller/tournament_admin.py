@@ -314,3 +314,35 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             return
         cherrypy.engine.publish(KEY_ENGINE_DB_DELETE_JUDGE, {'id': id}).pop(0)
         return
+
+
+    @cherrypy.expose
+    @cherrypy.tools.render(template='/tournament_admin/edit_scores_hub.html')
+    def edit_scores(self):
+        data = self._standard_env()
+        return data
+
+    @cherrypy.expose
+    #@require(is_admin()) # later ask for judge or similar
+    @cherrypy.tools.render(template='/tournament_admin/edit_scores_panel.html')
+    def do_get_editor_panel(self, heat_id = None): #--------editiert-------------
+        if heat_id is None:
+            return ''
+
+        heat_id = int(heat_id)
+        data = self._standard_env()
+        #heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        heat_info = self.collect_heat_info(heat_id)
+        surfer_data = heat_info['participants']
+        ids = map(str, surfer_data.get('surfer_id', []))
+        colors = map(str, surfer_data.get('surfer_color', []))
+        colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
+        data['heat_id'] = heat_id
+        data['judge_ids'] = heat_info.get('judges', {}).keys()
+        data['judge_names'] = ['{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name']) for judge_id in data['judge_ids']]
+        data['surfers'] = dict(zip(ids, colors))
+        data['surfer_color_names'] = colors
+        data['surfer_color_colors'] = dict(zip(colors, colors_hex))
+        data['number_of_waves'] = int(heat_info['number_of_waves'])
+        return data
+

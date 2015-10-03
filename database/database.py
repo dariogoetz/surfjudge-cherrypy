@@ -290,7 +290,14 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
     def _insert_score(self, score):
-        self._insert_into_db(score, 'scores')
+        print '*****'
+        print score
+        query = {'wave': score['wave'], 'judge_id': score['judge_id'], 'heat_id': score['heat_id'], 'surfer_id': score['surfer_id']}
+        if len(self._get_scores(query)) > 0:
+            print query, score
+            self._modify_in_db(query, score, 'scores')
+        else:
+            self._insert_into_db(score, 'scores')
         return
 
 

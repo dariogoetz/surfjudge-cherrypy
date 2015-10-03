@@ -84,290 +84,202 @@
 var MISSED = -1;
 var INTERFERENCE = -2;
 //Variables that need to be defined by Contest Operators*****
-var max_no_of_waves= -1; // 10 is default value will be overwritten by toggle_visibility
-var surfer_colors_hex= []; //will be overwritten by toggle_visibility
-var surfer_color_names = {};
-var current_surfer="none";
 
-//Variables	that are needed to run the script, using variables from contest operator as parameters
-var current_input_field="none"; //This variables is a state variable telling the key board where to write input
-var surfer_scores={};// This variable contains for each surfer an array with his scored waves
-
-
-function activate_judge_panel(heat_id){
-    $.getJSON('do_get_active_heat_info', {heat_id: heat_id}, function(data){
-        max_no_of_waves = data['number_of_waves'];
-        surfer_colors_hex = []
-        var surfer_colors_hex_array = data['participants']['surfer_color_hex'];
-        surfer_color_names = data['participants']['surfer_color'];
-        current_surfer="none";
-        current_input_field='none';
-        surfer_scores={};
-         // Initialize colors in surfer_scores from jinja template
-        for (var surfer_color_idx = 0; surfer_color_idx < surfer_color_names.length; surfer_color_idx++)
+ function activate_panel(heat_id){
+    $.getJSON('/do_query_scores', {heat_id: heat_id, get_for_all_judges: 1},  function(server_data){
+        for (judge_id in server_data)
         {
-            surfer_colors_hex[surfer_color_names[surfer_color_idx]] = surfer_colors_hex_array[surfer_color_idx];
-            surfer_scores[surfer_color_names[surfer_color_idx]] = [];
+            for (var color in server_data[judge_id])
+            {
+                for (var wave_index=0; wave_index < server_data[judge_id][color].length; wave_index++)
+                {
+                    $('#'+ judge_id + '_' + color + '_' + wave_index).val(server_data[judge_id][color][wave_index]);
+                    $('#'+ judge_id + '_' + color + '_' + wave_index).removeClass('unscored');
+                    $('#'+ judge_id + '_' + color + '_' + wave_index).addClass('scored');
+                }
+            }
         }
-        sync_with_server();
-        make_buttons_quadratic();
-        $(window).resize(make_buttons_quadratic);
-        $('#active_heat').html('Tournament: ' + data['tournament_name'] + ' Category: ' + data['category_name'] + ' Heat: ' + data['heat_name']);
+        $('.scored').prop('readonly', false);
     });
  }
 
+$('.data-section').on('keyup', '.score-field', function (e) {
+    if (e.keyCode == 13) {
+        enter_score(this.id);
+        // Do something
+    } else if (e.keyCode == 27) {
+            $(this).blur();
+    }
+});
 
-
-
-
-
-
-function transform_score_index_to_field_id(color,surfer_score_index)
+// enter_score is called for an "input" element; its data are received through "this"
+function enter_score(elem_id)
 {
-	return color + "_" + surfer_score_index;
-}
+    var elem = $('#'+elem_id);
+    var heat_id = $('#heat_panel').data('heat');
+    console.log(heat_id);
+    var judge_id = $(elem).data('judge');
+    var surfer_color = $(elem).data('surfer');
+    var wave_idx = $(elem).data('wave');
+    var score = parseFloat($('#'+ judge_id + '_' + surfer_color + '_' + wave_idx).val());
+    if (score >= 0 && score <= 10){
+        score_data = {color: surfer_color, wave: wave_idx, score: score};
+        $.get('/do_modify_score', {heat_id: heat_id, judge_id: judge_id, score: JSON.stringify(score_data)}, function(data){});
+    }
+    elem.blur()
+ }
+</script>
 
-function mark_field_as_best(field_id)
-{
-	document.getElementById(field_id).style.backgroundColor = "#DDDDF1";
-	//document.getElementById(field_id).style.border = "solid black 2px";
-}
+<script>
+ // ***** DROPDOWN *****
 
-function mark_field_as_active(field_id)
-{
-	document.getElementById(field_id).style.backgroundColor = surfer_colors_hex[current_surfer];
-	// document.getElementById(field_id).style.border = "solid black 2px";
-}
+ function refresh_tournaments(){
+     // fill dropdown with tournament names
+     $.get('{{ mount_loc }}/do_get_tournaments', function(data){
+         var tournaments = JSON.parse(data);
+         // sort
+         function comp_func(a,b){
+             return (b['start_datetime'] < a['start_datetime']) ? 1 : -1;
+         }
+         tournaments.sort(comp_func);
+         // fill dropdown list with sorted tournament names
+         $('#tournaments_dropdown_list').empty();
+         for (i in tournaments){
+             $('#tournaments_dropdown_list').append('<li><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
+         };
+     });
+     $('#tournaments_dropdown_label').html('Tournament');
+     $('#tournaments_dropdown_select').data('select', null);
+     refresh_categories();
+     $('.data-section').hide();
+ };
 
-function mark_field_as_inactive(field_id)
-{
-	document.getElementById(field_id).style.backgroundColor = "#FFFFFF";
-	document.getElementById(field_id).style.border = "solid black 1px";
-}
-function mark_best_field_of_surfer(color)
+ function refresh_categories(tournament_id){
+     if (typeof tournament_id !== 'undefined'){
+         $.get('{{ mount_loc }}/do_get_categories',{tournament_id: tournament_id}, function(data){
+             var categories = JSON.parse(data);
+             $('#categories_dropdown_list').empty();
+             for (i in categories){
+                 $('#categories_dropdown_list').append('<li><a class="select" href="#" data-name="' + categories[i]['name'] + '" data-index=' + categories[i]['id'] + '>' + categories[i]['name'] + '</a></li>');
+             };
+         });
+     };
+     $('#categories_dropdown_label').html('Category');
+     $('#categories_dropdown_select').data('select', null);
+     $('.data-section').hide();
+ };
+
+ function refresh_heats(category_id){
+     if (typeof category_id !== 'undefined'){
+         $.getJSON('{{ mount_loc }}/do_get_heats',{category_id: category_id}, function(heats){
+             $('#heats_dropdown_list').empty();
+             for (i in heats){
+                 $('#heats_dropdown_list').append('<li><a class="select" href="#" data-name="' + heats[i]['name'] + '" data-index=' + heats[i]['id'] + '>' + heats[i]['name'] + '</a></li>');
+             };
+         });
+     };
+     $('#heats_dropdown_label').html('Heat');
+     $('#heats_dropdown_select').data('select', null);
+     $('.data-section').hide();
+ };
+
+ $('#tournaments_dropdown_list').on('click', '.select', function(e){
+     tid = $(this).data('index');
+     $('#tournaments_dropdown_label').html('Tournament <b>' + $(this).data('name') + '</b>');
+     $('#tournaments_dropdown_select').data('select', tid);
+     refresh_categories(tid);
+ });
+
+ $('#categories_dropdown_list').on('click', '.select', function(e){
+     cid = $(this).data('index');
+     $('#categories_dropdown_label').html('Category <b>' + $(this).data('name') + '</b>');
+     $('#categories_dropdown_select').data('select', $(this).data('index'));
+     refresh_heats(cid);
+ });
+ $('#heats_dropdown_list').on('click', '.select', function(e){
+     $('#heats_dropdown_label').html('Heat <b>' + $(this).data('name') + '</b>');
+     $('#heats_dropdown_select').data('select', $(this).data('index'));
+     activate_data_section($(this).data('index'));
+ });
+</script>
+
+<script>
+// load panel div from server and include in page
+function activate_data_section(heat_id)
  {
-	var best_score=0;
-	var best_score_id="none";
-	for (var surfer_score_index = 0; surfer_score_index < surfer_scores[color].length; surfer_score_index++)
-	 {
-        var score = parseFloat(surfer_scores[color][surfer_score_index]);
-		if (score < 0) // Check if field contains valid score i.e. not a missed of interference
-        {
-        }
-        else
-        {
-            if (score >= best_score)
-            {
-                best_score = score;
-                best_score_id = transform_score_index_to_field_id(color,surfer_score_index);
-            }
-        }
-		var field_id=transform_score_index_to_field_id(color, surfer_score_index);
-		mark_field_as_inactive(field_id);
-	}
-    if ( !(best_score_id === "none") )
-	     mark_field_as_best(best_score_id);
+     $('.data-section').empty();
+     if (heat_id >= 0){
+         $.get('do_get_editor_panel', {heat_id: heat_id}, function(panel){
+             $('.data-section').append(panel);
+             $('.data-section').show();
+             activate_panel(heat_id);
+         });
+     }
 }
+</script>
 
-
-function sync_with_server()
-{
-    $.getJSON('do_query_scores', function(server_data){
-        for (var color in surfer_scores)
-        {
-            var server_data_length=0;
-            if (color in server_data)
-            {
-                server_data_length=server_data[color].length;
-                for (var wave_index=0; wave_index < server_data[color].length; wave_index++)
-                {
-                    surfer_scores[color][wave_index] = server_data[color][wave_index];
-                }
-            }
-            if (surfer_scores[color].length > server_data_length)
-            {
-                for (var wave_index=server_data_length; wave_index < surfer_scores[color].length; wave_index++)
-                {
-                    var missed = (surfer_scores[color][wave_index] === MISSED);
-                    var interference = (surfer_scores[color][wave_index] === INTERFERENCE);
-                    var upload_data = {'color':color, 'score':surfer_scores[color][wave_index], 'wave':wave_index, 'missed': missed, 'interference': interference };
-                    var jsonyfied_upload_data= JSON.stringify(upload_data); //Transform object into JSON
-                    var data_to_be_uploaded = {'score':jsonyfied_upload_data};
-                    $.post('do_insert_score',data_to_be_uploaded);
-                }
-            }
-        }
-        update_fields();
-    });
-}
-
-function update_fields()
-{
-	clear_fields();
-	for (var color in surfer_scores)
-	{
-		for (surfer_score_index = 0; surfer_score_index < surfer_scores[color].length; surfer_score_index++)
-		{
-			var field_id = transform_score_index_to_field_id(color,surfer_score_index);
-			var text_box = document.getElementById(field_id);
-			text_box.value=surfer_scores[color][surfer_score_index];
-		}
-		mark_best_field_of_surfer(color);
-	}
-}
-
-function clear_fields()
-{
-	for (var color in surfer_scores)
-	{
-		for (var j = 0; j<max_no_of_waves;j++)
-		{
-			var field_id=transform_score_index_to_field_id(color,j);
-			var text_box = document.getElementById(field_id);
-			text_box.value="";
-            mark_field_as_inactive(field_id);
-		}
-	}
-
-}
-
-function number_write(x)
-{
-	if(current_input_field!="none")
-	{
-		var text_box = document.getElementById(current_input_field);
-        var text_box_value = parseFloat(text_box.value);
-		if(x===MISSED)
-        {
-            text_box.value="M";
-        }
-        else if(x===INTERFERENCE)
-        {
-            text_box.value="I";
-        }
-        else if(!isNaN(text_box_value) && x>=0 && x<=9)
-		{
-			var input = text_box_value * 10 + 0.1 * x;
-			if (input<=10)
-			{
-				text_box.value = input.toFixed(1);
-			}
-		}
-        else if (text_box.value==="")
-        {
-            text_box.value = (x*0.1).toFixed(1);
-        }
-	}
-}
-
-function number_clear()
-{
-	if(current_input_field != "none")
-	{
-		document.getElementById(current_input_field).value = "";
-	}
-}
-
-function set_input_field(color)
-{
-	//cancel();
-    if (current_input_field === 'none')
-    {
-        current_input_field= transform_score_index_to_field_id(color,surfer_scores[color].length);
-        current_surfer=color;
-        mark_field_as_active(current_input_field);
+<script>
+// Exporting scores
+function export_scores(heat_id, mode){
+    if (mode==='judge_sheet'){
+        $.get('/export_scores', {heat_id: heat_id, mode: mode}, function(data){
+            console.log(data);
+        });
     }
-}
-function enter_score()
-{
-	if(current_input_field != "none" )
-	{
-		var text_box = document.getElementById(current_input_field);
-        var content_of_text_box=parseFloat(text_box.value); // Konvertiert den String aus dem Input Feld in eine Zahl vom Typ Float
-		if (text_box.value==="M")
-        {
-            surfer_scores[current_surfer][surfer_scores[current_surfer].length]=MISSED;
-        }
-        else if (text_box.value==="I")
-        {
-            surfer_scores[current_surfer][surfer_scores[current_surfer].length]=INTERFERENCE;
-        }
-		else if(!isNaN(content_of_text_box) && content_of_text_box >=0 && content_of_text_box<=10)
-		{
-			surfer_scores[current_surfer][surfer_scores[current_surfer].length]=content_of_text_box;
-		}
-        else
-        {
-            text_box.value = "";
-        }
-        mark_field_as_inactive(current_input_field);
-	}
-    sync_with_server();
-    mark_best_field_of_surfer(current_surfer);
-    current_surfer="none";
-	current_input_field="none";
  }
-
-function cancel()
-{
-    number_clear();
-    if (current_input_field != 'none')
-    {
-        mark_field_as_inactive(current_input_field);
-    }
-    current_surfer="none";
-	current_input_field="none";
-}
-function make_buttons_quadratic()
-{
-    var cw = $('.quadratic').width();
-    $('.quadratic').height(cw);
-}
 </script>
 
 <script>
-function toggle_visibility()
-{
-    $.getJSON('do_get_active_heat_info', function(active_heat_info)
-        {
-        if (! $.isEmptyObject(active_heat_info)){ //if user is not active in any heat
-            if ($('#judge_panel').data('status')==='inactive'){
-                var heat_id = active_heat_info['heat_id'];
-                $.get('/do_get_judge_panel', {heat_id: heat_id}, function(judge_panel){
-                    if (active_heat_info != ''){
-                        $('#judge_panel').append(judge_panel);
-                        $('#judge_panel').data('status', 'active');
-                        activate_judge_panel(heat_id);
-                        $('#waiting_banner').hide();
-                    }
-                });
-            }
-        } else {
-            $('#judge_panel').empty();
-            $('#judge_panel').data('status', 'inactive');
-            $('#waiting_banner').show();
-        }
-
-    });
-}
-
-</script>
-
-
-<script>
-	$(document).ready(function(){
-        toggle_visibility();
-        setInterval(toggle_visibility, 5000);
+ $(document).ready(function(){
+     refresh_tournaments();
     });
 </script>
 {% endblock javascript %}
 
 
 {% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-3">
+            <div class="dropdown">
+                <div class="btn-group">
+                <button id="tournaments_dropdown_select" class="btn btn-dropdown dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span id="tournaments_dropdown_label">Tournament</span>&nbsp;<span class="caret"></span>
+                </button>
+                <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="tournaments_dropdown_label">
+                </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-3">
+            <div class="dropdown">
+                <div class="btn-group">
+                <button id="categories_dropdown_select" class="btn btn-dropdown dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span id="categories_dropdown_label">Category</span>&nbsp;<span class="caret"></span>
+                </button>
+                <ul id="categories_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="categories_dropdown_label">
+                </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-3">
+            <div class="dropdown">
+                <div class="btn-group">
+                <button id="heats_dropdown_select" class="btn btn-dropdown dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span id="heats_dropdown_label">Heat</span>&nbsp;<span class="caret"></span>
+                </button>
+                <ul id="heats_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="heats_dropdown_label">
+                </ul>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-standard" onclick="activate_data_section($('#heats_dropdown_select').data('select'));">
+            <span class="glyphicon glyphicon-refresh">&nbsp;</span>Refresh
+        </button>
+    </div>
 
-<div class="jumbotron" id="waiting_banner"><h1>Please wait for heat to start...</h1></div>
 
-
-<div class="container-fluid" id="judge_panel" data-status="inactive">
+    <div class="container-fluid data-section" data-status="inactive">
+    </div>
 </div>
 {% endblock content %}

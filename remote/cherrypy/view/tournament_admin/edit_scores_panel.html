@@ -1,13 +1,13 @@
-<!-- TODO 
+<!-- TODO
     Define Jinja Variables:
         judge_ids: This variable contains the ids of the judges registered for the current heat
 -->
 {% block content %}
-<div class="container-fluid" >
-    {% for judge_id in judge_ids %} 
+<div class="container-fluid" id="heat_panel" data-heat="{{ heat_id }}">
+    {% for judge_id in judge_ids %}
         <table class="table">
             <tr>
-                <td><b>Judge: {{judge_id}}</b></td>
+                <td><b>Judge {{ judge_id }}: {{judge_names[loop.index - 1]}}</b></td>
                 {% for wave_idx in range( number_of_waves ) %}
                     <td align="center">
                         <b>{{ loop.index }}</b>
@@ -25,7 +25,7 @@
                     <div class="form-inline">
                         <div class="input-group input-group-lg">
                             <!--<input class="form-control"  type="text" id="{judge_id: u'{{judge_id}}', 'surfer_color': u'{{ surfer_color }}' wave_number: {{wave_idx}}}" readonly /> -->
-                            <input class="form-control"  type="text"  data-judge_id="{{judge_id}}" data-surfer_id="{{surfer_color}}" data-wave="{{wave-idx}}"/>
+                            <input id="{{ judge_id }}_{{ surfer_color }}_{{ wave_idx }}" class="form-control score-field"  type="number" step="0.1" min="0" max="10"  data-judge="{{judge_id}}" data-surfer="{{surfer_color}}" data-wave="{{wave_idx}}" readonly/>
                         </div>
                     </div>
                 </td>
@@ -38,8 +38,8 @@
 </div>
 <br />
 <div class="btn-toolbar" role="toolbar">
-    <button class="btn btn-success btn-lg" style="width: 18%; height: 50px" onclick="enter_score();">Print Judge Sheets</button>
-    <button class="btn btn-success btn-lg" style="width: 18%; height: 50px" onclick="enter_score();">Print averaged Scores</button>
-    <button class="btn btn-success btn-lg" style="width: 18%; height: 50px" onclick="enter_score();">Print best Waves</button>
+    <button class="btn btn-success btn-lg" style="width: 18%; height: 50px" onclick="export_scores({{ heat_id }}, 'judge_sheet');">Save Judge Sheets</button>
+    <button class="btn btn-success btn-lg" style="width: 18%; height: 50px" onclick="export_scores({{ heat_id }}, 'averaged_scores');">Save averaged Scores</button>
+    <button class="btn btn-success btn-lg" style="width: 18%; height: 50px" onclick="export_scores({{ heat_id }}, 'best_waves');">Save best Waves</button>
 </div>
 {% endblock content %}

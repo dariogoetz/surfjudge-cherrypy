@@ -42,7 +42,7 @@
 
 
  function add_panel(tournament_id){
-     $.get('{{ mount_loc }}/get_tournament_activity_panel', {tournament_id: tournament_id}, function(data){
+     $.get('{{ mount_loc }}/get_heat_activation_panel', {tournament_id: tournament_id}, function(data){
          $('#activity_panels').append(data);
          $('#tournaments_dropdown_list .dropdown_'+tournament_id).remove();
      });
