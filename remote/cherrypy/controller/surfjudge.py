@@ -25,7 +25,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    @require(has_one_role(KEY_ROLE_JUDGE))
+    @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_COMMENTATOR, KEY_ROLE_HEADJUDGE, KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='judge_hub.html')
     def judge_hub(self):
         data = self._standard_env()
@@ -97,7 +97,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     def do_query_scores(self, heat_id = None, judge_id = None, get_for_all_judges = None):
         roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
 
-        if get_for_all_judges and (KEY_ROLE_COMMENTATOR in roles or KEY_ROLE_ADMIN in roles):
+        if get_for_all_judges and (KEY_ROLE_HEADJUDGE in roles or KEY_ROLE_COMMENTATOR in roles or KEY_ROLE_ADMIN in roles):
             judge_id = None
         elif judge_id is None:
             judge_id = cherrypy.session.get(KEY_JUDGE_ID)

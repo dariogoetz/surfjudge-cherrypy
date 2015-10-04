@@ -1,66 +1,49 @@
-{% extends "base_template.html" %}
-
-{% block nav_items %}['#nav_item_headjudge_judge_activities']{% endblock nav_items %}
-
-{% block title %}Judge Activities{% endblock title %}
-
 {% block content %}
 <div class="container-fluid">
-    <div class="btn-toolbar" role="toolbar">
-        <button class="btn btn-lg btn-standard" onclick="activate_commentator_panel({{ heat_id }});"><span class="glyphicon glyphicon-refresh">&nbsp;</span>Update</button> 
-    </div>
-    
-    
+
     <table class= "table table-bordered" style='border-color:black; '>
         {% for surfer_color in surfer_color_names %}
-            <tr style='background-color: #EEEEEE'>
-                <th style='border-color:black'><b>Surfer</b></th>
-                <th style='border-color:black'><b><span class="glyphicon glyphicon-triangle-bottom"></span>Judges</b> <b>|</b> <b>Waves</b><span class="glyphicon glyphicon-triangle-right"></span> </th>
-                {% for wave_idx in range( number_of_waves ) %}
-                    <th style='border-color:black'; align="center" colspan="2">
-                        {{ loop.index }}
-                    </th>
-                {% endfor %}
-            </tr>
-     
-            <tr> 
-                <!-- This row is only for first judge and average scores because of the rowspan -->
-                <td style="border-color:black; background-color: {{ surfer_color_colors[surfer_color] }}; vertical-align:middle; "; rowspan="{{ judge_ids|length}}"; >
-                    <b>{{ surfer_color }}</b>
-                </td>
-                
-                <td style='border-color:black'>
-                    <b>Judge: {{judge_ids[0]}}</b>
-                </td>
-                
-                {% for wave_idx in range( 1, number_of_waves+1 ) %}
-                    <td rowspan="{{ judge_ids | length}}"; id='average_{{surfer_color}}_{{wave_idx}}'; style= "background-color: #EEEEEE; border-color:black; vertical-align:middle; text-align:right"> - </td>
-                    <td style='border-color:black'; id='{{judge_ids[0]}}_{{surfer_color}}_{{wave_idx}}'>-</td>
-                {% endfor %}
-            </tr>
-        
-        
-            {% for judge_id in judge_ids[1:] %}
-                <tr><!-- This row is only for all judges except the first one because of the rowspan -->
-                    <td style='border-color:black' ><b>Judge: {{judge_id}}</b></td>
-                    {% for wave_idx in range( 1, number_of_waves+1 ) %}
-                        <td style='border-color:black' id='{{judge_id}}_{{surfer_color}}_{{wave_idx}}'>-</td>
-                    {% endfor %}
-                </tr>
+        <tr style='background-color: #EEEEEE'>
+            <th style='border-color:black'><b>Surfer</b></th>
+            <th style='border-color:black'><b><span class="glyphicon glyphicon-triangle-bottom"></span>Judges</b> <b>|</b> <b>Waves</b><span class="glyphicon glyphicon-triangle-right"></span> </th>
+            {% for wave_idx in range( number_of_waves ) %}
+            <th style='border-color:black'; align="center" colspan="2">
+                {{ loop.index }}
+            </th>
             {% endfor %}
-            <tr>
-                <td style='border-color:black'>
-                </td>
-            </tr>
+        </tr>
+
+        <tr>
+            <!-- This row is only for first judge and average scores because of the rowspan -->
+            <td style="border-color:black; background-color: {{ surfer_color_colors[surfer_color] }}; vertical-align:middle; "; rowspan="{{ judge_ids|length}}"; >
+                <b>{{ surfer_color }}</b>
+            </td>
+
+            <td style='border-color:black'>
+                <b>Judge {{judge_ids[0]}} ({{ judge_names[0] }})</b>
+            </td>
+
+            {% for wave_idx in range( 1, number_of_waves+1 ) %}
+            <td rowspan="{{ judge_ids | length}}"; id='average_{{surfer_color}}_{{wave_idx}}'; style= "background-color: #EEEEEE; border-color:black; vertical-align:middle; text-align:right"> - </td>
+            <td style='border-color:black'; id='{{judge_ids[0]}}_{{surfer_color}}_{{wave_idx}}'>-</td>
+            {% endfor %}
+        </tr>
+
+
+        {% for judge_id in judge_ids[1:] %}
+        <tr><!-- This row is only for all judges except the first one because of the rowspan -->
+            <td style='border-color:black' ><b>Judge {{judge_id}} ({{ judge_names[loop.index]}})</b></td>
+            {% for wave_idx in range( 1, number_of_waves+1 ) %}
+            <td style='border-color:black' id='{{judge_id}}_{{surfer_color}}_{{wave_idx}}'>-</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        <tr>
+            <td style='border-color:black'>
+            </td>
+        </tr>
         {%endfor%}
-        
     </table>
-    
 </div>
 
-{% endblock content %}    
-
-
-
-
-
+{% endblock content %}

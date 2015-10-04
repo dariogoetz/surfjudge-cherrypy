@@ -94,6 +94,7 @@ var INTERFERENCE = -2;
                 for (var wave_index=0; wave_index < server_data[judge_id][color].length; wave_index++)
                 {
                     $('#'+ judge_id + '_' + color + '_' + wave_index).val(server_data[judge_id][color][wave_index]);
+                    $('#'+ judge_id + '_' + color + '_' + wave_index).data('orig_val', server_data[judge_id][color][wave_index])
                     $('#'+ judge_id + '_' + color + '_' + wave_index).removeClass('unscored');
                     $('#'+ judge_id + '_' + color + '_' + wave_index).addClass('scored');
                 }
@@ -108,7 +109,8 @@ $('.data-section').on('keyup', '.score-field', function (e) {
         enter_score(this.id);
         // Do something
     } else if (e.keyCode == 27) {
-            $(this).blur();
+        $(this).val($(this).data('orig_val'));
+        $(this).blur();
     }
 });
 
@@ -122,7 +124,7 @@ function enter_score(elem_id)
     var surfer_color = $(elem).data('surfer');
     var wave_idx = $(elem).data('wave');
     var score = parseFloat($('#'+ judge_id + '_' + surfer_color + '_' + wave_idx).val());
-    if (score >= 0 && score <= 10){
+    if ((score >= 0 && score <= 10) || score == -1){
         score_data = {color: surfer_color, wave: wave_idx, score: score};
         $.get('/do_modify_score', {heat_id: heat_id, judge_id: judge_id, score: JSON.stringify(score_data)}, function(data){});
     }

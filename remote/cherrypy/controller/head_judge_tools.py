@@ -26,7 +26,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
     @require(has_one_role(KEY_ROLE_HEADJUDGE))
     @cherrypy.tools.render(template = 'headjudge/judge_activities_hub.html')
     def judge_activities(self):
-        
+
         data = self._standard_env()
         return data
 
@@ -107,12 +107,13 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
         data['surfers'] = dict(zip(ids, colors))
         data['surfer_color_names'] = colors
         data['number_of_waves'] = int(heat_info['number_of_waves'])
-        data['judge_ids']= judge_ids 
+        data['judge_ids']= judge_ids
+        data['judge_names'] = ['{}'.format(heat_info['judges'][judge_id]['judge_first_name']) for judge_id in data['judge_ids']]
         data['surfer_color_colors'] = dict(zip(colors, colors_hex))
         return data
-        
-        
-        
+
+
+
 
     @cherrypy.expose
     def do_get_participating_surfers(self, heat_id=None):

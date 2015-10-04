@@ -273,7 +273,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         while True:
             #print 'waiting for db commands'
             task_processor, data, pipe_conn = self.__access_queue.get()
-
+            print '***** DB task {} (remaining {}) *****'.format(data, self.__access_queue.qsize())
             if task_processor == KEY_SHUTDOWN:
                 self.__access_queue.task_done()
                 break
@@ -281,6 +281,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             res = task_processor(data)
             pipe_conn.send(res)
             pipe_conn.close()
+            print '***** DB done task (remaining {}) *****'.format(self.__access_queue.qsize())
             self.__access_queue.task_done()
 
 
@@ -290,11 +291,8 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
     def _insert_score(self, score):
-        print '*****'
-        print score
         query = {'wave': score['wave'], 'judge_id': score['judge_id'], 'heat_id': score['heat_id'], 'surfer_id': score['surfer_id']}
         if len(self._get_scores(query)) > 0:
-            print query, score
             self._modify_in_db(query, score, 'scores')
         else:
             self._insert_into_db(score, 'scores')

@@ -201,7 +201,7 @@ function refresh_active_judges(heat_id){
                 var judge_first_name = judges_data[idx]['first_name'];
                 var judge_last_name = judges_data[idx]['last_name'];
 
-                $('<option />', {value: judge_id, text: judge_first_name+' '+judge_last_name}).appendTo($('#active_judges_select'));
+                $('<option />', {value: judge_id, text: judge_id + ': '+ judge_first_name+' '+judge_last_name}).appendTo($('#active_judges_select'));
             }
 
             for (idx in active_judges){
