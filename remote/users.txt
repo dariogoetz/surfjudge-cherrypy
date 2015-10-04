@@ -1,21 +1,72 @@
-[admin]
-password = $2a$12$C.ge9gx5rgezSZy7mNKz8.ifeCD7AMnCsxrjvZMXenpS4SJ6cNRV2
-roles = ac_admin,
 [dg]
 password = $2a$12$lJbHDGCtrQt2CnV9nFRgFOLVEm8fywQXuqjKjYcmTqYqH7DfpyYdy
-roles = ac_admin, ac_judge, ac_headjudge, ac_commentator
+roles = ac_admin, ac_headjudge, ac_commentator, ac_judge
 [jcr]
 password = $2a$12$If7O5tlYJE43LuAIv6r5GuyAc8wdOJ90RiZS0BSCMkSZ4v/2x6Ejy
 roles = ac_admin, ac_headjudge, ac_commentator, ac_judge
-[test]
-roles = ,
-password = $2a$12$C6x4qlpgw4vFQomlOkoMD.sY.ba5DXHz6FpcmtF.P9Wrr9fRrOT46
-[nk]
-roles = ac_admin, ac_judge
-password = $2b$12$xTI6rdtxLR5i99H7K7R0sOQ7qK6gozreAgcXTcGgxBHK8AxNJMZrS
-[jr]
+[1]
 roles = ac_judge,
-password = $2b$12$ZH3ZI0t/Jib0cg5KH2qqgOTIFBgpUpRFNq4c8juVV1BjgaEFjExjS
-[pk]
+password = $2a$12$mpfXVDk6xlECc0NYT4D35.i9B/1j7qyO23RY185d16btDpXtrvqcy
+[2]
 roles = ac_judge,
-password = $2a$12$SkSmQekwKkYljzIXXgedZ.KWa4W.uBCVsnliDctCtO68DhC4LgueC
+password = $2a$12$YNawQXLS6u5/Pj.vIyrqe.oV39Xc5OH912MIe2myuIWp0XcIX72iW
+[3]
+roles = ac_judge,
+password = $2a$12$vTL2WQBVs8XNY1X8kUH1C.rEfz/fy83RXuspPtbY3JMuRnd/H38bu
+[4]
+roles = ac_judge,
+password = $2a$12$6v/3Scw6aQBv59.jRZzo.ulEQmQ3Iq75BMuX.peQM62EjtVHWjEJe
+[5]
+roles = ac_judge,
+password = $2a$12$uKnRnsh2I/ycjE85fitnseKAfE2QDgci0.Md5brtWYnuya4taqcYa
+[6]
+roles = ac_judge,
+password = $2a$12$bNOHWFsZa0xGshIufq3WxuTgbtBFsubxEcWG8dlG2fuLESzviz7Ja
+[7]
+roles = ac_judge,
+password = $2a$12$fDA9b8IwvixRU2JgZqFQJ.T8JF.RWA33PzzzmKm1rfTtur0i4.dTG
+[8]
+roles = ac_judge,
+password = $2a$12$U4Y3FhsFMF9/iCZaNYHVmOsG7eLfJPaLsGg.fd/3L.4Vo0PABXXQK
+[9]
+roles = ac_judge,
+password = $2a$12$kMHHlwBLq0YKEHaeDmsEC.kAzPC2xPh/mkAUP0/6v0chPOwU/7GC.
+[10]
+roles = ac_judge,
+password = $2a$12$IHi/p5Dr0RsaFotGxCWIIekIBR.3dnMGO6OSGXcwb.NujJIKo1lP2
+[11]
+roles = ac_judge,
+password = $2a$12$X3XhXbBcQjihcz0XMQdFNeSccOD0jYzxSLtNfNQQc/0jQ9CW5qy5i
+[12]
+roles = ac_judge,
+password = $2a$12$/ykccNdDE.rwOrTlvo81dep8nCM3GgeZBnTSif6d6ARpBZTCyBzzm
+[13]
+roles = ac_judge,
+password = $2a$12$U1BiDjiNgZHSo30UhzD5juMfDAal7OCP57aLS37GfSFNj.ltXxWGy
+[14]
+roles = ac_judge,
+password = $2a$12$QP/1Oj.CChvX4eMssmiv6OM1bsGeP5X2htMEXfC1fArSHrnfnZBP2
+[15]
+roles = ac_judge,
+password = $2a$12$YY1WN5.ug72AWIvBYiuYjOe9oeyR/4pkArSllD1o2NnP60LEZexvm
+[16]
+roles = ac_judge,
+password = $2a$12$aEejYDqjDhGoTi/N5wYjq.64QnnUAF5g0eYia8gRno77voBRha4m.
+[17]
+roles = ac_judge,
+password = $2a$12$/sQ.niCikG1C.AUD671yruJbx/7XAZqGv3DL7.fj.CiJnPAPi63RK
+[18]
+roles = ac_judge,
+password = $2a$12$6z51k3UOGftfK1CYEPbLPeKl./AAX2A19aHzHsrxNgiu3KSvou0uG
+[19]
+roles = ac_judge,
+password = $2a$12$.15HiHYvxrAV7GMUl24tNuVmbC3XhJCMbuvbNXENqcU5ig7.rA5Fy
+[20]
+roles = ac_judge,
+password = $2a$12$8iy1Qgt2XOEyhnpZPtxEaenRl0hS7nLRvHzPUsjzR2lGGEZQjTy5W
+[headjudge]
+roles = ac_headjudge,
+password = $2a$12$RHK.sg0l.1MBhj15bu76L.BIVEz3qTRyNCpKwdPlBf4r21O8liHW2
+[commentator]
+roles = ac_commentator,
+password = $2a$12$2djT2WCizn.rYJ3OdCBTX.ZDvhhu3hpDNnb1Do6IQE4NvtGCUc7Hi
