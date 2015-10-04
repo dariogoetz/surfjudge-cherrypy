@@ -3,6 +3,13 @@
         judge_ids: This variable contains the ids of the judges registered for the current heat
 -->
 {% block content %}
+<div class="btn-toolbar" role="toolbar">
+    <br>
+    <button class="btn btn-success btn-lg" style="width: 200px; height: 50px" onclick="export_scores({{ heat_id }});">Save Judge Sheets</button>
+</div>
+
+<br>
+
 <div class="container-fluid" id="heat_panel" data-heat="{{ heat_id }}">
     {% for judge_id in judge_ids %}
         <table class="table">
@@ -35,11 +42,5 @@
         {% endfor %}
         </table>
     {% endfor %}
-</div>
-<br />
-<div class="btn-toolbar" role="toolbar">
-    <button class="btn btn-success btn-lg" style="width: 18%; height: 50px" onclick="export_scores({{ heat_id }}, 'judge_sheet');">Save Judge Sheets</button>
-    <button class="btn btn-success btn-lg" style="width: 18%; height: 50px" onclick="export_scores({{ heat_id }}, 'averaged_scores');">Save averaged Scores</button>
-    <button class="btn btn-success btn-lg" style="width: 18%; height: 50px" onclick="export_scores({{ heat_id }}, 'best_waves');">Save best Waves</button>
 </div>
 {% endblock content %}

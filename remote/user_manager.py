@@ -230,3 +230,7 @@ class UserManager(object):
             self.__registered_users.setdefault(username, {})[KEY_ROLES].remove(role)
             self._write_to_disk()
         return True
+
+
+    def get_users(self):
+        return self.__registered_users

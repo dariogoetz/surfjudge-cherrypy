@@ -10,6 +10,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template = 'headjudge/start_stop_heats.html')
+    @require(has_one_role(KEY_ROLE_HEADJUDGE))
     def start_stop_heats(self):
         context = self._standard_env()
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
@@ -22,6 +23,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
         return context
 
     @cherrypy.expose
+    @require(has_one_role(KEY_ROLE_HEADJUDGE))
     @cherrypy.tools.render(template = 'headjudge/judge_activities.html')
     def judge_activities(self):
         judge_id = cherrypy.session.get(KEY_JUDGE_ID)
@@ -61,6 +63,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
     ##############
 
     @cherrypy.expose
+    @require(has_one_role(KEY_ROLE_HEADJUDGE))
     def do_activate_heat(self, heat_id = None, **kwargs):
         if heat_id is None:
             return
@@ -71,6 +74,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
         return res
 
     @cherrypy.expose
+    @require(has_one_role(KEY_ROLE_HEADJUDGE))
     def do_deactivate_heat(self, heat_id = None, **kwargs):
         if heat_id is None:
             return
@@ -82,6 +86,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='headjudge/heat_activation_panel.html')
+    @require(has_one_role(KEY_ROLE_HEADJUDGE))
     def get_heat_activation_panel(self, tournament_id=None):
         context = self._standard_env()
 

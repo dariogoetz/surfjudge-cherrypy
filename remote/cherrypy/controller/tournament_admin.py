@@ -28,6 +28,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='tournament_admin/edit_tournaments.html')
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def tournaments(self):
         context = self._standard_env()
         return context
@@ -35,7 +36,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     # TODO: as POST action
     @cherrypy.expose
-    #@cherrypy.tools.render(template='tournament_admin/edit_modal.html')
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_edit_tournament(self, json_data=None, id=None, name=None, start_date=None, end_date=None, additional_info=None):
 
         # data is a json with the fields?
@@ -54,9 +55,10 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_TOURNAMENT, data).pop(0)
-        return res
+        return str(res)
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_delete_tournament(self, id=None):
         if id is None:
             return
@@ -78,6 +80,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/edit_categories.html')
     def categories(self):
         context = self._standard_env()
@@ -96,7 +99,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     # TODO: as POST action
     @cherrypy.expose
-    #@cherrypy.tools.render(template='tournament_admin/edit_modal.html')
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_edit_category(self, json_data=None, id=None, name=None, tournament_id=None, additional_info=None):
 
         # data is a json with the fields?
@@ -110,9 +113,10 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             data['additional_info'] = additional_info.encode()
 
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_CATEGORY, data).pop(0)
-        return res
+        return str(res)
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_delete_category(self, id=None):
         if id is None:
             return
@@ -122,6 +126,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/edit_heats.html')
     def heats(self):
         context = self._standard_env()
@@ -131,6 +136,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_delete_heat(self, id=None):
         if id is None:
             return
@@ -152,7 +158,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     # TODO: as POST action
     @cherrypy.expose
-    #@cherrypy.tools.render(template='tournament_admin/edit_modal.html')
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, tournament_id=None, category_id=None, date=None, start_time=None, number_of_waves=None, additional_info=None):
         # data is a json with the fields?
         if json_data is not None:
@@ -175,6 +181,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/edit_surfers.html')
     def surfers(self):
         context = self._standard_env()
@@ -189,6 +196,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_set_participating_surfers(self, json_data=None, heat_id=None, surfer_ids=None, surfer_colors=None):
         surfer_ids = json.loads(surfer_ids)
         if surfer_colors is not None:
@@ -204,6 +212,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     # TODO: as POST action
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_edit_surfer(self, json_data=None, id=None, first_name=None, last_name=None, country=None, additional_info=None):
 
         # data is a json with the fields?
@@ -224,6 +233,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_delete_surfer(self, id=None):
         if id is None:
             return
@@ -232,9 +242,12 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    def do_surfers_load_csv(self):
+    @require(has_all_roles(KEY_ROLE_ADMIN))
+    def do_surfers_load_csv(self, my_file=None):
         import utils
-        surfers = utils.read_surfers('tmp_surfers.csv')
+        if my_file is None:
+            return
+        surfers = utils.read_surfers(my_file.file)
         for sid, surfer in surfers.items():
             res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, surfer).pop(0)
         return
@@ -242,12 +255,14 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/edit_judges.html')
     def judges(self):
         context = self._standard_env()
         return context
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/judge_activities.html')
     def judge_activities(self):
         context = self._standard_env()
@@ -263,6 +278,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         return json.dumps(judges)
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_set_active_judges(self, heat_id=None, judge_ids=None):
         if heat_id is None:
             return
@@ -282,6 +298,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         return json.dumps(judges)
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_edit_judge(self, json_data=None, id=None, first_name=None, last_name=None, username=None, additional_info=None):
         #TODO: check user roles for ac_judge and add if required
         if username is None:
@@ -304,6 +321,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         return json.dumps(res)
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_delete_judge(self, id=None, username=None):
         # TODO: check user roles for ac_judge and delete if required
         if username is None:
@@ -317,12 +335,14 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='/tournament_admin/edit_scores_hub.html')
     def edit_scores(self):
         data = self._standard_env()
         return data
 
     @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
     #@require(is_admin()) # later ask for judge or similar
     @cherrypy.tools.render(template='/tournament_admin/edit_scores_panel.html')
     def do_get_editor_panel(self, heat_id = None): #--------editiert-------------
@@ -346,3 +366,25 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         data['number_of_waves'] = int(heat_info['number_of_waves'])
         return data
 
+
+
+    @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
+    @cherrypy.tools.render(template='/tournament_admin/edit_logins.html')
+    def logins(self, **kwargs):
+        data = self._standard_env()
+        return data
+
+
+    @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
+    def do_get_logins(self, **kwargs):
+        logins = cherrypy.engine.publish(KEY_ENGINE_USER_GET_USERS).pop()
+        res = []
+        for login, data in logins.items():
+            d = {}
+            d.update(data)
+            d['login'] = login
+            del d['password']
+            res.append(d)
+        return json.dumps(res)

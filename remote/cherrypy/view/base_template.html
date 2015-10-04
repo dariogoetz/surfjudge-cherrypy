@@ -205,13 +205,14 @@
                     </li>
                     {% endif %}
                     {% if global_is_admin %}
-                    <li class="dropdown" id='nav_item_tournament_admin'>
+                    <li class="dropdown" id='nav_item_admin'>
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-cog">&nbsp;</span>Admin<span class="caret"></span></a>
                         <ul class="dropdown-menu">
 
                             <li><a href="/tournament_admin/tournaments">Tournament Admin</a></li>
+                            <li><a href="/tournament_admin/edit_scores">Edit Scores</a></li>
                             <li role="separator" class="divider"></li>
-                            <li id='nav_item_register'><a href="/auth/register">Register User</a></li>
+                            <li><a href="/tournament_admin/logins">Administrate Logins</a></li>
                         </ul>
                     </li>
                     {% endif %}

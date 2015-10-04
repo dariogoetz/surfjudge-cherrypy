@@ -1,0 +1,129 @@
+{% extends "base_template.html" %}
+
+{% block nav_items %}['#nav_item_admin']{% endblock nav_items %}
+
+{% block title %}Edit Surfers{% endblock title %}
+
+{% block sidebar_content %}
+{% include "tournament_admin/sidebar.html" %}
+{% endblock sidebar_content %}
+
+
+
+{% block css %}
+{{ super() }}
+
+<style>
+.scrollable-menu{
+    height: auto;
+    max-height: 200px;
+    overflow-x: hidden;
+}
+</style>
+
+{% endblock css %}
+
+{% block content %}
+
+<!-- All judges table -->
+<div class="container-fluid">
+
+    <table class="table table-striped"
+           id="logins_table"
+           data-toggle="table"
+           data-url="{{ mount_loc }}/do_get_logins"
+           data-sort-name="name"
+           date-sort-order="asc">
+        <thead>
+            <tr>
+                <th data-field="login">Login</th>
+                <th data-field="roles" data-sortable="true">Roles</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+{% endblock content %}
+
+
+
+{% block modals %}
+
+<!-- Edit judge modal -->
+<div class="modal fade" id="edit_login_modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+          <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title">Edit Login</h4>
+          </div> <!-- /.modal-header -->
+
+          <div class="modal-body">
+              <div class="well">
+                  asdf
+              </div>
+          </div><!-- /.modal-body -->
+          <div class="modal-footer">
+              <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button id="login_delete" class="btn btn-danger pull-left">Delete</button>
+              <button id="login_submit" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+          </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+{% endblock modals %}
+
+
+{% block javascript %}
+{{ super() }}
+
+<script>
+ function fill_edit_login_modal(login, roles){
+}
+
+// register functionality for selecting judge from table
+$('#logins_table').on('click-row.bs.table', function (e, row, $element) {
+    if (typeof(row) !== 'undefined'){
+        fill_edit_login_modal(row['login'], row['rows']);
+        $('#edit_login_modal').modal('toggle');
+    };
+});
+</script>
+
+{% endblock javascript %}
+
+
+
+
+{% block modal_javascript %}
+
+<script>
+
+ // ***** MODAL internals *****
+$('#login_submit').on('click', function(){
+    var judge_id = $('#modal_judge_id').val();
+    var judge_first_name = $('#modal_judge_first_name').val();
+    var judge_last_name = $('#modal_judge_last_name').val();
+    var judge_login = $('#modal_judge_login').val();
+    var additional_info = $('#modal_additional_info').val();
+
+
+    $.post('{{ mount_loc }}/do_edit_judge', {id: judge_id, first_name: judge_first_name, last_name: judge_last_name, username: judge_login, additional_info: additional_info});
+    $('#judges_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_judges'});
+  });
+
+  $('#judge_delete').on('click', function(){
+      var judge_id = $('#modal_judge_id').val();
+      var judge_login = $('#modal_judge_login').val();
+
+      $.post('{{ mount_loc }}/do_delete_judge', {id: judge_id, username: judge_login});
+      $('#edit_judge_modal').modal('toggle');
+      $('#judges_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_judges'});
+ });
+
+
+
+</script>
+
+{% endblock modal_javascript %}

@@ -54,15 +54,15 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
         print 'database: Initializing ID pointers'
         tournaments = self.get_tournaments({})
-        n_tournaments = max([t['id'] for t in tournaments]) + 1
+        n_tournaments = max([t['id'] for t in tournaments]) + 1 if len(tournaments) > 0 else 0
         categories = self.get_categories({})
-        n_categories = max([t['id'] for t in categories]) + 1
+        n_categories = max([t['id'] for t in categories]) + 1 if len(categories) > 0 else 0
         heats = self.get_heats({})
-        n_heats = max([t['id'] for t in heats]) + 1
+        n_heats = max([t['id'] for t in heats]) + 1 if len(heats) > 0 else 0
         surfers = self.get_surfers({})
-        n_surfers = max([t['id'] for t in surfers]) + 1
+        n_surfers = max([t['id'] for t in surfers]) + 1 if len(surfers) > 0 else 0
         judges = self.get_judges({})
-        n_judges = max([t['id'] for t in judges]) + 1
+        n_judges = max([t['id'] for t in judges]) + 1 if len(judges) > 0 else 0
 
         self._db_info = {'n_tournaments': n_tournaments,
                          'n_categories': n_categories,

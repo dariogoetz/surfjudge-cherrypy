@@ -1,6 +1,6 @@
 {% extends "base_dashboard.html" %}
 
-{% block nav_items %}['#nav_item_tournament_admin', '#sidebar_item_edit_surfers']{% endblock nav_items %}
+{% block nav_items %}['#nav_item_admin', '#sidebar_item_edit_surfers']{% endblock nav_items %}
 
 {% block title %}Edit Surfers{% endblock title %}
 
@@ -8,12 +8,39 @@
 {% include "tournament_admin/sidebar.html" %}
 {% endblock sidebar_content %}
 
+{% block css %}
+{{ super() }}
+
+<style type="text/css">
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+ }
+</style>
+{% endblock css %}
+
 
 {% block content %}
 
 <div class="container-fluid">
     <button type="button" id="new_btn" class="btn btn-standard btn-lg"><span class="glyphicon glyphicon-plus">&nbsp;</span>New Surfer</button>
-    <button type="button" id="load_csv_btn" class="btn btn-standard btn-lg pull-right"><span class="glyphicon glyphicon-upload">&nbsp;</span>Load CSV</button>
+    <button type="button" class="btn btn-standard btn-lg btn-file pull-right"><span class="glyphicon glyphicon-upload">&nbsp;</span>Load CSV<input type="file"></button>
     <br><br>
     <table class="table table-striped"
            id="data_table"
@@ -32,7 +59,6 @@
             </tr>
         </thead>
     </table>
-
 </div>
 {% endblock content %}
 
@@ -117,12 +143,26 @@ $('#new_btn').on('click', function(){
   $('#edit_modal').modal('toggle');
   });
 
-// register functionality for "new category" button
-$('#load_csv_btn').on('click', function(){
-    $.post('{{ mount_loc }}/do_surfers_load_csv');
-    $('#data_table').bootstrapTable('refresh');
-  });
 
+$(document).on('change', '.btn-file :file', function() {
+    var input = $(this);
+    var formData = new FormData();
+    formData.append('my_file', this.files[0]);
+    console.log(formData);
+    var num_files = input.get(0).files ? input.get(0).files.length : 1;
+    if (num_files > 0){
+        $.ajax({
+            type: "POST",
+            url: 'do_surfers_load_csv',
+            data: formData,
+            processData: false,
+            contentType: false,
+            cache: false,
+            encType: 'multipart/form-data',
+            success: function(){$('#data_table').bootstrapTable('refresh');}
+        });
+    }
+ });
 
 // register functionality for selecting categories from table
  $('#data_table').on('click-row.bs.table', function (e, row, $element) {

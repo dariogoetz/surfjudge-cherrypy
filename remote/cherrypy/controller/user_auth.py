@@ -102,27 +102,20 @@ class AuthenticationController(CherrypyWebInterface):
     # functions as website as well as POST request leading to website, if unsuccessful
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/register.html')
-    def register(self, username = None, password = None, as_admin = False):
+    def register(self, username = None, password = None):
         env = self._standard_env()
 
         logged_in = env['global_logged_in']
-        is_admin = env['global_is_admin']
 
         message = ''
         if cherrypy.request.method == 'POST':
-            if as_admin and not is_admin:
-                message = 'Only admins can register admins.'
+            roles = []
+            successful = self.do_register(username, password, roles)
+            if successful:
+                msg = 'User "{}" registered successfully!'.format(username)
+                raise cherrypy.HTTPRedirect('/simple_message?msg={}'.format(msg) )
             else:
-                roles = []
-                if as_admin:
-                    roles.append(KEY_ROLE_ADMIN)
-
-                successful = self.do_register(username, password, roles)
-                if successful:
-                    msg = 'User "{}" registered successfully!'.format(username)
-                    raise cherrypy.HTTPRedirect('/simple_message?msg={}'.format(msg) )
-                else:
-                    message = 'Register unsuccessful!'
+                message = 'Register unsuccessful!'
 
         env['message']     = message
         env['post_action'] = self.mount_location + '/' + 'register'

@@ -1,6 +1,6 @@
 {% extends "base_template.html" %}
 
-{% block nav_items %}['#nav_item_judge_tools']{% endblock nav_items %}
+{% block nav_items %}['#nav_item_admin']{% endblock nav_items %}
 
 {% block title %}UI for Judges{% endblock title %}
 
@@ -220,13 +220,11 @@ function activate_data_section(heat_id)
 
 <script>
 // Exporting scores
-function export_scores(heat_id, mode){
-    if (mode==='judge_sheet'){
-        $.get('/export_scores', {heat_id: heat_id, mode: mode}, function(data){
-            console.log(data);
-        });
+ function export_scores(heat_id, mode){
+     window.location.replace('/export_scores?heat_id='+heat_id);
+    //$.fileDownload('/export_scores', {heat_id: heat_id, mode: mode});
+    //$.get('/export_scores', {heat_id: heat_id, mode: mode});
     }
- }
 </script>
 
 <script>

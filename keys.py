@@ -39,6 +39,7 @@ KEY_ENGINE_USER_REGISTER = 'register-user'
 KEY_ENGINE_USER_INFO = 'lookup-user-info'
 KEY_ENGINE_USER_ADD_ROLE = 'add-role-user'
 KEY_ENGINE_USER_REMOVE_ROLE = 'remove-role-user'
+KEY_ENGINE_USER_GET_USERS = 'get-users'
 
 
 ################################
