@@ -300,22 +300,23 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             scores_by_judge_id.setdefault(score[KEY_JUDGE_ID], {}).setdefault(score['surfer_id'], {})[score['wave']] = score['score']
 
         average_scores = self._compute_average_scores(scores_by_surfer_wave, judges)
-        all_scores, best_scores_by_judge, best_scores_average = self._compute_score_dicts(scores_by_judge_id, average_scores, n_best_waves)
+        all_scores, best_scores_by_judge, best_scores_average, sorted_total_scores = self._compute_score_dicts(scores_by_judge_id, average_scores, n_best_waves)
 
-        export_data = self._collect_export_data(all_scores, average_scores, best_scores_by_judge, best_scores_average, heat_info, id2color, n_best_waves)
+        export_data = self._collect_export_data(all_scores, average_scores, best_scores_by_judge, best_scores_average, sorted_total_scores, heat_info, id2color, n_best_waves)
 
 
+        heat_name = '{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
         filename = None
         if mode == 'judge_sheet':
-            filename = 'export_heat_{}_heat_sheet.csv'.format(heat_id)
+            filename = 'export_{}_heat_sheet.csv'.format(heat_name)
         elif mode == 'best_waves':
-            filename = 'export_heat_{}_best_judge_waves.csv'.format(heat_id)
+            filename = 'export_{}_best_judge_waves.csv'.format(heat_name)
         elif mode == 'averaged_scores':
-            filename = 'export_heat_{}_best_average_waves.csv'.format(heat_id)
+            filename = 'export_{}_best_average_waves.csv'.format(heat_name)
 
         if filename is not None:
             utils.write_csv(filename, export_data[mode]['data'], export_data[mode]['header'])
-        filename = os.path.abspath('Auswertung_heat_{}.xlsx'.format(heat_id))
+        filename = os.path.abspath('Auswertung_{}.xlsx'.format(heat_name))
         utils.write_xlsx(filename, export_data)
         from cherrypy.lib.static import serve_file
         return serve_file(filename, "application/x-download", "attachment")
@@ -367,10 +368,18 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                 best_scores_by_judge.setdefault(surfer_id, {})[judge_id] = sorted(vals.items(), key=lambda x: x[1], reverse=True)[:n_best_waves]
                 all_scores.setdefault(surfer_id, {})[judge_id] = sorted(vals.items(), key=lambda x: x[0])
 
-        return all_scores, best_scores_by_judge, best_scores_average
+        total_scores = []
+        for surfer_id, data in best_scores_average.items():
+            wave_idx, scores = zip(*data['average'])
+            total_scores.append( (surfer_id, sum(scores)) )
+        s = sorted(total_scores, key=lambda x: x[1], reverse=True)
+        sorted_total_scores = {}
+        for idx, (surfer_id, score) in enumerate(s):
+            sorted_total_scores[surfer_id] = (idx, score)
+        return all_scores, best_scores_by_judge, best_scores_average, sorted_total_scores
 
 
-    def _collect_export_data(self, all_scores, average_scores, best_scores_by_judge, best_scores_average, heat_info, id2color, n_best_waves):
+    def _collect_export_data(self, all_scores, average_scores, best_scores_by_judge, best_scores_average, sorted_total_scores, heat_info, id2color, n_best_waves):
         export_data = {}
 
 
@@ -379,51 +388,92 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         # *****************
         csv_out_data = []
         labels_scores = ['{}. wave'.format(i+1) for i in range(heat_info['number_of_waves'])]
-        header = ['color', 'judge_id'] + labels_scores
+        header = ['Color', 'Judge Id'] + labels_scores
         highlights = {}
-        for surfer_id, data in all_scores.items():
-            for judge_id, vals in data.items():
+        for surfer_id in heat_info['participants']['surfer_id']:
+            data = all_scores.get(surfer_id, {})
+            for judge_id in heat_info['judges']:
+                vals = data.get(judge_id, [])
                 res = {}
-                res['judge_id'] = judge_id
-                res['color'] = id2color.get(surfer_id, 'Error: Color not found')
-                indices, scores = zip(*vals)
+                res['Judge Id'] = judge_id
+                res['Color'] = id2color.get(surfer_id, 'Error: Color not found')
+                if len(vals) > 0:
+                    indices, scores = zip(*vals)
+                else:
+                    indices = [None] * n_best_waves
+                    scores = [None] * n_best_waves
                 best_waves = zip(*best_scores_by_judge.get(surfer_id, {}).get(judge_id, []))
                 for label_score, wave_idx, score in zip(labels_scores, indices, scores):
                     res[label_score] = score
                     if len(best_waves) > 0 and wave_idx in best_waves[0]:
-                        highlights.setdefault(res['color'], {}).setdefault(judge_id, []).append( labels_scores[wave_idx] )
+                        highlights.setdefault(res['Color'], {}).setdefault(judge_id, []).append( labels_scores[wave_idx] )
 
                 csv_out_data.append(res)
+        export_data.setdefault('judge_sheet', {})['title_line'] = '{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
         export_data.setdefault('judge_sheet', {})['header'] = header
         export_data['judge_sheet']['data'] = csv_out_data
         export_data['judge_sheet']['highlights'] = highlights
 
 
         # *****************
-        # export best waves per judge and averaged scores
+        # export best waves per judge
         # *****************
-        for m in ['best_waves', 'averaged_scores']:
-            if m == 'best_waves':
-                base_data = best_scores_by_judge
-            else:
-                base_data = best_scores_average
+        base_data = best_scores_by_judge
 
-            csv_out_data = []
-            labels_scores = ['{}. best wave score'.format(i+1) for i in range(n_best_waves)]
-            labels_index = ['{}. best wave number'.format(i+1) for i in range(n_best_waves)]
-            header = ['color', 'judge_id'] + labels_scores + labels_index
-            for surfer_id, data in base_data.items():
-                for judge_id, vals in data.items():
-                    res = {}
-                    res['judge_id'] = judge_id
-                    res['color'] = id2color.get(surfer_id, 'Error: Color not found')
+        csv_out_data = []
+        labels_scores = ['{}. best wave score'.format(i+1) for i in range(n_best_waves)]
+        labels_index = ['{}. best wave number'.format(i+1) for i in range(n_best_waves)]
+        header = ['Color', 'Judge Id'] + labels_scores + labels_index
+        for surfer_id in heat_info['participants']['surfer_id']:
+            data = base_data.get(surfer_id, {})
+            for judge_id in heat_info['judges']:
+                vals = data.get(judge_id, [])
+                res = {}
+                res['Judge Id'] = judge_id
+                res['Color'] = id2color.get(surfer_id, 'Error: Color not found')
+                if len(vals) > 0:
                     indices, scores = zip(*vals)
-                    for label_index, label_score, index, score in zip(labels_index, labels_scores, indices, scores):
-                        res[label_score] = '%.2f' % score
-                        res[label_index] = index + 1
-                    csv_out_data.append(res)
+                else:
+                    indices = [None] * n_best_waves
+                    scores = [None] * n_best_waves
+                for label_index, label_score, index, score in zip(labels_index, labels_scores, indices, scores):
+                    res[label_score] = '' if score is None else '{:.2f}'.format(score)
+                    res[label_index] = '' if index is None else index + 1
+                csv_out_data.append(res)
 
-            export_data.setdefault(m, {})['header'] = header
-            export_data[m]['data'] = csv_out_data
+        export_data.setdefault('best_waves', {})['header'] = header
+        export_data['best_waves']['title_line'] = '{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
+        export_data['best_waves']['data'] = csv_out_data
+
+
+        # *****************
+        # export averaged scores
+        # *****************
+        base_data = best_scores_average
+
+        csv_out_data = []
+        labels_scores = ['{}. best wave score'.format(i+1) for i in range(n_best_waves)]
+        header = ['Ranking', 'Color', 'Total Score'] + labels_scores
+        for surfer_id in heat_info['participants']['surfer_id']:
+            data = base_data.get(surfer_id, {})
+            vals = data.get('average', [])
+            res = {}
+            res['Color'] = id2color.get(surfer_id, 'Error: Color not found')
+            if len(vals) > 0:
+                _, scores = zip(*vals)
+                total_score = sum(scores)
+            else:
+                scores = [None] * n_best_waves
+                total_score = 0.0
+            for label_score, score in zip(labels_scores, scores):
+                res[label_score] = '' if score is None else '{:.2f}'.format(score)
+            ranking, total_score = sorted_total_scores.get(surfer_id, (len(heat_info['participants']['surfer_id']) - 1, total_score) )
+            res['Ranking'] = ranking
+            res['Total Score'] = total_score
+            csv_out_data.append( res )
+
+        export_data.setdefault('averaged_scores', {})['header'] = header
+        export_data['averaged_scores']['title_line'] = '{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
+        export_data['averaged_scores']['data'] = csv_out_data
 
         return export_data

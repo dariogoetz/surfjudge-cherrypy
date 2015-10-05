@@ -1,6 +1,14 @@
 import csv
 from keys import *
 
+
+def utf_8_encoder(unicode_csv_data):
+    lines = unicode_csv_data.readlines()
+    for line in lines:
+        res = line.encode('utf-8').rstrip('\n')
+        yield res
+
+
 def read_surfers(f):
     res = {}
     surfer_reader = csv.DictReader(f, delimiter=';')
@@ -36,53 +44,98 @@ def write_xlsx(filename, data):
     workbook = xlsxwriter.Workbook(filename)
 
     # TEXT blau
-    text_format = workbook.add_format({'align': 'right', 'num_format': '#,##0.00', 'font_color': 'blue'})
-    number_format = workbook.add_format({'num_format': '#,##0.00', 'font_color': 'blue'})
-    judge_id_format = workbook.add_format({'num_format': '#,##0', 'font_color': 'blue'})
-    headline_format = workbook.add_format({'bold': True, 'font_color': 'blue', 'bottom': True})
-    headcol_format = workbook.add_format({'bold': True, 'font_color': 'blue'})
+    formats = {
+        'text': workbook.add_format({'align': 'right', 'num_format': '#,##0.00', 'font_color': 'blue'}),
+        'number': workbook.add_format({'num_format': '#,##0.00', 'font_color': 'blue'}),
+        'judge_id': workbook.add_format({'num_format': '#,##0', 'font_color': 'blue'}),
+        'headline': workbook.add_format({'bold': True, 'font_color': 'blue', 'bottom': True}),
+        'headcol': workbook.add_format({'bold': True, 'font_color': 'blue'}),
 
-    highlighted_number_format = workbook.add_format({'num_format': '#,##0.00', 'font_color': 'blue', 'border': True, 'bg_color': '#DDDDDD'})
+        'highlighted_number': workbook.add_format({'num_format': '#,##0.00', 'font_color': 'blue', 'border': True, 'bg_color': '#DDDDDD'}),
+    }
 
     for mode, d in data.items():
         sheet = workbook.add_worksheet(mode)
-        header = d['header']
-        sheet_data = d['data']
-        highlight_cells = d.get('highlights', {})
-
-        for idx, field in enumerate(header):
-            sheet.write(0, idx, field, headline_format)
-
-        for row_idx, row_data in enumerate(sheet_data):
-            high = highlight_cells.get(row_data['color'], {}).get(row_data['judge_id'], [])
-
-            for col_idx, field in enumerate(header):
-                if col_idx == 0:
-                    val = row_data.get(field)
-                    f = headcol_format
-                elif col_idx == 1:
-                    val = row_data.get(field)
-                    try:
-                        val = int(val)
-                    except:
-                        pass
-                    f = judge_id_format
-                else:
-                    val = row_data.get(field)
-                    if val is not None:
-                        if val == VAL_MISSED:
-                            val = 'M'
-                            f = text_format
-                        else:
-                            try:
-                                val = float(val)
-                            except:
-                                pass
-                            if field in high:
-                                f = highlighted_number_format
-                            else:
-                                f = number_format
-                sheet.write(row_idx+1, col_idx, val, f)
-
+        if mode == 'averaged_scores':
+            _write_final_score_sheet(d, sheet, formats)
+        else:
+            _write_default_data_sheet(d, sheet, formats)
 
     workbook.close()
+
+
+def _write_final_score_sheet(d, sheet, formats):
+    placing = dict(enumerate(['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th']))
+    header = d['header']
+    sheet_data = d['data']
+
+    sheet.write(0, 0, d.get('title_line'), formats['headline'])
+
+    for idx, field in enumerate(header):
+        sheet.write(1, idx, field, formats['headline'])
+
+    for row_idx, row_data in enumerate(sheet_data):
+
+        for col_idx, field in enumerate(header):
+            if col_idx == 0:
+                val = placing.get(row_data.get('Ranking', ''))
+                f = formats['headcol']
+            elif col_idx == 1:
+                val = row_data.get(field)
+                f = formats['headcol']
+            else:
+                val = row_data.get(field)
+                f = formats['number']
+                if val is not None:
+                    if val == VAL_MISSED:
+                        val = 'M'
+                        f = formats['text']
+                    else:
+                        try:
+                            val = float(val)
+                        except:
+                            pass
+            sheet.write(row_idx+2, col_idx, val, f)
+    return
+
+
+def _write_default_data_sheet(d, sheet, formats):
+    header = d['header']
+    sheet_data = d['data']
+    highlight_cells = d.get('highlights', {})
+
+    sheet.write(0, 0, d.get('title_line'), formats['headline'])
+
+    for idx, field in enumerate(header):
+        sheet.write(1, idx, field, formats['headline'])
+
+    for row_idx, row_data in enumerate(sheet_data):
+        high = highlight_cells.get(row_data['Color'], {}).get(row_data['Judge Id'], [])
+
+        for col_idx, field in enumerate(header):
+            if col_idx == 0:
+                val = row_data.get(field)
+                f = formats['headcol']
+            elif col_idx == 1:
+                val = row_data.get(field)
+                f = formats['judge_id']
+                try:
+                    val = int(val)
+                except:
+                    pass
+            else:
+                val = row_data.get(field)
+                f = formats['number']
+                if val is not None:
+                    if val == VAL_MISSED:
+                        val = 'M'
+                        f = formats['text']
+                    else:
+                        try:
+                            val = float(val)
+                        except:
+                            pass
+                        if field in high:
+                            f = formats['highlighted_number']
+            sheet.write(row_idx+2, col_idx, val, f)
+    return

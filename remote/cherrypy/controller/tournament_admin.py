@@ -246,9 +246,14 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     def do_surfers_load_csv(self, my_file=None):
         import utils
         if my_file is None:
+            print 'No file given to upload surfers'
             return
+        else:
+            print 'Loading file...'
         surfers = utils.read_surfers(my_file.file)
+        print surfers
         for sid, surfer in surfers.items():
+            print 'Trying to add surfer {}'.format(surfer)
             res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, surfer).pop(0)
         return
 

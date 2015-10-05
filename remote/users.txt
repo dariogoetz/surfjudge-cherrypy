@@ -70,3 +70,12 @@ password = $2a$12$RHK.sg0l.1MBhj15bu76L.BIVEz3qTRyNCpKwdPlBf4r21O8liHW2
 [commentator]
 roles = ac_commentator,
 password = $2a$12$2djT2WCizn.rYJ3OdCBTX.ZDvhhu3hpDNnb1Do6IQE4NvtGCUc7Hi
+[21]
+roles = ac_judge,
+password = $2a$12$Je84uNXV.0EAU1BPHqejeeHu0rT3wGx1L8OPB.A3GLz.EfwTh6lBK
+[23]
+roles = ac_judge,
+password = $2a$12$jJzCasSHVK5B246duiiBsOsLZ6EJin6m2G44VGWCzxVqM47CFzWgy
+[22]
+roles = ac_judge,
+password = $2a$12$bP8VUc7L03purBUrXc1PxeH1NQ25OIx3cO8dAJqWuPS4EOtkLXLnm
