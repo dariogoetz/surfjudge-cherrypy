@@ -308,6 +308,10 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
 
         heat_name = '{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
+        directory = 'exports'
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         filename = None
         if mode == 'judge_sheet':
             filename = 'export_{}_heat_sheet.csv'.format(heat_name)
@@ -317,8 +321,10 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             filename = 'export_{}_best_average_waves.csv'.format(heat_name)
 
         if filename is not None:
-            utils.write_csv(filename, export_data[mode]['data'], export_data[mode]['header'])
-        filename = os.path.abspath('Auswertung_{}.xlsx'.format(heat_name))
+            utils.write_csv(os.path.join(directory, filename), export_data[mode]['data'], export_data[mode]['header'])
+
+        filename = os.path.abspath(os.path.join(directory, 'Auswertung_{}.xlsx'.format(heat_name)))
+        print filename
         utils.write_xlsx(filename, export_data)
         from cherrypy.lib.static import serve_file
         return serve_file(filename, "application/x-download", "attachment")
