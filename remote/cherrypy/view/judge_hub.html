@@ -172,18 +172,6 @@ function sync_with_server()
                     surfer_scores[color][wave_index] = server_data[color][wave_index];
                 }
             }
-            if (surfer_scores[color].length > server_data_length)
-            {
-                for (var wave_index=server_data_length; wave_index < surfer_scores[color].length; wave_index++)
-                {
-                    var missed = (surfer_scores[color][wave_index] === MISSED);
-                    var interference = (surfer_scores[color][wave_index] === INTERFERENCE);
-                    var upload_data = {'color':color, 'score':surfer_scores[color][wave_index], 'wave':wave_index, 'missed': missed, 'interference': interference };
-                    var jsonyfied_upload_data= JSON.stringify(upload_data); //Transform object into JSON
-                    var data_to_be_uploaded = {'score':jsonyfied_upload_data};
-                    $.post('do_insert_score',data_to_be_uploaded);
-                }
-            }
         }
         update_fields();
     });
@@ -362,7 +350,7 @@ function toggle_visibility()
                         </td>
 
                         <td bgcolor="#EEEEEE" style="border-radius: 5px 5px 0px 0px">
-                            <button class="btn btn-danger btn-lg" style="width: 100%; height: 70px;" data-dismiss="modal">Cancel</button>
+                            <button class="btn btn-danger btn-lg" style="width: 100%; height: 70px;" data-dismiss="modal" onclick="sync_with_server()">Cancel</button>
                         </td>
                     </tr>
                     <tr>
@@ -448,16 +436,21 @@ function enter_score_modal(){
     {
         modal_float = INTERFERENCE;
     }
+	//surfer_scores[current_surfer][next_open_wave_idx] = modal_float;
+    var missed = (modal_float == MISSED);
+    var interference = (modal_float == INTERFERENCE);
+    var score = {'color': current_surfer, 'score': modal_float, 'wave': selected_wave_idx, 'missed': missed, 'interference': interference };
+    var upload_data = {score: JSON.stringify(score)}; //Transform object into JSON
+
     if ((!isNaN(modal_float) && modal_float >=0 && modal_float<=10) || modal_float == MISSED || modal_float == INTERFERENCE)
     {
         if (selected_wave_idx == next_open_wave_idx){ // add a new wave
-	    {
-		    surfer_scores[current_surfer][next_open_wave_idx] = modal_float;
-	    }
-        sync_with_server();
+            $.post('do_insert_score', upload_data, function(data){
+                sync_with_server();
+            });
         } else { // edit an old wave
-            score_data = {color: current_surfer, wave: selected_wave_idx, score: modal_float};
-            $.get('/do_modify_score', {heat_id: $('#judge_panel').data('heat_id'), score: JSON.stringify(score_data)}, function(data){
+            upload_data['heat_id'] = $('#judge_panel').data('heat_id');
+            $.get('/do_modify_score', upload_data, function(data){
                 sync_with_server();
             });
         }
