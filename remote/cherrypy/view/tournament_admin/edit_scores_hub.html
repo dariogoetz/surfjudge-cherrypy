@@ -104,31 +104,72 @@ var INTERFERENCE = -2;
     });
  }
 
-$('.data-section').on('keyup', '.score-field', function (e) {
+$('.data-section').on('keyup', '.scored', function (e) {
     if (e.keyCode == 13) {
         enter_score(this.id);
         // Do something
     } else if (e.keyCode == 27) {
-        $(this).val($(this).data('orig_val'));
         $(this).blur();
     }
 });
+$('.data-section').on('focusout', '.scored', function (e) {
+    $(this).val($(this).data('orig_val'));
+    if ($(this).hasClass('unscored')){
+        $(this).removeClass('scored');
+        $(this).prop('readonly', true);
+    }
+});
 
-// enter_score is called for an "input" element; its data are received through "this"
+$('.data-section').on('click', '.unscored', function (e) {
+    var prev_wave = $(this).data('wave') - 1;
+    var judge_id = $(this).data('judge');
+    var surfer = $(this).data('surfer');
+    if (prev_wave < 0 || $('#'+judge_id + '_' + surfer + '_' + prev_wave).hasClass('scored')){
+        $(this).addClass('scored');
+        $(this).prop('readonly', false);
+    }
+});
+
+
 function enter_score(elem_id)
 {
     var elem = $('#'+elem_id);
     var heat_id = $('#heat_panel').data('heat');
-    console.log(heat_id);
     var judge_id = $(elem).data('judge');
     var surfer_color = $(elem).data('surfer');
     var wave_idx = $(elem).data('wave');
     var score = parseFloat($('#'+ judge_id + '_' + surfer_color + '_' + wave_idx).val());
     if ((score >= 0 && score <= 10) || score == -1){
         score_data = {color: surfer_color, wave: wave_idx, score: score};
-        $.get('/do_modify_score', {heat_id: heat_id, judge_id: judge_id, score: JSON.stringify(score_data)}, function(data){});
+        $.get('/do_modify_score', {heat_id: heat_id, judge_id: judge_id, score: JSON.stringify(score_data)}, function(data){
+            alert('Score updated: ' + elem.data('orig_val') + ' -> ' + score);
+            elem.data('orig_val', score);
+            elem.addClass('scored');
+            elem.removeClass('unscored');
+            elem.blur();
+        });
+    } else if (isNaN(score)){
+        var next_wave = $(elem).data('wave') + 1;
+        var judge_id = $(elem).data('judge');
+        var surfer = $(elem).data('surfer');
+
+        if (next_wave >= $('#heat_panel').data('waves') || !( $('#'+judge_id + '_' + surfer + '_' + next_wave).hasClass('scored') )){
+            del_score_data = {color: surfer_color, wave: wave_idx};
+            $.get('do_delete_score', {heat_id: heat_id, judge_id: judge_id, score: JSON.stringify(del_score_data)}, function(data){
+                alert('Deleted score '+ elem.data('orig_val'));
+                elem.addClass('unscored');
+                elem.data('orig_val', null);
+                $(elem).removeClass('scored');
+                $(elem).prop('readonly', true);
+                elem.blur();
+            });
+        } else {
+            alert('Can only delete scores at the end of the list');
+        }
+
+    } else {
+        alert('Only numbers between 0 and 10 or -1 for missed.');
     }
-    elem.blur()
  }
 </script>
 
@@ -168,6 +209,7 @@ function enter_score(elem_id)
      };
      $('#categories_dropdown_label').html('Category');
      $('#categories_dropdown_select').data('select', null);
+     refresh_heats();
      $('.data-section').hide();
  };
 
@@ -273,9 +315,6 @@ function activate_data_section(heat_id)
                 </div>
             </div>
         </div>
-        <button class="btn btn-standard" onclick="activate_data_section($('#heats_dropdown_select').data('select'));">
-            <span class="glyphicon glyphicon-refresh">&nbsp;</span>Refresh
-        </button>
     </div>
 
 

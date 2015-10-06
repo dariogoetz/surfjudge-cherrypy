@@ -5,42 +5,49 @@
 {% block content %}
 <div class="btn-toolbar" role="toolbar">
     <br>
-    <button class="btn btn-success btn-lg" style="width: 200px; height: 50px" onclick="export_scores({{ heat_id }});">Save Judge Sheets</button>
+    <button class="btn btn-standard btn-lg"  onclick="export_scores({{ heat_id }});">
+        <span class="glyphicon glyphicon-download-alt">&nbsp;</span>Save Judging Sheets
+    </button>
+<button class="btn btn-standard btn-lg pull-right" onclick="activate_data_section($('#heats_dropdown_select').data('select'));">
+    <span class="glyphicon glyphicon-refresh">&nbsp;</span>Refresh
+</button>
 </div>
 
 <br>
 
-<div class="container-fluid" id="heat_panel" data-heat="{{ heat_id }}">
+<div class="container-fluid" id="heat_panel" data-heat="{{ heat_id }}" data-waves="{{ number_of_waves }}">
+    <table class="table">
     {% for judge_id in judge_ids %}
-        <table class="table">
-            <tr>
-                <td><b>Judge {{ judge_id }}: {{judge_names[loop.index - 1]}}</b></td>
-                {% for wave_idx in range( number_of_waves ) %}
-                    <td align="center">
-                        <b>{{ loop.index }}</b>
-                    </td>
-                {% endfor %}
-            </tr>
+        <tr>
+            <td><b>Judge {{ judge_id }}:{{judge_names[loop.index - 1]}}</b></td>
+            {% for wave_idx in range( number_of_waves ) %}
+            <td align="center" style="vertical-align: bottom">
+                <b>{{ loop.index }}</b>
+            </td>
+            {% endfor %}
+        </tr>
 
         {% for surfer_color in surfer_color_names %}
-            <tr>
-                <td>
-                    <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000"><b>{{ surfer_color }}</b></button>
-                </td>
-                {% for wave_idx in range( number_of_waves ) %}
-                <td>
-                    <div class="form-inline">
-                        <div class="input-group input-group-lg">
-                            <!--<input class="form-control"  type="text" id="{judge_id: u'{{judge_id}}', 'surfer_color': u'{{ surfer_color }}' wave_number: {{wave_idx}}}" readonly /> -->
-                            <input id="{{ judge_id }}_{{ surfer_color }}_{{ wave_idx }}" class="form-control score-field"  type="number" step="0.1" min="-1" max="10"  data-judge="{{judge_id}}" data-surfer="{{surfer_color}}" data-wave="{{wave_idx}}" readonly/>
-                        </div>
+        <tr>
+            <td>
+                <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000"><b>{{ surfer_color }}</b></button>
+            </td>
+            {% for wave_idx in range( number_of_waves ) %}
+            <td>
+                <div class="form-inline">
+                    <div class="input-group input-group-lg">
+                        <!--<input class="form-control"  type="text" id="{judge_id: u'{{judge_id}}', 'surfer_color': u'{{ surfer_color }}' wave_number: {{wave_idx}}}" readonly /> -->
+                        <input id="{{ judge_id }}_{{ surfer_color }}_{{ wave_idx }}" class="form-control unscored"  type="number" step="0.1" min="-1" max="10"  data-judge="{{judge_id}}" data-surfer="{{surfer_color}}" data-wave="{{wave_idx}}" readonly/>
                     </div>
-                </td>
-                {% endfor %}
-
-            </tr>
+                </div>
+            </td>
+            {% endfor %}
+        </tr>
         {% endfor %}
-        </table>
+        <tr>
+            <td style="border:0"><br><br></td>
+        </tr>
     {% endfor %}
+    </table>
 </div>
 {% endblock content %}

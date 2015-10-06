@@ -345,6 +345,43 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         data = self._standard_env()
         return data
 
+
+
+    @cherrypy.expose
+    @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_ADMIN))
+    def do_delete_score(self, score = None, heat_id = None, judge_id = None):
+        if score is None:
+            print 'do_delete_score: No score data given'
+            return
+
+        score = json.loads(score)
+        db_data = score
+
+        if judge_id is None:
+            judge_id = cherrypy.session.get(KEY_JUDGE_ID)
+            if judge_id is None:
+                print 'do_modify_score: Not registered as judge and no judge id specified'
+                return
+
+        if heat_id is None:
+            print 'do_delete_score: No heat_id specified'
+            return
+
+        heat_id = int(heat_id)
+
+        db_data['judge_id'] = judge_id
+
+        db_data['heat_id'] = heat_id
+        heat_info = self.collect_heat_info(heat_id)
+        participants = heat_info['participants']
+        color2id = dict(zip(participants['surfer_color'], participants['surfer_id']))
+        db_data['surfer_id'] = int(color2id[score['color']])
+        del db_data['color']
+
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_DELETE_SCORE, db_data).pop()
+        return res
+
+
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
     #@require(is_admin()) # later ask for judge or similar

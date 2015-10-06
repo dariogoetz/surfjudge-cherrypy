@@ -48,6 +48,7 @@ KEY_ENGINE_USER_GET_USERS = 'get-users'
 
 KEY_ENGINE_DB_RETRIEVE_SCORES = 'db_retrieve_scores'
 KEY_ENGINE_DB_INSERT_SCORE = 'db_insert_score'
+KEY_ENGINE_DB_DELETE_SCORE = 'db_delete_score'
 
 KEY_ENGINE_DB_RETRIEVE_TOURNAMENTS = 'db_retrieve_tournaments'
 KEY_ENGINE_DB_INSERT_TOURNAMENT = 'db_insert_tournament'

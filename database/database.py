@@ -101,6 +101,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
+    def delete_score(self, score):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._delete_score, score, pipe_send), block=True)
+        res = pipe_recv.recv()
+        return res
+
 
 
     ############ tournaments interface ##############
@@ -296,6 +302,10 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._modify_in_db(query, score, 'scores')
         else:
             self._insert_into_db(score, 'scores')
+        return
+
+    def _delete_score(self, score):
+        self._delete_from_db(score, 'scores')
         return
 
 

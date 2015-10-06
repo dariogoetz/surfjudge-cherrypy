@@ -11,7 +11,7 @@
             {% endfor %}
         </tr>
 
-    {% for surfer_color in surfer_color_names %}
+        {% for surfer_color in surfer_color_names %}
         <tr>
             <td>
                 <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000; height: 70px;" onclick="open_modal('{{ surfer_color }}')" data-hex="{{ surfer_color_colors[surfer_color] }}" id="{{ surfer_color }}" data-surfer ="{{ surfer_color }}" data-wave="-1"><b>{{ surfer_color }}</b></button>
@@ -25,7 +25,6 @@
                 </div>
             </td>
             {% endfor %}
-
         </tr>
         {% endfor %}
     </table>
