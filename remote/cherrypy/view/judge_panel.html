@@ -1,6 +1,6 @@
 
 {% block content %}
-<div class="container-fluid" id="display_this_if_some_heat_active">
+<div class="container-fluid">
     <table class="table">
         <tr>
             <td><b>Wave</b></td>
@@ -14,13 +14,13 @@
     {% for surfer_color in surfer_color_names %}
         <tr>
             <td>
-                <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000; height: 70px;" onclick="open_modal('{{ surfer_color }}')" data-hex="{{ surfer_color_colors[surfer_color] }}" id="{{ surfer_color }}" data-surfer ="{{ surfer_color }}""><b>{{ surfer_color }}</b></button>
+                <button class="btn btn-default btn-lg btn-block" style="background-color: {{ surfer_color_colors[surfer_color] }}; border-color: #000000; height: 70px;" onclick="open_modal('{{ surfer_color }}')" data-hex="{{ surfer_color_colors[surfer_color] }}" id="{{ surfer_color }}" data-surfer ="{{ surfer_color }}" data-wave="-1"><b>{{ surfer_color }}</b></button>
             </td>
             {% for wave_idx in range( number_of_waves ) %}
             <td>
                 <div class="form-inline">
                     <div class="input-group input-group-lg">
-                        <input class="form-control"  type="text" id="{{ surfer_color }}_{{wave_idx}}" onclick="open_modal('{{ surfer_color }}')" data-hex="{{ surfer_color_colors[surfer_color] }}" data-surfer="{{ surfer_color }}" style="height: 70px;" readonly />
+                        <input class="form-control"  type="text" id="{{ surfer_color }}_{{wave_idx}}" onclick="open_modal('{{ surfer_color }}_{{wave_idx}}')" data-hex="{{ surfer_color_colors[surfer_color] }}" data-surfer="{{ surfer_color }}" data-wave="{{ wave_idx }}" style="height: 70px;" readonly />
                     </div>
                 </div>
             </td>

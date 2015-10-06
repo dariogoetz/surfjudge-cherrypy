@@ -2,12 +2,18 @@
 
 {% block nav_items %}['#nav_item_judge_tools']{% endblock nav_items %}
 
-{% block title %}UI for Judges{% endblock title %}
+{% block title %}Judge Panel{% endblock title %}
 
 
 {% block css %}
 {{ super()}}
 <style type="text/css">
+
+.borderless tbody tr td, .borderless tr th, .borderless thead tr th {
+    border: none;
+    border-radius: 5px;
+}
+
 .main_panel
 {
 	width:100%;
@@ -227,8 +233,10 @@ function toggle_visibility()
         if (! $.isEmptyObject(active_heat_info)){ //if user is not active in any heat
             if ($('#judge_panel').data('status')==='inactive'){
                 var heat_id = active_heat_info['heat_id'];
+
                 $.get('/do_get_judge_panel', {heat_id: heat_id}, function(judge_panel){
                     if (active_heat_info != ''){
+                        $('#judge_panel').data('heat_id', heat_id);
                         $('#judge_panel').append(judge_panel);
                         $('#judge_panel').data('status', 'active');
                         activate_judge_panel(heat_id);
@@ -264,11 +272,31 @@ function toggle_visibility()
  function open_modal(elem_id){
      var elem = $('#'+elem_id);
      var surfer =  elem.data('surfer');
-     var wave_idx = surfer_scores[surfer].length;
-     if (wave_idx < max_no_of_waves){
+     var selected_wave_idx = elem.data('wave');
+     var next_open_wave_idx = surfer_scores[surfer].length;
+     var old_val = '--';
+     if (selected_wave_idx > next_open_wave_idx)
+         return;
+
+     if (selected_wave_idx == -1 || selected_wave_idx == next_open_wave_idx){
+         input_wave_idx = next_open_wave_idx;
+         $('#input_modal .modal_old_score').hide();
+         $('#input_modal .modal_new_score').hide();
+
+     }
+     else {
+         input_wave_idx = selected_wave_idx;
+         old_val = elem.val();
+         $('#input_modal .modal_old_score').html('<font color="red">Old: ' + old_val + '</font>');
+         $('#input_modal .modal_new_score').show();
+         $('#input_modal .modal_old_score').show();
+
+     }
+     if (next_open_wave_idx < max_no_of_waves){
          $('#input_modal').data('surfer', surfer);
+         $('#input_modal').data('wave', input_wave_idx);
          $('#modal_surfer_color').html(surfer.toUpperCase());
-         $('#modal_wave_idx').html(wave_idx+1);
+         $('#modal_wave_idx').html(input_wave_idx +1);
          $('#input_modal .modal_score').html('--');
          $('#input_modal .modal-content').css({'background-color': elem.data('hex')});
          $('#input_modal').modal('toggle');
@@ -292,28 +320,22 @@ function toggle_visibility()
 {% block modals %}
 
 <!-- Edit judge modal -->
-<div class="modal fade" id="input_modal">
+<div class="modal" id="input_modal" data-backdrop="static">
     <div class="modal-dialog">
         <div class="modal-content">
 
             <div class="modal-body">
 
-                <div class="row">
-                    <div class="col-xs-3" align="center">
-                        <h2><b><span id="modal_surfer_color"></span></b></h2>
-                        <br>
-                        <h2><b>Wave <span id="modal_wave_idx"></span></b></h2>
-                        <div class="well margin-bottom">
-                            <h1 class="modal_score" align="center">--</h1>
-                        </div>
-                        <br>
-                        <button class="btn btn-standard btn-lg" style="height:70px; width: 120px; vertical-align: bottom;" onclick="edit_score_modal(MISSED)"">Missed</button>
-                    </div>
-                <!-- </div>
-                <div class="row">
-                    <div class="col-xs-2"></div> -->
-                    <div class="col-xs-6">
-                        <div class="well">
+                <table class="table borderless">
+                    <tr>
+                        <td>
+                            <font size="5"><b><span id="modal_surfer_color"></span></b><br><b>Wave <span id="modal_wave_idx"></span></b></font>
+                            <br>
+                        </td>
+
+
+                        <td rowspan="3" width="5%"></td>
+                        <td rowspan="3" bgcolor="#EEEEEE">
                             <div class="btn-toolbar" role="toolbar" align="center">
                                 <button class="btn btn-standard btn-lg quadratic" style="width: 70px; height: 65px;" onclick="edit_score_modal(1)"><b>1</b></button>
                                 <button class="btn btn-standard btn-lg quadratic" style="width: 70px; height: 65px;" onclick="edit_score_modal(2)"><b>2</b></button>
@@ -335,14 +357,35 @@ function toggle_visibility()
                             <div class="btn-toolbar" role="toolbar" align="center">
                                 <button class="btn btn-standard btn-lg quadratic" style="width: 70px; height: 65px;" onclick="edit_score_modal(0)"><b>0</b></button>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-xs-3" align="center">
-                        <button class="btn btn-danger btn-lg" style="width: 100px; height: 70px;" data-dismiss="modal">Cancel</button><br><br><br><br><br><br><br><br><br><br><br><br>
-                        <button id="judge_submit" class="btn btn-success btn-lg" style="width: 100px; height: 70px;" data-dismiss="modal" onclick="enter_score_modal()">Enter</button>
-                    </div>
+                        </td>
+                        <td rowspan="3" width="5%">
+                        </td>
 
-                </div>
+                        <td bgcolor="#EEEEEE" style="border-radius: 5px 5px 0px 0px">
+                            <button class="btn btn-danger btn-lg" style="width: 100%; height: 70px;" data-dismiss="modal">Cancel</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" bgcolor="#EEEEEE">
+                                <h4 class="modal_old_score" style="display:none;" align="center"></h4>
+                                <h1>
+                                    <span class="modal_new_score" style="display:none">New:<br></span>
+                                    <span class="modal_score" align="center">--</span></h1>
+                        </td>
+
+                        <td bgcolor="#EEEEEE" style="vertical-align: middle; border-radius: 0px 0px 0px 0px">
+                            <button class="btn btn-info btn-lg" style="width: 100%; height: 70px;" onclick="clear_score_modal()">Del</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: bottom">
+                            <button class="btn btn-standard btn-lg" style="height:70px; width: 120px; vertical-align: bottom;" onclick="edit_score_modal(MISSED)"">Missed</button>
+                        </td>
+                        <td bgcolor="#EEEEEE" style="vertical-align: bottom; border-radius: 0px 0px 5px 5px">
+                            <button id="judge_submit" class="btn btn-success btn-lg" style="width: 100%; height: 70px;" data-dismiss="modal" onclick="enter_score_modal()">Enter</button>
+                        </td>
+                    </tr>
+                </table>
             </div><!-- /.modal-body -->
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -386,24 +429,39 @@ function edit_score_modal(val)
         modal_score_field.html(out_val);
 }
 
+function clear_score_modal(){
+    $('#input_modal .modal_score').html('--');
+}
+
 function enter_score_modal(){
     var modal_score = $('#input_modal .modal_score').html();
     var modal_float = parseFloat(modal_score);
     var current_surfer = $('#input_modal').data('surfer');
+    var selected_wave_idx = $('#input_modal').data('wave');
+    var next_open_wave_idx = surfer_scores[current_surfer].length;
 
 	if (modal_score==="M")
     {
-        surfer_scores[current_surfer][surfer_scores[current_surfer].length]=MISSED;
+        modal_float = MISSED;
     }
     else if (modal_score==="I")
     {
-        surfer_scores[current_surfer][surfer_scores[current_surfer].length]=INTERFERENCE;
+        modal_float = INTERFERENCE;
     }
-	else if(!isNaN(modal_float) && modal_float >=0 && modal_float<=10)
-	{
-		surfer_scores[current_surfer][surfer_scores[current_surfer].length]=modal_float;
-	}
-    sync_with_server();
- }
+    if ((!isNaN(modal_float) && modal_float >=0 && modal_float<=10) || modal_float == MISSED || modal_float == INTERFERENCE)
+    {
+        if (selected_wave_idx == next_open_wave_idx){ // add a new wave
+	    {
+		    surfer_scores[current_surfer][next_open_wave_idx] = modal_float;
+	    }
+        sync_with_server();
+        } else { // edit an old wave
+            score_data = {color: current_surfer, wave: selected_wave_idx, score: modal_float};
+            $.get('/do_modify_score', {heat_id: $('#judge_panel').data('heat_id'), score: JSON.stringify(score_data)}, function(data){
+                sync_with_server();
+            });
+        }
+    }
+}
 </script>
 {% endblock modal_javascript %}

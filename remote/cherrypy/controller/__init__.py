@@ -87,7 +87,6 @@ class CherrypyWebInterface(object):
         for idx, participant in enumerate(res):
             color = participant.get('surfer_color')
             seeds.append( (idx, int(colors.get(color, {}).get('SEEDING', len(colors) + idx))) )
-        print seeds
         data = {}
         for p, seed in sorted(seeds, key=lambda x: x[1]):
             participant = res[p]

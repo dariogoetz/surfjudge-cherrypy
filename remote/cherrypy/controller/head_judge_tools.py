@@ -84,7 +84,6 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
         context['categories'] = sorted(categories.values(), key=lambda x:x['name'])
         context['heats'] = {}
         for cid, heats in cid2heats.items():
-            print heats.values()
             context['heats'][cid] = sorted(heats.values(), key=lambda x:x['name'])
         return context
 

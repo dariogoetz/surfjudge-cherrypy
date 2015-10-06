@@ -74,6 +74,9 @@ def _write_final_score_sheet(d, sheet, formats):
     for idx, field in enumerate(header):
         sheet.write(1, idx, field, formats['headline'])
 
+
+    sheet.set_column(1, 1, 25)
+    sheet.set_column(3, 5, 10)
     for row_idx, row_data in enumerate(sheet_data):
 
         for col_idx, field in enumerate(header):
@@ -106,6 +109,7 @@ def _write_default_data_sheet(d, sheet, formats):
 
     sheet.write(0, 0, d.get('title_line'), formats['headline'])
 
+    sheet.set_column(0, 0, 25)
     for idx, field in enumerate(header):
         sheet.write(1, idx, field, formats['headline'])
 
@@ -116,7 +120,7 @@ def _write_default_data_sheet(d, sheet, formats):
             if col_idx == 0:
                 val = row_data.get(field)
                 f = formats['headcol']
-            elif col_idx == 1:
+            elif field == 'Judge Id':
                 val = row_data.get(field)
                 f = formats['judge_id']
                 try:

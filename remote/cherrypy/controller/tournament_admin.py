@@ -251,7 +251,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         else:
             print 'Loading file...'
         surfers = utils.read_surfers(my_file.file)
-        print surfers
         for sid, surfer in surfers.items():
             print 'Trying to add surfer {}'.format(surfer)
             res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, surfer).pop(0)
@@ -363,7 +362,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         colors = map(str, surfer_data.get('surfer_color', []))
         colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
         data['heat_id'] = heat_id
-        data['judge_ids'] = heat_info.get('judges', {}).keys()
+        data['judge_ids'] = sorted(heat_info.get('judges', {}).keys())
         data['judge_names'] = ['{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name']) for judge_id in data['judge_ids']]
         data['surfers'] = dict(zip(ids, colors))
         data['surfer_color_names'] = colors
