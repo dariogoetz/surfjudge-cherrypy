@@ -20,57 +20,46 @@ function activate_judge_activities_panel(active_heat_id){
     var active_judges ={};
     var active_surfers={};
     var number_of_judges='none';
+    var color2id={};
+    var id2color={};
 
     $.get('/do_get_active_heat_info', {heat_id: active_heat_id}, function(data)
     {
         active_heat_data = $.parseJSON(data); // this is a global variable, it is an object
+        //active_heat_id=active_heat_data[0]['heat_id']; // this is a global variable, it is a number
         active_surfers=active_heat_data['participants'];
-        if (Object.keys(active_heat_data['judges']).length==0 || active_surfers['surfer_id'].length==0) // If no judge or no surfer is in the heat
-        {
-           data_for_table[0]={'surfer_color':'-', 'surfer_name':'No Surfers or no judges registered for heat', 'total_score':'-', 'needs':'-'};
-           if( !isNaN(number_of_best_waves) && number_of_best_waves >0) // if number_of_waves is a number greater than zero
-           {
-                for (var best_waves_index=1; best_waves_index <= number_of_best_waves; best_waves_index++) //TODO number_of_best_waves aus Server holen
-                {
-                    best_waves_index_string=best_waves_index.toString();
-                }
-            }
-        }
-        else // If at least one judge and one surfer are registered for the active heat
+        if (Object.keys(active_heat_data['judges']).length > 0 && active_surfers['surfer_id'].length > 0) // If no judge or no surfer is in the heateat
         {
             for (var judge_id_string in active_heat_data['judges'])
             {
-                active_judges[judge_id_string]=active_heat_data['judges'][judge_id_string]['judge_id']; // This is a global variable, an object that contains the active judge ids as numbers
+                active_judges[judge_id_string] = active_heat_data['judges'][judge_id_string]['judge_id'];
+                // This is a global variable, an object that contains the active judge ids as numbers
             }
-            number_of_judges=Object.keys(active_judges).length;
+            number_of_judges = Object.keys(active_judges).length;
             for (var surfer_id_index=0; surfer_id_index < active_surfers['surfer_id'].length; surfer_id_index++)
             {
-                // Introduce fields for the best waves that enter the total score of a surfer
-                for (var best_waves_index=1; best_waves_index <= number_of_best_waves; best_waves_index++) //TODO number_of_best_waves aus Server holen
-                {
-                    best_waves_index_string=best_waves_index.toString();
-                }
+                var surfer_id = active_surfers['surfer_id'][surfer_id_index];
+                var surfer_color = active_surfers['surfer_color'][surfer_id_index];
+                id2color[surfer_id] = surfer_color;
+                color2id[surfer_color] = surfer_id;
             }
             var number_of_logged_waves={}; //[judge_id][color]
             var current_scores={}; //current_scores['surfer_id']['judge_id'][wave_no]This is a global variable it is an object filled with objects that contain numbers
-            var current_scores_original; // contains current scores with Missed Waves
             var minimum_of_logged_waves={};//minimum_of_logged_waves[color]
             var scores_from_server=[]; // this variable is used to store data from the server that comes from do_query_scores
             var counter=0; // This is the index for the list "data_for_table"
             var top_waves={}; // topwaves{surfer_id}{wave_index =1,2} This variable is needed in the function that finds the best waves of each surfer
             var key_of_best_wave='none'; //This variable is needed in the function that finds the best waves of each surfer)
-            var average_scores={};
-            var average_scores_no_missed={};
             var leader_id='none'; // ID of the surfer that leads the current heat. It is needed to find the value of the variable "needs"
-            var color_per_id={};
+            var json_for_commentator_table='none'; // Global variable, a string that contains the data for the commentator table in json format. It must be saved to a .txt file
             var total_scores={};
             // Create an object that has all scored waves stored in such a way, that the average scores can be calculated easily
-            $.get('/do_query_scores',{'heat_id':active_heat_id, 'get_for_all_judges':1}, function(data)
+            $.get('/do_query_scores', {'heat_id':active_heat_id, 'get_for_all_judges':1}, function(data)
             {
                 scores_from_server=$.parseJSON(data);
-                if (Object.keys(scores_from_server).length=0)
+                if (Object.keys(scores_from_server).length == 0)
                 {
-                    Console.log('Waiting for waves to be scored')
+                    console.log('Waiting for waves to be scored')
                 }
                 else
                 {
@@ -79,27 +68,10 @@ function activate_judge_activities_panel(active_heat_id){
                     {
                         for (var surfer_color in scores_from_server[judge_id_string])
                         {
-                            //find surfer_id
-                            var surfer_id='none';
-                            for (i=0; i < active_surfers['surfer_color'].length; i++)
-                            {
-                                if (active_surfers['surfer_color'][i]==surfer_color)
-                                {
-                                    surfer_id=active_surfers['surfer_id'][i];
-                                    var surfer_id_string=surfer_id.toString();
-                                    color_per_id[surfer_id_string]=surfer_color;
-                                }
-                            }
-
-                            if(surfer_id_string in current_scores)
-                            {
-                               // do nothing
-                            }
-                            else
-                            {
-                                current_scores[surfer_id_string]={};
-                            }
-                            current_scores[surfer_id_string][judge_id_string]={};
+                            var surfer_id = color2id[surfer_color];
+                            if( !(surfer_id in current_scores) )
+                                current_scores[surfer_id]={};
+                            current_scores[surfer_id][judge_id_string] = {};
                         }
                     }
                     // Fill object current_scores with data
@@ -107,80 +79,58 @@ function activate_judge_activities_panel(active_heat_id){
                     {
                         for (var surfer_color in scores_from_server[judge_id_string])
                         {
-                            //find surfer_id
-                            var surfer_id='none';
-                            for (i=0; i < active_surfers['surfer_color'].length; i++)
+                            var surfer_id = color2id[surfer_color];
+                            for (var wave_index = 0; wave_index < scores_from_server[judge_id_string][surfer_color].length; wave_index++)
                             {
-                                if (active_surfers['surfer_color'][i]==surfer_color)
-                                {
-                                    surfer_id=active_surfers['surfer_id'][i];
-                                }
-                            }
-                            var surfer_id_string=surfer_id.toString();
-
-                            for (var wave_index =0; wave_index < scores_from_server[judge_id_string][surfer_color].length; wave_index++)
-                            {
-                                var wave_number=wave_index+1;
-                                var wave_number_string = wave_number.toString();
-                                current_scores[surfer_id_string][judge_id_string][wave_number_string]=scores_from_server[judge_id_string][surfer_color][wave_index];
-                                var val = current_scores[surfer_id_string][judge_id_string][wave_number_string];
+                                current_scores[surfer_id][judge_id_string][wave_index + 1] = scores_from_server[judge_id_string][surfer_color][wave_index];
+                                var val = current_scores[surfer_id][judge_id_string][wave_index + 1];
                                 if (val == MISSED)
                                     val = 'M';
-                                var id_of_element_for_score=judge_id_string+'_'+surfer_color+'_'+wave_number_string;
+                                var id_of_element_for_score = judge_id_string+'_'+surfer_color+'_'+wave_index;
                                 $('#'+id_of_element_for_score).html(val);
                             }
                         }
 
                     }
-                    current_scores_original=current_scores;
-
 
                     // Count for each surfer the number of waves where a score is available from every judge
-                    for(var surfer_id in current_scores)
+                    for (var surfer_id in current_scores)
                     {
-                        minimum_of_logged_waves[surfer_id]='none';
-                        if(Object.keys(current_scores[surfer_id]).length==Object.keys(active_judges).length) // If every judge has logged at least one wave
+                        minimum_of_logged_waves[surfer_id] = active_heat_data['number_of_waves'];
+                        if(Object.keys(current_scores[surfer_id]).length == Object.keys(active_judges).length) // If every judge has logged at least one wave
                         {
                             for (var judge_id_string in current_scores[surfer_id])
                             {
-                                if (minimum_of_logged_waves[surfer_id]='none')
+                                if (minimum_of_logged_waves[surfer_id] > Object.keys(current_scores[surfer_id][judge_id_string]).length)
                                 {
-                                    minimum_of_logged_waves[surfer_id]=Object.keys(current_scores[surfer_id][judge_id_string]).length;
-                                }
-                                else if (minimum_of_logged_waves[surfer_id] > Object.keys(current_scores[surfer_id][judge_id_string]).length);
-                                {
-                                    minimum_of_logged_waves[surfer_id]=Object.keys(current_scores[surfer_id][judge_id_string]).length;
+                                    minimum_of_logged_waves[surfer_id] = Object.keys(current_scores[surfer_id][judge_id_string]).length;
                                 }
                             }
                         }
                         else // if one or more judges have not logges a single wave for surfer_id
                         {
-                            minimum_of_logged_waves[surfer_id]=0
+                            minimum_of_logged_waves[surfer_id] = 0;
                         }
                     }
-
+                    var average_scores_no_missed={};
                     // build averaged scores leaving out MISSED waves
                     for (var surfer_id in current_scores)
                     {
-                        average_scores_no_missed[surfer_id]={};
-                        if(minimum_of_logged_waves[surfer_id]!=0)
-                        {
-                            for (var wave_index=1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
-                            {
-                                var wave_number_string = wave_index.toString();
-                                average_scores_no_missed[surfer_id][wave_number_string]=0;
-                                var average_counter=0;
-                                for (var judge_id in current_scores[surfer_id])
-                                {
-                                    if(current_scores[surfer_id][judge_id][wave_number_string] != MISSED && !isNaN(current_scores[surfer_id][judge_id][wave_number_string])) //
-                                    {
-                                        average_counter=average_counter+1;
-                                        average_scores_no_missed[surfer_id][wave_number_string] += current_scores[surfer_id][judge_id][wave_number_string];
-                                    }
-                                }
-                                average_scores_no_missed[surfer_id][wave_number_string] = average_scores_no_missed[surfer_id][wave_number_string]/average_counter;
-                            }
-                        }
+		        average_scores_no_missed[surfer_id] = {};
+			for (var wave_index=1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
+			{
+			    average_scores_no_missed[surfer_id][wave_index] = 0;
+			    var average_counter = 0;
+			    for (var judge_id in current_scores[surfer_id])
+			    {
+			        if (current_scores[surfer_id][judge_id][wave_index] != MISSED && !isNaN(current_scores[surfer_id][judge_id][wave_index])) //
+			        {
+			            average_counter += 1;
+			            average_scores_no_missed[surfer_id][wave_index] += current_scores[surfer_id][judge_id][wave_index];
+			        }
+			    }
+			    average_scores_no_missed[surfer_id][wave_index] = average_scores_no_missed[surfer_id][wave_index]/average_counter;
+			}
                     }
 
                     // Substitute MISSED waves by averages
@@ -188,46 +138,36 @@ function activate_judge_activities_panel(active_heat_id){
                     {
                         for (var judge_id in current_scores[surfer_id])
                         {
-                            for (var wave_index=1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
+                            for (var wave_index = 1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
                             {
-                                var wave_number_string = wave_index.toString();
-                                if(current_scores[surfer_id][judge_id][wave_index] == MISSED)
+                                if(current_scores[surfer_id][judge_id][wave_index] == MISSED || isNaN(current_scores[surfer_id][judge_id][wave_index]))
                                 {
-                                    current_scores[surfer_id][judge_id][wave_index] = average_scores_no_missed[surfer_id][wave_number_string];
+                                    current_scores[surfer_id][judge_id][wave_index] = average_scores_no_missed[surfer_id][wave_index];
                                 }
                             }
                         }
                     }
-
+                    var average_scores={};
                     //Build average scores for each surfer in current_scores and find the best two waves TODO: find best n waves
-                    if(number_of_judges<4)
+                    if (number_of_judges < 5)
                     {
                         for (var surfer_id in current_scores)
                         {
-                            average_scores[surfer_id]={};
-                            if(minimum_of_logged_waves[surfer_id]!=0)
+                            average_scores[surfer_id] = {};
+                            for (var wave_index = 1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
                             {
-                                for (var wave_index=1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
+                                average_scores[surfer_id][wave_index] = 0;
+                                var average_counter = 0;
+                                for (var judge_id in current_scores[surfer_id])
                                 {
-                                    var wave_number_string = wave_index.toString();
-                                    average_scores[surfer_id][wave_number_string]=0;
-                                    var average_counter=0;
-                                    for (var judge_id in current_scores[surfer_id])
-                                    {
-                                        if(current_scores[surfer_id][judge_id][wave_number_string]!= MISSED && !isNaN(current_scores[surfer_id][judge_id][wave_number_string])) //
-                                        {
-                                            average_counter=average_counter+1;
-                                            average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]+current_scores[surfer_id][judge_id][wave_number_string];
-                                        }
-                                    }
-                                    average_scores[surfer_id][wave_number_string]=average_scores[surfer_id][wave_number_string]/average_counter;
-                                    average_scores[surfer_id][wave_number_string]=Math.round(average_scores[surfer_id][wave_number_string]*100)/100;
-                                    var id_of_element_for_score='average_'+color_per_id[surfer_id]+'_'+wave_number_string;
-                                    $('#'+id_of_element_for_score).html(average_scores[surfer_id][wave_number_string]);
-                                    console.log(id_of_element_for_score);
-                                    console.log('average scores');
-                                    console.log(average_scores);
+                                    average_counter += 1;
+                                    average_scores[surfer_id][wave_index] += current_scores[surfer_id][judge_id][wave_index];
                                 }
+                                average_scores[surfer_id][wave_index] = average_scores[surfer_id][wave_index]/average_counter;
+                                var id_of_element_for_score='average_'+id2color[surfer_id]+'_'+wave_index;
+                                $('#'+id_of_element_for_score).html(Math.round(average_scores[surfer_id][wave_index] * 100) / 100);
+                                console.log('average scores');
+                                console.log(average_scores);
                             }
                         }
                     }
@@ -235,62 +175,50 @@ function activate_judge_activities_panel(active_heat_id){
                     {
                         for (var surfer_id in current_scores)
                         {
-
                             average_scores[surfer_id]={};
-                            if(minimum_of_logged_waves[surfer_id] != 0)
+                            for (var wave_index = 1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
                             {
-                                for (var wave_index=1; wave_index <= minimum_of_logged_waves[surfer_id]; wave_index++)
+                                average_scores[surfer_id][wave_index] = 0;
+                                // Find highest and lowest score
+                                var highest_score = -1;
+                                var highest_score_judge_id = 'none';
+                                var lowest_score = 11;
+                                var lowest_score_judge_id = 'none';
+                                for (var judge_id in current_scores[surfer_id])
                                 {
-                                    var wave_number_string = wave_index.toString();
-                                    average_scores[surfer_id][wave_number_string]=0;
-
-                                    // Find highest and lowest score
-                                    var highest_score = -1;
-                                    var highest_score_judge_id='none';
-                                    var lowest_score = 11;
-                                    var lowest_score_judge_id='none';
-                                    for (var judge_id in current_scores[surfer_id])
+                                    if(highest_score <= current_scores[surfer_id][judge_id][wave_index])
                                     {
-                                        if(highest_score <= current_scores[surfer_id][judge_id][wave_number])
-                                        {
-                                            highest_score <= current_scores[surfer_id][judge_id][wave_number];
-                                            highest_score_judge_id = judge_id;
-                                            highest_score = current_scores[surfer_id][judge_id][wave_number];
-                                        }
-                                        if(lowest_score >= current_scores[surfer_id][judge_id][wave_number])
-                                        {
-                                            lowest_score <= current_scores[surfer_id][judge_id][wave_number];
-                                            lowest_score_judge_id = judge_id;
-                                            lowest_score = current_scores[surfer_id][judge_id][wave_number];
-                                        }
+                                        highest_score_judge_id = judge_id;
+                                        highest_score = current_scores[surfer_id][judge_id][wave_index];
                                     }
-
-
-                                    var average_counter = 0;
-                                    for (var judge_id in current_scores[surfer_id])
+                                    if(lowest_score >= current_scores[surfer_id][judge_id][wave_index])
                                     {
-                                        if(judge_id != highest_score_judge_id && judge_id != lowest_score_judge_id && !isNaN(current_scores[surfer_id][judge_id][wave_number_string])) //
-                                        {
-                                            average_counter = average_counter + 1;
-                                            average_scores[surfer_id][wave_number_string] += current_scores[surfer_id][judge_id][wave_number_string];
-                                        }
+                                        lowest_score_judge_id = judge_id;
+                                        lowest_score = current_scores[surfer_id][judge_id][wave_index];
                                     }
-
-                                    average_scores[surfer_id][wave_number_string] = average_scores[surfer_id][wave_number_string]/average_counter;
-                                    average_scores[surfer_id][wave_number_string] = Math.round(average_scores[surfer_id][wave_number_string]*100)/100;
-                                    var id_of_element_for_score='average_'+color_per_id[surfer_id]+'_'+wave_number_string;
-                                    $('#'+id_of_element_for_score).html(average_scores[surfer_id][wave_number_string]);
                                 }
-
+                                var average_counter = 0;
+                                for (var judge_id in current_scores[surfer_id])
+                                {
+                                    if (judge_id != highest_score_judge_id && judge_id != lowest_score_judge_id && !isNaN(current_scores[surfer_id][judge_id][wave_index])) //
+                                    {
+                                        average_counter += 1;
+                                        average_scores[surfer_id][wave_index] += current_scores[surfer_id][judge_id][wave_index];
+                                    }
+                                }
+                                average_scores[surfer_id][wave_index] = average_scores[surfer_id][wave_index]/average_counter;
+                                var id_of_element_for_score='average_'+id2color[surfer_id]+'_'+wave_index;
+                                $('#'+id_of_element_for_score).html(Math.round(average_scores[surfer_id][wave_index] * 100) / 100);
                             }
                         }
                     }
+
                     for (var id in active_surfers['surfer_id']){
                         var surfer_id = active_surfers['surfer_id'][id];
                         top_waves[surfer_id]=[];
                         top_waves[surfer_id][0]='-';
                         top_waves[surfer_id][1]='-';
-                    }                    // find the best 2 waves and write them in data_for_table TODO: Introduce best n waves
+                    }
                     for(var surfer_id in average_scores)
                     {
                         var best_wave_index='none';

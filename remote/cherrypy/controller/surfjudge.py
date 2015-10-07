@@ -11,7 +11,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     #@require(is_admin())
-    @cherrypy.tools.render(template = 'index.html')
+    @cherrypy.tools.render(template = 'commentator_hub.html')
     def index(self):
         context = self._standard_env()
         heats_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
@@ -19,8 +19,8 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             query_info = {KEY_HEAT_ID: int(heat_id)}
             # TODO: maybe store current scores in state object for faster access
             scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
-            heat['scores'] = json.loads(self.do_query_scores(heat_id=heat_id, get_for_all_judges=1))
-        context['active_heats'] = heats_info
+            heat['scores'] = json.loads(self.do_query_scores(heat_id=heat_id, get_for_all_judges = 1))
+        context['heats'] = heats_info
         return context
 
 
@@ -55,6 +55,8 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         ids = map(str, surfer_data.get('surfer_id', []))
         colors = map(str, surfer_data.get('surfer_color', []))
         colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
+        data['heat_id'] = heat_id
+        data['judge_id'] = judge_id
         data['judge_name'] = '{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name'])
         data['surfers'] = dict(zip(ids, colors))
         data['surfer_color_names'] = colors
@@ -66,31 +68,15 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     @require(has_one_role(KEY_ROLE_COMMENTATOR)) # later ask for judge or similar
     @cherrypy.tools.render(template='commentator_hub.html')
     def commentator_hub(self):
-        data = self._standard_env()
-        return data
-
-    @cherrypy.expose
-    @require(has_one_role(KEY_ROLE_COMMENTATOR)) # later ask for judge or similar
-    @cherrypy.tools.render(template='commentator_panel.html')
-    def do_get_commentator_panel(self, heat_id=None):
-        if heat_id is None:
-            return ''
-        heat_id = int(heat_id)
-
-        data = self._standard_env()
-
-        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
-        surfer_data = heat_info['participants']
-        ids = map(str, surfer_data.get('surfer_id', []))
-        colors = map(str, surfer_data.get('surfer_color', []))
-        colors_hex = map(str, surfer_data.get('surfer_color_hex', []))
-        data['heat_id'] = heat_id
-        data['surfers'] = dict(zip(ids, colors))
-        data['surfer_color_names'] = colors
-        data['surfer_color_colors'] = dict(zip(colors, colors_hex))
-        data['number_of_waves'] = int(heat_info['number_of_waves'])
-        return data
-
+        context = self._standard_env()
+        heats_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
+        for heat_id, heat in heats_info.items():
+            query_info = {KEY_HEAT_ID: int(heat_id)}
+            # TODO: maybe store current scores in state object for faster access
+            scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
+            heat['scores'] = json.loads(self.do_query_scores(heat_id=heat_id, get_for_all_judges = 1))
+        context['heats'] = heats_info
+        return context
 
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_HEADJUDGE, KEY_ROLE_COMMENTATOR, KEY_ROLE_ADMIN))
@@ -243,6 +229,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_HEADJUDGE, KEY_ROLE_ADMIN))
     def do_get_active_heat_info(self, heat_id = None, **kwargs):
         if heat_id is not None:
             heat_id = int(heat_id)
@@ -270,6 +257,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         return json.dumps(heat_info)
 
     @cherrypy.expose
+    @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_HEADJUDGE, KEY_ROLE_ADMIN))
     def do_get_all_active_heats(self, **kwargs):
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
         return json.dumps(heat_info.values())
@@ -281,6 +269,55 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         env = {}
         env['message'] = msg
         return env
+
+
+    @cherrypy.expose
+    def do_get_average_scores(self, heat_id=None, **kwargs):
+
+        heat_id = int(heat_id)
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+
+        if heat_info is None:
+            return ''
+        query_info = {KEY_HEAT_ID: heat_id}
+        scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
+
+        id2color = dict(zip(heat_info['participants'].get('surfer_id', []), heat_info['participants'].get('surfer_color', [])))
+        id2name = dict(zip(heat_info['participants'].get('surfer_id', []), heat_info['participants'].get('name', [])))
+
+        judges = set(heat_info.get('judges', []))
+        scores_by_surfer_wave = {}
+        scores_by_judge_id = {}
+        for score in scores:
+            if score[KEY_JUDGE_ID] not in judges:
+                continue
+            scores_by_surfer_wave.setdefault(score['surfer_id'], {}).setdefault(score['wave'], {})[score[KEY_JUDGE_ID]] = score
+            scores_by_judge_id.setdefault(score['judge_id'], {}).setdefault(score['surfer_id'], {})[score['wave']] = score['score']
+
+        average_scores = self._compute_average_scores(scores_by_surfer_wave, judges)
+        all_scores, best_scores_by_judge, best_scores_average, sorted_total_scores = self._compute_score_dicts(scores_by_judge_id, average_scores, 2)
+        out_data = []
+        for surfer_id in heat_info['participants']['surfer_id']:
+            data = best_scores_average.get(surfer_id, {}).get('average', [])
+            res = {}
+            res['total_score'] = 0
+            res['surfer_id'] = surfer_id
+            res['surfer_color'] = id2color.get(surfer_id, '')
+            res['surfer_name'] = id2name.get(surfer_id, '')
+            for idx, (best_wave_idx, score) in enumerate(data):
+                res['best_wave_{}'.format(idx+1)] = round(score, 2)
+                res['total_score'] += score
+            res['total_score'] = round(res['total_score'], 2)
+            for key, val in average_scores.get(surfer_id, {}).items():
+                res[str(key)] = round(val, 2)
+            res['needs'] = 0
+            out_data.append(res)
+        total_max = max([d['total_score'] for d in out_data])
+        for d in out_data:
+            if d['total_score'] < total_max:
+                d['needs'] = round(total_max - d.get('best_wave_1', 0) + 0.01, 2)
+        return json.dumps(out_data)
+
 
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
@@ -355,7 +392,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                         pre_average = float(sum(s)) / len(s)
                         s.extend([pre_average] * n_missed_scores)
 
-                if len(s) > 3:
+                if len(s) > 4:
                     s = sorted(s)[1:-1]
 
                 final_average = float(sum(s)) / len(s)

@@ -13,69 +13,6 @@
     border: none;
     border-radius: 5px;
 }
-
-.main_panel
-{
-	width:100%;
-	height:100%;
-	background-color:#FFFFFF;
-	padding:20px;
-}
-
-.number_button
-{
-	width:70px;
-	height:70px;
-	margin:10px;
-	float:left;
-	background-color:#AAAAAA;
-
-	font-size:36px;
-	text-align:center;
-}
-
-.text_box_inactive
-{
-	width:50px;
-	height:30px;
-	font-size:24px;
-	text-align:right;
-}
-
-.enter_wave
-{
-	width:100px;
-	height:30px;
-	font-size:14px;
-	text-align:left;
-	background-color:#AAAAAA;
-	border-style: solid;
-    border-width: 0px;
-}
-
-.cancel_button
-{
-	width:140px;
-	height:70px;
-	margin:10px;
-	float:left;
-	background-color:#AAAAAA;
-
-	font-size:25px;
-	text-align:center;
-}
-
-.enter_button
-{
-	width:140px;
-	height:70px;
-	margin:10px;
-	float:left;
-	background-color:#AAAAAA;
-
-	font-size:25px;
-	text-align:center;
-}
 </style>
 {% endblock css %}
 
@@ -219,12 +156,12 @@ function toggle_visibility()
     $.getJSON('do_get_active_heat_info', function(active_heat_info)
         {
         if (! $.isEmptyObject(active_heat_info)){ //if user is not active in any heat
-            if ($('#judge_panel').data('status')==='inactive'){
+            if ($('#judge_panel').data('status') == 'inactive'){
                 var heat_id = active_heat_info['heat_id'];
 
                 $.get('/do_get_judge_panel', {heat_id: heat_id}, function(judge_panel){
                     if (active_heat_info != ''){
-                        $('#judge_panel').data('heat_id', heat_id);
+                        //$('#judge_panel_data').data('heat_id', heat_id);
                         $('#judge_panel').append(judge_panel);
                         $('#judge_panel').data('status', 'active');
                         activate_judge_panel(heat_id);
@@ -237,6 +174,11 @@ function toggle_visibility()
                 });
             }
         } else {
+            if ($('#judge_panel').data('status') == 'active'){
+                $('#modal_heat_end_judge_name').html($('#judge_panel_data').data('judgename'));
+                $('#modal_heat_end_judge_id').html($('#judge_panel_data').data('judgeid'));
+                $('#heat_end_modal').modal('toggle');
+            }
             $('#judge_panel').empty();
             $('#judge_panel').data('status', 'inactive');
             $('#waiting_banner').show();
@@ -280,7 +222,7 @@ function toggle_visibility()
          $('#input_modal .modal_old_score').show();
 
      }
-     if (next_open_wave_idx < max_no_of_waves){
+     if (input_wave_idx < max_no_of_waves){
          $('#input_modal').data('surfer', surfer);
          $('#input_modal').data('wave', input_wave_idx);
          $('#modal_surfer_color').html(surfer.toUpperCase());
@@ -381,6 +323,29 @@ function toggle_visibility()
 
 
 
+<!-- Logout after Heat modal -->
+<div class="modal" id="heat_end_modal" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+              <h4 class="modal-title">Lenny asks:</h4>
+          </div> <!-- /.modal-header -->
+            <div class="modal-body" align="center">
+                <h1>Are you Judge <span id="modal_heat_end_judge_id"></span></h1>
+                <h1>(<span id="modal_heat_end_judge_name"></span>)?</h1>
+                <br><br><br>
+                <div class="btn-toolbar" role="toolbar">
+                    <button class="btn btn-lg btn-danger pull-left" style="height: 100px; width: 130px" onclick="window.location.replace('/auth/logout')">
+                        <span class="glyphicon glyphicon-remove">&nbsp;</span>No
+                    </button>
+                    <button class="btn btn-lg btn-success pull-right" style="height: 100px; width: 130px" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-ok">&nbsp;</span>Yes                               </button>
+                </div>
+            </div><!-- /.modal-body -->
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 {% endblock modals %}
 
 {% block modal_javascript %}
@@ -401,8 +366,12 @@ function edit_score_modal(val)
     }
     else if(!isNaN(text_box_value) && val>=0 && val<=9)
 	{
-		var input = text_box_value * 10 + 0.1 * val;
-		if (input<=10)
+        var input = 0.0;
+        if (text_box_value == 1 && val == 0)
+            input = 10;
+        else
+		    input = text_box_value + 0.1 * val;
+		if (input <= 10)
 		{
 			out_val = input.toFixed(1);
 		} else {
@@ -411,7 +380,7 @@ function edit_score_modal(val)
 	}
     else if(isNaN(text_box_value))
     {
-        out_val = (val*0.1).toFixed(1);
+        out_val = (val).toFixed(1);
     }
     if (out_val != '')
         modal_score_field.html(out_val);
@@ -449,7 +418,7 @@ function enter_score_modal(){
                 sync_with_server();
             });
         } else { // edit an old wave
-            upload_data['heat_id'] = $('#judge_panel').data('heat_id');
+            upload_data['heat_id'] = $('#judge_panel_data').data('heatid');
             $.get('/do_modify_score', upload_data, function(data){
                 sync_with_server();
             });

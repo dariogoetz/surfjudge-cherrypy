@@ -299,6 +299,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     def do_get_judges(self, **kwargs):
         judges = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES, {}).pop()
+        judges = sorted(judges, key=lambda x: x['id'])
         return json.dumps(judges)
 
     @cherrypy.expose
