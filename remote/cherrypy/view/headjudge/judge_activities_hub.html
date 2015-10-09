@@ -86,7 +86,7 @@ function activate_judge_activities_panel(active_heat_id){
                                 var val = current_scores[surfer_id][judge_id_string][wave_index + 1];
                                 if (val == MISSED)
                                     val = 'M';
-                                var id_of_element_for_score = judge_id_string+'_'+surfer_color+'_'+wave_index;
+                                var id_of_element_for_score = judge_id_string+'_'+surfer_color+'_'+(wave_index+1);
                                 $('#'+id_of_element_for_score).html(val);
                             }
                         }

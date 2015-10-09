@@ -117,6 +117,8 @@ $('.data-section').on('focusout', '.scored', function (e) {
     if ($(this).hasClass('unscored')){
         $(this).removeClass('scored');
         $(this).prop('readonly', true);
+    } else {
+        $(this).prop('readonly', false);
     }
 });
 
@@ -159,6 +161,7 @@ function enter_score(elem_id)
                 alert('Deleted score '+ elem.data('orig_val'));
                 elem.addClass('unscored');
                 elem.data('orig_val', null);
+                elem.val('');
                 $(elem).removeClass('scored');
                 $(elem).prop('readonly', true);
                 elem.blur();

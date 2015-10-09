@@ -18,7 +18,7 @@
     <table class="table">
     {% for judge_id in judge_ids %}
         <tr>
-            <td><b>Judge {{ judge_id }}:{{judge_names[loop.index - 1]}}</b></td>
+            <td><b>Judge {{ judge_id }}: {{judge_names[loop.index - 1]}}</b></td>
             {% for wave_idx in range( number_of_waves ) %}
             <td align="center" style="vertical-align: bottom">
                 <b>{{ loop.index }}</b>

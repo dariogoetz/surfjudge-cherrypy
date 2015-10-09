@@ -79,3 +79,6 @@ password = $2a$12$jJzCasSHVK5B246duiiBsOsLZ6EJin6m2G44VGWCzxVqM47CFzWgy
 [22]
 roles = ac_judge,
 password = $2a$12$bP8VUc7L03purBUrXc1PxeH1NQ25OIx3cO8dAJqWuPS4EOtkLXLnm
+[24]
+roles = ac_judge,
+password = $2a$12$AGozwsbND.Qq/698zWXmDu8kpwdfgZmTOt2rjKiUqQMbSeQpf5xH.

@@ -27,7 +27,7 @@
 
             {% for wave_idx in range( 1, number_of_waves+1 ) %}
             <td rowspan="{{ judge_ids | length}}"; id='average_{{surfer_color}}_{{wave_idx}}'; style= "background-color: #EEEEEE; border-color:black; vertical-align:middle; text-align:right"> - </td>
-            <td style='border-color:black'; id='{{judge_ids[0]}}_{{surfer_color}}_{{wave_idx}}'>-</td>
+            <td style='border-color:black'; id='{{ judge_ids[0] }}_{{surfer_color}}_{{wave_idx}}'>-</td>
             {% endfor %}
         </tr>
 
