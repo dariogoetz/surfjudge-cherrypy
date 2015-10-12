@@ -15,7 +15,7 @@
             <th data-field="best_wave_1" >1st Wave</th>  <!--TODO extend to n waves-->
             <th data-field="best_wave_2" >2nd Wave</th> <!--TODO extend to n waves-->
             {% for wave_idx in range(  number_of_waves ) %}
-                <th data-field="{{wave_idx+1}}" >{{wave_idx+1}}</th>
+                <th data-field="{{wave_idx}}" >{{wave_idx+1}}</th>
             {% endfor %}
         </tr>
     </thead>
