@@ -230,7 +230,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_HEADJUDGE, KEY_ROLE_ADMIN))
-    def do_get_active_heat_info(self, heat_id = None, **kwargs):
+    def do_get_my_active_heat(self, heat_id = None, **kwargs):
         if heat_id is not None:
             heat_id = int(heat_id)
         else:

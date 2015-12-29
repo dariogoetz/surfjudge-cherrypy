@@ -35,7 +35,7 @@ var surfer_scores={};// This variable contains for each surfer an array with his
 
 
 function activate_judge_panel(heat_id){
-    $.getJSON('do_get_active_heat_info', {heat_id: heat_id}, function(data){
+    $.getJSON('do_get_my_active_heat', {heat_id: heat_id}, function(data){
         max_no_of_waves = data['number_of_waves'];
         surfer_colors_hex = []
         var surfer_colors_hex_array = data['participants']['surfer_color_hex'];
@@ -153,7 +153,7 @@ function clear_fields()
 <script>
 function toggle_visibility()
 {
-    $.getJSON('do_get_active_heat_info', function(active_heat_info)
+    $.getJSON('do_get_my_active_heat', function(active_heat_info)
         {
         if (! $.isEmptyObject(active_heat_info)){ //if user is not active in any heat
             if ($('#judge_panel').data('status') == 'inactive'){

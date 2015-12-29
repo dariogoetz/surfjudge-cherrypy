@@ -23,7 +23,7 @@ function activate_judge_activities_panel(active_heat_id){
     var color2id={};
     var id2color={};
 
-    $.get('/do_get_active_heat_info', {heat_id: active_heat_id}, function(data)
+    $.get('/do_get_my_active_heat', {heat_id: active_heat_id}, function(data)
     {
         active_heat_data = $.parseJSON(data); // this is a global variable, it is an object
         //active_heat_id=active_heat_data[0]['heat_id']; // this is a global variable, it is a number
