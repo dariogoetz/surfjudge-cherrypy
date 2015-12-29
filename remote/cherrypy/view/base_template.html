@@ -185,10 +185,10 @@
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
-                    {% if False %}
+                    {% if False %} <!-- This is commented out because we decided to hide the login button. -->
                     <li id='nav_item_login'><a href="/auth/login"><span class="glyphicon glyphicon-play-circle">&nbsp;</span>Login</a></li>
                     <li id='nav_item_register'><a href="/auth/register"><span class="glyphicon glyphicon-user">&nbsp;</span>Register</a></li>
-                    {% else %}
+                    {% endif %}
                     {% if global_is_judge %}
                     <li id='nav_item_judge_tools'><a href="/judge_hub"><span class="glyphicon glyphicon-list-alt">&nbsp;</span>Judge Sheet</a></li>
                     {% endif %}
@@ -215,7 +215,6 @@
                             <li><a href="/tournament_admin/logins">Administrate Logins</a></li>
                         </ul>
                     </li>
-                    {% endif %}
                     {% endif %}
                 </ul>
                 {% if global_logged_in %}
