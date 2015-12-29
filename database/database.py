@@ -124,8 +124,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def delete_tournament(self, tournament):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        del_tournament = lambda data: self._delete_from_db(data, 'tournaments')
-        self.__access_queue.put( (del_tournament, tournament, pipe_send), block=True)
+        self.__access_queue.put( (self._delete_tournament, tournament, pipe_send), block=True)
         res = pipe_recv.recv()
         return res
 
@@ -145,8 +144,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def delete_category(self, category):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        del_category = lambda data: self._delete_from_db(data, 'categories')
-        self.__access_queue.put( (del_category, category, pipe_send), block=True)
+        self.__access_queue.put( (self._delete_category, category, pipe_send), block=True)
         res = pipe_recv.recv()
         return res
 
@@ -192,8 +190,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def delete_judge(self, judge):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        del_judge = lambda data: self._delete_from_db(data, 'judges')
-        self.__access_queue.put( (del_judge, judge, pipe_send), block=True)
+        self.__access_queue.put( (self._delete_judge, judge, pipe_send), block=True)
         res = pipe_recv.recv()
         return res
 
@@ -212,8 +209,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def delete_surfer(self, surfer):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        del_surfer = lambda data: self._delete_from_db(data, 'surfers')
-        self.__access_queue.put( (del_surfer, surfer, pipe_send), block=True)
+        self.__access_queue.put( (self._delete_surfer, surfer, pipe_send), block=True)
         res = pipe_recv.recv()
         return res
 
@@ -257,6 +253,25 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
+
+    def get_results(self, query_info):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._get_results, query_info, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
+
+    def insert_result(self, result):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._insert_result, result, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
+
+    def delete_result(self, query_info):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._delete_result, query_info, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
+
     ############ db admin interface ##############
     def shutdown(self):
         if not self._thread.isAlive():
@@ -282,6 +297,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             #print '***** DB task {} (remaining {}) *****'.format(data, self.__access_queue.qsize())
             if task_processor == KEY_SHUTDOWN:
                 self.__access_queue.task_done()
+                self._db.close()
                 break
 
             res = task_processor(data)
@@ -328,6 +344,11 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._insert_into_db(tournament, 'tournaments')
         return tournament['id']
 
+    def _delete_tournament(self, tournament):
+        self._delete_from_db(tournament, 'tournaments')
+        self._delete_from_db({'tournament_id': tournament['id']}, 'categories')
+        return
+
 
     def _get_categories(self, query_info, cols=None):
         return self._query_db(query_info, 'categories', cols = cols)
@@ -345,6 +366,10 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._insert_into_db(category, 'categories')
         return category['id']
 
+    def _delete_category(self, category):
+        self._delete_from_db(category, 'categories')
+        self._delete_from_db({'category_id': category['id']}, 'heats')
+        return
 
 
     def _get_heats(self, query_info, cols = None):
@@ -354,6 +379,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         self._delete_from_db(data, 'heats')
         self._delete_from_db({'heat_id': data['id']}, 'participants')
         self._delete_from_db({'heat_id': data['id']}, 'judge_activities')
+        self._delete_from_db({'heat_id': data['id']}, 'scores')
         return
 
     def _insert_heat(self, heat):
@@ -391,12 +417,16 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._insert_into_db(judge, 'judges')
         return judge['id']
 
+    def _delete_judge(self, judge):
+        self._delete_from_db(judge, 'judges')
+        self._delete_from_db({'judge_id': judge['id']}, 'judge_activities')
+        self._delete_from_db({'judge_id': judge['id']}, 'scores')
+        return
 
 
 
     def _get_surfers(self, query_info):
         return self._query_db(query_info, 'surfers')
-
 
     def _insert_surfer(self, surfer):
         if 'id' not in surfer or surfer['id'] is None:
@@ -417,6 +447,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         else:
             self._insert_into_db(surfer, 'surfers')
         return surfer['id']
+
+    def _delete_surfer(self, surfer):
+        self._delete_from_db(surfer, 'surfers')
+        self._delete_from_db({'surfer_id': surfer['id']}, 'participants')
+        self._delete_from_db({'surfer_id': surfer['id']}, 'scores')
+        return
 
 
     def _get_participants(self, heat_id):
@@ -493,6 +529,26 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
                 'tournaments.end_datetime AS tournament_end_datetime',
                 'tournaments.additional_info AS tournament_additional_info']
         return self._query_join(qinfo, 'tournaments', 'id', 'tournament_id', 'categories', 'id',  'category_id','heats', cols=cols)
+
+
+
+    def _get_results(self, query_info):
+        return self._query_db(query_info, 'results')
+
+    def _insert_result(self, result):
+        if not isinstance(result.setdefault('wave_scores', '[]'), basestring):
+            result['wave_scores'] = json.dumps(result['wave_scores'])
+
+        query = {'heat_id': result['heat_id'], 'surfer_id': result['surfer_id']}
+        if len(self._get_results(query)) > 0:
+            self._modify_in_db(query, result, 'results')
+        else:
+            self._insert_into_db(result, 'results')
+        return
+
+    def _delete_result(self, query_info):
+        self._delete_from_db(query_info, 'results')
+        return
 
 
     def _register_converter_adapter(self, sql):

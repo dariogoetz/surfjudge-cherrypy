@@ -430,3 +430,31 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             del d['password']
             res.append(d)
         return json.dumps(res)
+
+
+    @cherrypy.expose
+    def do_get_heat_order(self, tournament_id=None, **kwargs):
+        if tournament_id is None:
+            return
+        tournament_id = int(tournament_id)
+        res = cherrypy.engine.publish(KEY_ENGINE_TM_GET_HEAT_ORDER, tournament_id).pop(0)
+        return json.dumps(res)
+
+    @cherrypy.expose
+    def do_set_heat_order(self, tournament_id=None, list_of_heat_ids=None, **kwargs):
+        if tournament_id is None or list_of_heat_ids is None:
+            return
+
+        tournament_id = int(tournament_id)
+        list_of_heat_ids = json.loads(list_of_heat_ids)
+        res = cherrypy.engine.publish(KEY_ENGINE_TM_SET_HEAT_ORDER, tournament_id, list_of_heat_ids).pop(0)
+        return json.dumps(res)
+
+
+    @cherrypy.expose
+    def do_get_advancing_surfers(self, heat_id=None, **kwargs):
+        if heat_id is None:
+            return
+        heat_id = int(heat_id)
+        res = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop(0)
+        return json.dumps(res)

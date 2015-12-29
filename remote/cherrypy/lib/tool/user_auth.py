@@ -54,9 +54,10 @@ class UserAuthenticationTool(cherrypy.Tool):
         # adding it with cherrypy.request.query_string
         # interprets the old parameters as new ones
         # in the page handler where it is redirected to.
-        from_page = 'from_page={}'.format(cherrypy.lib.httputil.urllib.quote(cherrypy.request.path_info))
+        #from_page = 'from_page={}'.format(cherrypy.lib.httputil.urllib.quote(cherrypy.request.path_info))
+        #print from_page
         # try alternatively
-        #from_page = 'from_page={}'.format(cherrypy.lib.httputil.urllib.quote(cherrypy.request.request_line.split()[1]))
+        from_page = 'from_page={}'.format(cherrypy.lib.httputil.urllib.quote(cherrypy.request.request_line.split()[1]))
 
         # Check if the user is logged in on the webserver.
         if username is None:

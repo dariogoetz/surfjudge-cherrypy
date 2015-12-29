@@ -51,6 +51,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, self.get_heat_info)
+
+        self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_RESULTS, self.get_results)
         return
 
     def stop(self):
@@ -89,6 +91,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, self.get_heat_info)
+
+        self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_RESULTS, self.get_results)
         return
 
 
@@ -196,4 +200,9 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
     def get_heat_info(self, query_info):
         res = self.database.get_heat_info(query_info)
+        return res
+
+
+    def get_results(self, query_info):
+        res = self.database.get_results(query_info)
         return res

@@ -298,7 +298,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         all_scores, best_scores_by_judge, best_scores_average, sorted_total_scores = self._compute_score_dicts(scores_by_judge_id, average_scores, 2)
         out_data = []
         for surfer_id in heat_info['participants']['surfer_id']:
-            data = best_scores_average.get(surfer_id, {}).get('average', [])
+            data = best_scores_average.get(surfer_id, [])
             res = {}
             res['total_score'] = 0
             res['surfer_id'] = surfer_id
@@ -361,7 +361,6 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             utils.write_csv(os.path.join(directory, filename), export_data[mode]['data'], export_data[mode]['header'])
 
         filename = os.path.abspath(os.path.join(directory, 'Auswertung_{}.xlsx'.format(heat_name)))
-        print filename
         utils.write_xlsx(filename, export_data)
         from cherrypy.lib.static import serve_file
         return serve_file(filename, "application/x-download", "attachment")
@@ -407,7 +406,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         best_scores_average = {}
         all_scores = {}
         for surfer_id, data in average_scores.items():
-            best_scores_average.setdefault(surfer_id, {})['average'] = sorted(data.items(), key=lambda x: x[1], reverse=True)[:n_best_waves]
+            best_scores_average[surfer_id] = sorted(data.items(), key=lambda x: x[1], reverse=True)[:n_best_waves]
             for judge_id in scores_by_judge_id:
                 vals = scores_by_judge_id[judge_id][surfer_id]
                 best_scores_by_judge.setdefault(surfer_id, {})[judge_id] = sorted(vals.items(), key=lambda x: x[1], reverse=True)[:n_best_waves]
@@ -415,7 +414,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
         total_scores = []
         for surfer_id, data in best_scores_average.items():
-            wave_idx, scores = zip(*data['average'])
+            wave_idx, scores = zip(*data)
             total_scores.append( (surfer_id, sum(scores)) )
         s = sorted(total_scores, key=lambda x: x[1], reverse=True)
         sorted_total_scores = {}
@@ -502,8 +501,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         labels_scores = ['Wave {}'.format(i+1) for i in range(n_best_waves)]
         header = ['Ranking', 'Name', 'Color', 'Total Score'] + labels_scores
         for idx, surfer_id in enumerate(heat_info['participants']['surfer_id']):
-            data = base_data.get(surfer_id, {})
-            vals = data.get('average', [])
+            vals = base_data.get(surfer_id, [])
             res = {}
             res['Color'] = id2color.get(surfer_id, 'Error: Color not found')
             if len(vals) > 0:

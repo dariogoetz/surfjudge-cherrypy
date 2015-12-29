@@ -2,6 +2,7 @@ import threading
 import time
 
 from statemanager import StateManager
+from tournament_manager import TournamentManager
 from remote.remote_interface import RemoteInterface
 from database.database import SQLiteDatabaseHandler
 
@@ -18,9 +19,8 @@ class SurfJudge(object):
         self.__database = SQLiteDatabaseHandler()
         self.__interface = RemoteInterface()
         self.__statemanager = StateManager()
-
+        self.__tournament_manager = TournamentManager()
         return
-
 
     @property
     def database(self):
@@ -34,6 +34,11 @@ class SurfJudge(object):
     def statemanager(self):
         return self.__statemanager
 
+    @property
+    def tournament_manager(self):
+        return self.__tournament_manager
+
+
     def shutdown(self):
         self.interface.shutdown()
         self.database.shutdown()
@@ -42,7 +47,11 @@ def doit(args):
     surfjudge = SurfJudge()
 
     if args.webserver:
-        cpserver = CherryPyServer(user_manager = surfjudge.interface.user_manager, database = surfjudge.database, statemanager = surfjudge.statemanager, port = args.port)
+        cpserver = CherryPyServer(user_manager = surfjudge.interface.user_manager,
+                                  database = surfjudge.database,
+                                  statemanager = surfjudge.statemanager,
+                                  tournament_manager = surfjudge.tournament_manager,
+                                  port = args.port)
         surfjudge.interface.add_server(cpserver)
 
     # start console
