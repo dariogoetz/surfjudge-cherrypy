@@ -460,6 +460,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         cols = ['participants.heat_id AS heat_id',
                 'participants.surfer_color AS surfer_color',
                 'participants.surfer_id AS surfer_id',
+                'participants.seed AS seed',
                 'surfers.first_name AS first_name',
                 'surfers.last_name AS last_name',
                 'surfers.name AS name',
@@ -473,8 +474,8 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         surfers = data['surfers']
         if len(self._get_participants(heat_id)) > 0:
             self._delete_from_db({'heat_id': heat_id}, 'participants')
-        for (surfer_id, surfer_color) in surfers:
-            self._insert_into_db({'heat_id': heat_id, 'surfer_id': surfer_id, 'surfer_color': surfer_color}, 'participants')
+        for (surfer_id, surfer_color, seed) in surfers:
+            self._insert_into_db({'heat_id': heat_id, 'surfer_id': surfer_id, 'surfer_color': surfer_color, 'seed': seed}, 'participants')
         return
 
 

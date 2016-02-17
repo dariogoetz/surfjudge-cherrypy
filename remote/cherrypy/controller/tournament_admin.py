@@ -204,7 +204,10 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
         if surfer_colors is None:
             surfer_colors = [''] * len(surfer_ids)#'red', 'blue', 'green', 'yellow', 'white', 'orange'][:len(surfer_ids)]
-        surfers = zip(surfer_ids, surfer_colors)
+
+        # TODO: get correct seed values
+        seeds = range(len(surfer_ids))
+        surfers = zip(surfer_ids, surfer_colors, seeds)
         data = {'heat_id': heat_id, 'surfers': surfers}
         res = cherrypy.engine.publish(KEY_ENGINE_DB_SET_PARTICIPANTS, data)
         return
