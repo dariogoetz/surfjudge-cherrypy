@@ -100,7 +100,7 @@ KEY_ENGINE_TM_GET_HEAT_ORDER = 'tm_get_heat_order'
 KEY_ENGINE_TM_SET_HEAT_ORDER = 'tm_set_heat_order'
 KEY_ENGINE_TM_GET_ADVANCING_SURFERS = 'tm_get_advancing_surfers'
 KEY_ENGINE_TM_SET_ADVANCING_SURFER = 'tm_set_advancing_surfer'
-
+KEY_ENGINE_TM_GENERATE_HEATS = 'tm_generate_heats'
 
 
 

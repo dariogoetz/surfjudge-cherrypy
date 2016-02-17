@@ -19,7 +19,7 @@ class SurfJudge(object):
         self.__database = SQLiteDatabaseHandler()
         self.__interface = RemoteInterface()
         self.__statemanager = StateManager()
-        self.__tournament_manager = TournamentManager()
+        self.__tournament_manager = TournamentManager(self)
         return
 
     @property
