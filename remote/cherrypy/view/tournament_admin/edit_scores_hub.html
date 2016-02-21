@@ -267,11 +267,17 @@ function activate_data_section(heat_id)
 
 <script>
 // Exporting scores
- function export_scores(heat_id, mode){
+ function export_scores(heat_id){
      window.location.replace('/export_scores?heat_id='+heat_id);
     //$.fileDownload('/export_scores', {heat_id: heat_id, mode: mode});
     //$.get('/export_scores', {heat_id: heat_id, mode: mode});
     }
+
+ function publish_results(heat_id){
+     $.get('/headjudge/do_publish_results?heat_id='+heat_id, function(){
+         alert('Published Results for Heat '+heat_id);
+     });
+     }
 </script>
 
 <script>

@@ -45,8 +45,8 @@ class TournamentManagerPlugin(plugins.SimplePlugin):
         return res
 
 
-    def get_advancing_surfers(self, heat_id, seed):
-        res = self.tournament_manager.get_advancing_surfers(heat_id, seed)
+    def get_advancing_surfers(self, heat_id):
+        res = self.tournament_manager.get_advancing_surfers(heat_id)
         return res
 
 

@@ -53,6 +53,7 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, self.get_heat_info)
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_RESULTS, self.get_results)
+        self.bus.subscribe(KEY_ENGINE_DB_INSERT_RESULT, self.insert_result)
         return
 
     def stop(self):
@@ -93,6 +94,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, self.get_heat_info)
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_RESULTS, self.get_results)
+        self.bus.unsubscribe(KEY_ENGINE_DB_INSERT_RESULT, self.insert_result)
+
         return
 
 
@@ -205,4 +208,8 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
     def get_results(self, query_info):
         res = self.database.get_results(query_info)
+        return res
+
+    def insert_result(self, result):
+        res = self.database.insert_result(result)
         return res

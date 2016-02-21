@@ -29,7 +29,7 @@ var INTERFERENCE = -2;
 //Variables that need to be defined by Contest Operators*****
 var max_no_of_waves= -1; // 10 is default value will be overwritten by toggle_visibility
 var surfer_colors_hex= []; //will be overwritten by toggle_visibility
-var surfer_color_names = {};
+var surfer_color_names = [];
 
 var surfer_scores={};// This variable contains for each surfer an array with his scored waves
 
@@ -37,9 +37,12 @@ var surfer_scores={};// This variable contains for each surfer an array with his
 function activate_judge_panel(heat_id){
     $.getJSON('do_get_my_active_heat', {heat_id: heat_id}, function(data){
         max_no_of_waves = data['number_of_waves'];
-        surfer_colors_hex = []
-        var surfer_colors_hex_array = data['participants']['surfer_color_hex'];
-        surfer_color_names = data['participants']['surfer_color'];
+        surfer_colors_hex = [];
+        var surfer_colors_hex_array = [];
+        for (idx=0; idx<data['participants'].length; idx++){
+            surfer_colors_hex_array.push(data['participants'][idx]['surfer_color_hex']);
+            surfer_color_names.push(data['participants'][idx]['surfer_color']);
+        }
         surfer_scores={};
          // Initialize colors in surfer_scores from jinja template
         for (var surfer_color_idx = 0; surfer_color_idx < surfer_color_names.length; surfer_color_idx++)

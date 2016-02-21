@@ -540,6 +540,13 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         if not isinstance(result.setdefault('wave_scores', '[]'), basestring):
             result['wave_scores'] = json.dumps(result['wave_scores'])
 
+        if 'id' not in result or result['id'] is None:
+            # generate new id
+            n_results = self._db_info.setdefault('n_results', 0)
+            result['id'] = n_results
+            self._db_info['n_results'] += 1
+
+
         query = {'heat_id': result['heat_id'], 'surfer_id': result['surfer_id']}
         if len(self._get_results(query)) > 0:
             self._modify_in_db(query, result, 'results')

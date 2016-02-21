@@ -7,6 +7,9 @@
     <button class="btn btn-standard"  onclick="export_scores({{ heat_id }});">
         <span class="glyphicon glyphicon-download-alt">&nbsp;</span>Save Judging Sheets
     </button>
+    <button class="btn btn-standard" onclick="publish_results({{ heat_id }});">
+        <span class="glyphicon glyphicon-globe">&nbsp;</span>Publish Results
+    </button>
 <button class="btn btn-standard pull-right" onclick="activate_data_section($('#heats_dropdown_select').data('select'));">
     <span class="glyphicon glyphicon-refresh">&nbsp;</span>Refresh
 </button>

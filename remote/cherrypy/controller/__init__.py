@@ -5,6 +5,8 @@ from ..lib.access_conditions import *
 from keys import *
 
 class CherrypyWebInterface(object):
+    N_BEST_WAVES = 2
+
     def __init__(self, mount_location = '/'):
         self.mount_location = mount_location
         return
@@ -49,10 +51,20 @@ class CherrypyWebInterface(object):
             return env
 
 
-    def collect_heat_info(self, heat_id):
+    def collect_heat_info(self, heat_id, force_from_db=False):
         query_info = {'heat_id': heat_id}
 
-        # get heat_info from database
+        # if heat_id is None, only currently active heat infos are provided
+        if heat_id is None:
+            return cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop()
+
+        # if a heat_id is provided, first try state manager for speed
+        if not force_from_db:
+            heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop()
+            if heat_info is not None and len(heat_info) > 0:
+                return heat_info
+
+        # if not active, get heat_info from database
         heat_info = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, query_info).pop()
         if len(heat_info) > 0:
             heat_info = heat_info[0]
@@ -79,17 +91,64 @@ class CherrypyWebInterface(object):
         return heat_info
 
 
-    def collect_participants(self, heat_id):
-        res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, heat_id).pop()
+    def collect_participants(self, heat_id, fill_advance=False):
+        participants = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, heat_id).pop()
+
+        if fill_advance:
+            advanced_participants = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop(0)
+
+            db_seeds = [int(p.get('seed')) for p in participants if p.get('seed') is not None]
+            fill_in_participant_seeds = set(advanced_participants.keys()) - set(db_seeds)
+            if len(fill_in_participant_seeds) > 0:
+                for seed in fill_in_participant_seeds:
+                    from_heat = advanced_participants.get(seed, {}).get('from_heat_id')
+                    from_place = advanced_participants.get(seed, {}).get('from_place')
+                    print 'collecting participants: advancing surfer from Heat {}, {}. place'.format(from_heat, from_place)
+                    # get surfer_id from results table
+                    heat_result = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_RESULTS, {'heat_id': from_heat, 'place': from_place}).pop()
+                    if len(heat_result) > 0:
+                        heat_result = heat_result[0]
+                    if 'surfer_id' not in heat_result:
+                        print 'collecting participants: no placing (yet) for Heat {}, {}. place (starting from 1)'.format(from_heat, from_place+1)
+                        continue
+                    surfer_id = heat_result.get('surfer_id')
+                    surfer_info = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SURFERS, {'id': surfer_id}).pop()
+                    new_participant = {}
+                    new_participant.update(surfer_info[0])
+                    new_participant['surfer_id'] = surfer_id
+                    new_participant['heat_id'] = heat_id
+                    new_participant['seed'] = seed
+                    participants.append(new_participant)
+
         import utils
         colors = utils.read_lycra_colors('lycra_colors.csv')
-        seeds = []
-        for idx, participant in enumerate(res):
-            color = participant.get('surfer_color')
-            seeds.append( (idx, int(colors.get(color, {}).get('SEEDING', len(colors) + idx))) )
+        seed2color = {int(c['SEEDING']): c for c in colors.values()}
+
+        # make participants complete
+        # seed
+        taken_seeds = set([p['seed'] for p in participants if 'seed' in p])
+        available_seeds = set(range(max(taken_seeds))) - taken_seeds
+        for p in participants:
+            if 'seed' not in p:
+                p['seed'] = available_seeds.pop(0)
+
+        # color
+        taken_colors = set([p['surfer_color'] for p in participants if 'surfer_color' in p])
+        available_colors = [seed2color[s]['COLOR'] for s in sorted(seed2color) if seed2color[s]['COLOR'] not in taken_colors]
+
+        for p in participants:
+            if 'surfer_color' not in p:
+                pref_c = seed2color[p['seed']]['COLOR']
+                if pref_c not in taken_colors:
+                    p['surfer_color'] = pref_c
+                    available_colors.remove(pref_c)
+                else:
+                    color = available_colors.pop(0)
+
+
+        # old_version
         data = {}
-        for p, seed in sorted(seeds, key=lambda x: x[1]):
-            participant = res[p]
+        for participant in sorted(participants, key=lambda x: x['seed']):
             for key, val in participant.items():
                 data.setdefault(key, []).append(val)
             #id = participant.get('surfer_id')
@@ -99,4 +158,32 @@ class CherrypyWebInterface(object):
             ## TODO: insert 'surfer_names'
             #data.setdefault('surfer_colors', []).append(color)
             data.setdefault('surfer_color_hex', []).append(color_hex)
-        return data
+        #return data
+
+        # new version
+        for participant in participants:
+            participant['surfer_color_hex'] = colors.get(participant.get('surfer_color'), {}).get('HEX')
+
+        return sorted(participants, key=lambda x: x['seed'])
+
+    def _get_scores(self, heat_id, judges):
+        heat_id = int(heat_id)
+        query_info = {KEY_HEAT_ID: heat_id}
+        scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SCORES, query_info).pop()
+        scores_by_surfer_wave = {}
+        for score in scores:
+            # filter only scores from named judges
+            if score[KEY_JUDGE_ID] not in judges:
+                continue
+            scores_by_surfer_wave.setdefault(score['surfer_id'], {}).setdefault(score['wave'], {})[score[KEY_JUDGE_ID]] = score
+        return scores_by_surfer_wave
+
+
+    def _get_id2color(self, participants):
+        return {p['surfer_id']: p['surfer_color'] for p in participants}
+
+    def _get_id2name(self, participants):
+        return {p['surfer_id']: p['name'] for p in participants}
+
+    def _get_color2id(self, participants):
+        return {p['surfer_color']: p['surfer_id'] for p in participants}

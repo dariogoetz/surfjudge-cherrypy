@@ -34,9 +34,9 @@ class StateManager(object):
             return self.active_heats
         else:
             if heat_id in self.active_heats:
-                return {heat_id: self.active_heats[heat_id]}
+                return self.active_heats[heat_id]
             else:
-                return {}
+                return None
 
     def get_heats_for_judge(self, judge_id = None):
         res = {}

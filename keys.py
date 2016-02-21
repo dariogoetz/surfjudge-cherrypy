@@ -80,6 +80,7 @@ KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES = 'db_set_judge_activities'
 KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT = 'db_retrieve_judges_for_heat'
 KEY_ENGINE_DB_RETRIEVE_HEAT_INFO = 'db_retrieve_heat_info'
 KEY_ENGINE_DB_RETRIEVE_RESULTS = 'db_retrieve_results'
+KEY_ENGINE_DB_INSERT_RESULT = 'db_insert_result'
 
 ##########################################
 # cherrypy plugins - statemanager access #

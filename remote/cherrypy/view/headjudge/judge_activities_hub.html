@@ -28,7 +28,7 @@ function activate_judge_activities_panel(active_heat_id){
         active_heat_data = $.parseJSON(data); // this is a global variable, it is an object
         //active_heat_id=active_heat_data[0]['heat_id']; // this is a global variable, it is a number
         active_surfers=active_heat_data['participants'];
-        if (Object.keys(active_heat_data['judges']).length > 0 && active_surfers['surfer_id'].length > 0) // If no judge or no surfer is in the heateat
+        if (Object.keys(active_heat_data['judges']).length > 0 && active_surfers.length > 0) // If no judge or no surfer is in the heateat
         {
             for (var judge_id_string in active_heat_data['judges'])
             {
@@ -36,10 +36,10 @@ function activate_judge_activities_panel(active_heat_id){
                 // This is a global variable, an object that contains the active judge ids as numbers
             }
             number_of_judges = Object.keys(active_judges).length;
-            for (var surfer_id_index=0; surfer_id_index < active_surfers['surfer_id'].length; surfer_id_index++)
+            for (var surfer_id_index=0; surfer_id_index < active_surfers.length; surfer_id_index++)
             {
-                var surfer_id = active_surfers['surfer_id'][surfer_id_index];
-                var surfer_color = active_surfers['surfer_color'][surfer_id_index];
+                var surfer_id = active_surfers[surfer_id_index]['surfer_id'];
+                var surfer_color = active_surfers[surfer_id_index]['surfer_color'];
                 id2color[surfer_id] = surfer_color;
                 color2id[surfer_color] = surfer_id;
             }
@@ -166,8 +166,8 @@ function activate_judge_activities_panel(active_heat_id){
                                 average_scores[surfer_id][wave_index] = average_scores[surfer_id][wave_index]/average_counter;
                                 var id_of_element_for_score='average_'+id2color[surfer_id]+'_'+wave_index;
                                 $('#'+id_of_element_for_score).html(Math.round(average_scores[surfer_id][wave_index] * 100) / 100);
-                                console.log('average scores');
-                                console.log(average_scores);
+                                //console.log('average scores');
+                                //console.log(average_scores);
                             }
                         }
                     }
@@ -213,8 +213,8 @@ function activate_judge_activities_panel(active_heat_id){
                         }
                     }
 
-                    for (var id in active_surfers['surfer_id']){
-                        var surfer_id = active_surfers['surfer_id'][id];
+                    for (var idx in active_surfers){
+                        var surfer_id = active_surfers[idx]['surfer_id'];
                         top_waves[surfer_id]=[];
                         top_waves[surfer_id][0]='-';
                         top_waves[surfer_id][1]='-';
