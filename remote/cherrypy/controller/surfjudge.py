@@ -12,11 +12,10 @@ from keys import *
 class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
-    #@require(is_admin())
     @cherrypy.tools.render(template = 'commentator_hub.html')
     def index(self):
         context = self._standard_env()
-        heats_info = self.collect_heat_info(None)#cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
+        heats_info = self.collect_heat_info(None)
         for heat_id, heat in heats_info.items():
             query_info = {KEY_HEAT_ID: int(heat_id)}
             # TODO: maybe store current scores in state object for faster access
@@ -52,7 +51,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             print 'do_get_judge_panel: Is not judge for requested heat_id'
             return 'res'
 
-        heat_info = self.collect_heat_info(heat_id)#cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        heat_info = self.collect_heat_info(heat_id)
         participants = heat_info.get('participants', [])
         ids = [p.get('surfer_id') for p in participants]
         colors = [p.get('surfer_color') for p in participants]
@@ -71,7 +70,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     @cherrypy.tools.render(template='commentator_hub.html')
     def commentator_hub(self):
         context = self._standard_env()
-        heats_info = self.collect_heat_info(None)#cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
+        heats_info = self.collect_heat_info(None)
         for heat_id, heat in heats_info.items():
             query_info = {KEY_HEAT_ID: int(heat_id)}
             # TODO: maybe store current scores in state object for faster access
@@ -188,7 +187,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             return
 
         db_data['heat_id'] = int(heat_id)
-        heat_info = self.collect_heat_info(heat_id)#cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        heat_info = self.collect_heat_info(heat_id)
         participants = heat_info.get('participants', [])
         color2id = self._get_color2id(participants)
         db_data['surfer_id'] = int(color2id[score['color']])
@@ -248,7 +247,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                 print 'Error: No heat specified and judge has no active heats'
                 return '{}'
             heat_id = heats.keys()[0]
-        heat_info = self.collect_heat_info(heat_id)#cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        heat_info = self.collect_heat_info(heat_id)
         return json.dumps(heat_info)
 
     @cherrypy.expose
@@ -264,7 +263,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_HEADJUDGE, KEY_ROLE_ADMIN))
     def do_get_all_active_heats(self, **kwargs):
-        heat_info = self.collect_heat_info(None)#cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
+        heat_info = self.collect_heat_info(None)
         return json.dumps(heat_info.values())
 
 
@@ -278,9 +277,8 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     def do_get_average_scores(self, heat_id=None, n_best_waves=CherrypyWebInterface.N_BEST_WAVES, **kwargs):
-        print 'hallo'
         heat_id = int(heat_id)
-        heat_info = self.collect_heat_info(heat_id)#cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop().get(heat_id)
+        heat_info = self.collect_heat_info(heat_id)
 
         if heat_info is None:
             return ''
@@ -292,18 +290,17 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         scores_by_surfer_wave = self._get_scores(heat_id, judges)
         average_scores = score_processing.compute_average_scores(scores_by_surfer_wave, judges)
         best_scores_average = score_processing.compute_best_waves(average_scores, n_best_waves)
+        placing_total_scores = score_processing.compute_places_total_scores(average_scores, n_best_waves)
         out_data = []
         for participant in heat_info.get('participants', []):
             surfer_id = participant.get('surfer_id')
-            data = best_scores_average.get(surfer_id, [])
             res = {}
-            res['total_score'] = 0
+            res['total_score'] = placing_total_scores.get(surfer_id, (0,0))[1]
             res['surfer_id'] = surfer_id
             res['surfer_color'] = id2color.get(surfer_id, '')
             res['surfer_name'] = id2name.get(surfer_id, '')
-            for idx, (best_wave_idx, score) in enumerate(data):
+            for idx, (best_wave_idx, score) in enumerate(best_scores_average.get(surfer_id, [])):
                 res['best_wave_{}'.format(idx+1)] = round(score, 2)
-                res['total_score'] += score
             res['total_score'] = round(res['total_score'], 2)
             for key, val in average_scores.get(surfer_id, {}).items():
                 res[str(key)] = round(val, 2)
@@ -419,7 +416,6 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                     indices = [None] * n_best_waves
                     scores = [None] * n_best_waves
                 for label_index, label_score, index, score in zip(labels_index, labels_scores, indices, scores):
-                    print score
                     res[label_score] = '' if score is None else '{:.2f}'.format(score)
                     res[label_index] = '' if index is None else index + 1
                 res['Name'] = '{}'.format(participant.get('name'))

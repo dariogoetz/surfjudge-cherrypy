@@ -131,7 +131,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     def heats(self):
         context = self._standard_env()
         import utils
-        context['lycra_colors'] = utils.read_lycra_colors('lycra_colors.csv').keys()
+        context['lycra_colors'] = [c['COLOR'] for c in sorted(utils.read_lycra_colors('lycra_colors.csv').values(), key=lambda c: c['SEEDING'])]
         return context
 
 
@@ -153,7 +153,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         for heat in res:
             heat['date'], heat['start_time'] = dtstr2dstr_and_tstr(heat['start_datetime'])
         return json.dumps(res)
-
 
 
     # TODO: as POST action
@@ -197,7 +196,25 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
-    def do_set_participating_surfers(self, json_data=None, heat_id=None, surfer_ids=None, surfer_colors=None):
+    def do_set_participating_surfers(self, heat_id=None, participants=None):
+        participants = json.loads(participants)
+        # fill missing fields
+        old_participants = {p['surfer_id']: p for p in self.collect_participants(heat_id=heat_id)}
+        all_participants = []
+        for p in participants:
+            # take old info
+            participant = old_participants.get(p['surfer_id'], {})
+            # and overwrite with new one, as far as available
+            participant.update(p)
+            all_participants.append(participant)
+        all_participants = self._complete_participants(all_participants)
+
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_SET_PARTICIPANTS, {'heat_id': heat_id, 'participants': all_participants})
+        return
+
+    @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
+    def do_set_participating_surfers_depr(self, heat_id=None, surfer_ids=None, surfer_colors=None):
         surfer_ids = json.loads(surfer_ids)
         if surfer_colors is not None:
             surfer_colors = json.loads(surfer_colors)

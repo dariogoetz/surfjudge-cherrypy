@@ -471,11 +471,13 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def _set_participants(self, data):
         heat_id = data['heat_id']
-        surfers = data['surfers']
+        participants = data['participants']
         if len(self._get_participants(heat_id)) > 0:
             self._delete_from_db({'heat_id': heat_id}, 'participants')
-        for (surfer_id, surfer_color, seed) in surfers:
-            self._insert_into_db({'heat_id': heat_id, 'surfer_id': surfer_id, 'surfer_color': surfer_color, 'seed': seed}, 'participants')
+        for participant in participants:
+            item = {'heat_id': heat_id}
+            item.update(participant)
+            self._insert_into_db(item, 'participants')
         return
 
 

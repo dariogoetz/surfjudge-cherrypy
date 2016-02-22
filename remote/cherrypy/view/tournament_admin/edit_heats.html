@@ -177,26 +177,41 @@ function fill_modal(heat_id, heat_name, date, start_time, n_waves, additional_in
   refresh_participants(heat_id);
 }
 
- function add_participant_row(surfer_id, surfer_seed, surfer_name, surfer_color, elem_handle){
+ function remove_pending(heat_id, surfer_id){
+     $('#selected_participant_'+surfer_id).data('pending', false);
+     upload_heat_details();
+ }
+
+ function add_participant_row(heat_id, participant, elem_handle){
+     var row = $('<tr><td>' + participant['seed'] + '</td><td>' + participant['name'] +'</td></tr>');
+     var s = $('<select id="selected_participant_' + participant['surfer_id'] + '" class="form-control"/>');
+     s.data({'surfer_id': participant['surfer_id'], 'seed': participant['seed'], 'pending': participant['advanced']});
+
      var colors = {{ lycra_colors }};
-
-     var row = $('<tr><td>'+ surfer_id +'</td><td>' + surfer_seed + '</td><td>' + surfer_name +'</td></tr>');
-     var s = $('<select class="form-control"/>');
-     $(s).data({'surfer_id': surfer_id});
-
      for(var val in colors) {
-         var option_data = {value: colors[val], text: colors[val]};
-         if (surfer_color === colors[val])
-             option_data['selected'] = true;
-         $('<option />', option_data).appendTo(s);
+         var color_option_data = {value: colors[val], text: colors[val]};
+         if (participant['surfer_color'] === colors[val])
+             color_option_data['selected'] = true;
+         $('<option />', color_option_data).appendTo(s);
      }
      $(s).wrap('<td></td>');
      s.appendTo($(row));
+
+     var action_field = '';
+     if (participant['advanced']){
+         action_field = '<a href="#" class="glyphicon glyphicon-ok" style="color:green"onclick="remove_pending('+ heat_id + ',' + participant['surfer_id']+')"></a>';
+         row.css('background-color', '#FFDDDD');
+     }
+     $('<td align="center">' + action_field +'</td>').appendTo($(row));
+
      $('#participants_table tbody').append(row);
  }
 
  function refresh_participants(heat_id){
-     $.getJSON( '{{ mount_loc }}/do_get_surfers', function(surfer_data){
+
+     // TODO: get advancing surfers for all places for info "could advance from ..."
+     // then TODO: fill in (grey) defaults with this info and add
+     $.getJSON('{{ mount_loc }}/do_get_surfers', function(surfer_data){
          // fill participants_select in participant modal
          $('#participants_table > tbody').empty();
          $('#participants_select').empty();
@@ -211,15 +226,11 @@ function fill_modal(heat_id, heat_name, date, start_time, n_waves, additional_in
 
          $.getJSON('/headjudge/do_get_participating_surfers', {heat_id: heat_id, fill_advance: true}, function(participants){
              for (idx in participants){
-                 var surfer_id = participants[idx]['surfer_id'];
-                 var surfer_seed = participants[idx]['seed'];
-                 var surfer_color = participants[idx]['surfer_color'];
-                 var surfer_name = $('#participants_select option[value="'+ surfer_id +'"]').text();
-
                  // fill table in edit_heat modal
-                 add_participant_row(surfer_id, surfer_seed, surfer_name, surfer_color, '#participants_table > tbody');
+                 add_participant_row(heat_id, participants[idx], '#participants_table > tbody');
                  // activate in participants_select
-                 $('#participants_select option[value='+surfer_id+']').prop('selected', true)
+                 if (!participants[idx]['advanced'])
+                     $('#participants_select option[value='+participants[idx]['surfer_id']+']').prop('selected', true);
              }
             participants_dlb.bootstrapDualListbox('refresh');
 
@@ -328,10 +339,10 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
               <table id="participants_table" class="table table-striped">
                   <thead>
                       <tr>
-                          <th data-field="id">Surfer ID</th>
                           <th data-field="seed">Seed</th>
                           <th data-field="name">Surfer Name</th>
                           <th data-field="color">Surfer Color</th>
+                          <th data-field="action">Action</th>
                       </tr>
                   </thead>
                   <tbody>
@@ -422,29 +433,30 @@ function upload_heat_details(){
         $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
 
         // push participants to server (here with colors)
-        var surfer_ids = [];
-        var surfer_colors = [];
+        var participants = [];
         $('#participants_table select option:selected').each(function(){
-            surfer_colors.push( $(this).val() );
-            surfer_ids.push( $(this).parent().data('surfer_id') );
+            if (!$(this).parent().data('pending'))
+                participants.push({surfer_color: $(this).val(), surfer_id: $(this).parent().data('surfer_id'), seed: $(this).parent().data('seed')});
         });
-        surfer_ids = JSON.stringify(surfer_ids);
-        surfer_colors = JSON.stringify(surfer_colors);
+        participants = JSON.stringify(participants);
 
-        $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: hid, surfer_ids: surfer_ids, surfer_colors: surfer_colors});
+        $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: hid, participants: participants}, function(){
+        refresh_participants(heat_id);
+        });
     });
   }
 
+  // click on "save" in second modal to select participants
   $('#participants_submit').on('click', function(){
-      // push participants to server (here yet without colors)
+      // push participants to server (here yet without colors or seeds)
       var heat_id = $('#modal_heat_id').val();
       // select surfers
-      var surfer_ids = []
+      var participants = []
       $('#bootstrap-duallistbox-selected-list_participants option').each(function(){
-          surfer_ids.push( parseInt(this.value) );
+          participants.push( {surfer_id: parseInt(this.value)} );
       });
-      surfer_ids = JSON.stringify(surfer_ids);
-      $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: heat_id, surfer_ids: surfer_ids});
+      participants = JSON.stringify(participants);
+      $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: heat_id, participants: participants});
       refresh_participants(heat_id);
   });
 
