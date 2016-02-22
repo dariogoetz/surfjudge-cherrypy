@@ -126,6 +126,9 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         id2color = self._get_id2color(participants)
         out_scores = {}
         for score in scores:
+            if score['surfer_id'] not in id2color:
+                # if surfer has been deactivated for heat although there is already a score for him, ignore it
+                continue
             out_scores.setdefault(score['judge_id'], {}).setdefault(id2color[int(score['surfer_id'])], []).append( (score['wave'], score['score']) )
 
         for jid, s in out_scores.items():
@@ -306,7 +309,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                 res[str(key)] = round(val, 2)
             res['needs'] = 0
             out_data.append(res)
-        total_max = max([d['total_score'] for d in out_data])
+        total_max = max([d['total_score'] for d in out_data]) if len(out_data)>0 else 0
         for d in out_data:
             if d['total_score'] < total_max:
                 d['needs'] = round(total_max - d.get('best_wave_1', 0) + 0.01, 2)
