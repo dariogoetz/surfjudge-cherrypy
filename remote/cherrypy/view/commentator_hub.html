@@ -25,7 +25,7 @@ $(document).ready(function(e){
     <div class="panel-body">
         <table class="table table-striped commentator_panel"
                id="{{ heat_id }}"
-               data-url="/do_get_average_scores?heat_id={{ heats[heat_id]['heat_id'] }}"
+               data-url="{{ score_source }}?heat_id={{ heat_id }}"
                data-toggle="table"
                data-sort-name="total_score"
                data-sort-order="desc">

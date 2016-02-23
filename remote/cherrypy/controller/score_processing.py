@@ -5,7 +5,7 @@ def compute_average_scores(scores_by_surfer_wave, judges):
     for surfer_id, data in scores_by_surfer_wave.items():
         for wave, judge_data in data.items():
             if set(judge_data.keys()) != judges:
-                print 'export_scores: not all judges gave score for wave {} of surfer {} --> ignoring'.format(wave, surfer_id)
+                print 'score_processing: not all judges gave score for wave {} of surfer {} --> ignoring'.format(wave, surfer_id)
                 continue
 
             s = []
@@ -18,7 +18,7 @@ def compute_average_scores(scores_by_surfer_wave, judges):
 
             if n_missed_scores > 0:
                 if len(s) == 0:
-                    print 'export_scores: WARNING: everyone missed the score'
+                    print 'score_processing: WARNING: everyone missed the score'
                     s = [-5] * n_missed_scores
                 else:
                     pre_average = float(sum(s)) / len(s)
