@@ -149,48 +149,69 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                 if jid not in judges:
                     del out_scores[jid]
                     print 'do_query_scores: filtered out scores for inactive judge {}'.format(jid)
-        print out_scores
         return json.dumps(out_scores)
+
+
+    def _check_and_get_judge_id(self, judge_id):
+        # check judge_id
+        if judge_id is not None:
+            # check if correct judge_id was given or user is admin, else he is not allowed to set a judge_id
+            roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
+            if int(judge_id) != int(cherrypy.session.get(KEY_JUDGE_ID)):
+                if KEY_ROLE_ADMIN not in roles:
+                    judge_id = None
+                    print 'do_insert_score: Provided wrong judge_id and is not admin'
+
+        elif judge_id is None:
+            judge_id = cherrypy.session.get(KEY_JUDGE_ID)
+            if judge_id is None:
+                print 'do_insert_score: No judge_id provided and not registered as judge'
+                judge_id = None
+        return judge_id
+
+
+    def _check_and_get_heat_id_for_judge(self, heat_id, judge_id):
+        # check heat_id
+        heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
+        my_active_heat_id = None
+        if len(heats) > 0:
+            my_active_heat_id = heats.values()[0][KEY_HEAT_ID]
+
+        if heat_id is not None:
+            # check if correct heat_id was given or user is admin, else he is not allowed to set a heat_id
+            if my_active_heat_id is not None and int(heat_id) != int(my_active_heat_id):
+                roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
+                if KEY_ROLE_ADMIN not in roles:
+                    heat_id = None
+                    print 'do_insert_score: Provided wrong heat_id and is not admin'
+
+        elif heat_id is None:
+            heat_id = my_active_heat_id
+            if heat_id is None:
+                heat_id = None
+                print 'Error: No heat_id specified and judge has no active heat'
+        return heat_id
+
 
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_ADMIN))
     def do_insert_score(self, score = None, heat_id = None, judge_id = None):
         if score is None:
+            print 'do_insert_score: No score given'
+
             return
         #score = score.encode('utf-8')
         score = json.loads(score)
-        db_data = score
 
-        if judge_id is not None:
-            # check if user is admin, else he is not allowed to set a judge_id
-            roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
-            if KEY_ROLE_ADMIN not in roles:
-                judge_id = None
+        judge_id = self._check_and_get_judge_id(judge_id)
         if judge_id is None:
-            judge_id = cherrypy.session.get(KEY_JUDGE_ID)
-            if judge_id is None:
-                print 'Error: Not registered as judge'
-                return
+            return
+        heat_id = self._check_and_get_heat_id_for_judge(heat_id, judge_id)
+        if heat_id is None:
+            return
 
+        db_data = score
         db_data['judge_id'] = judge_id
-
-        # TODO: get heat_id for judge_id from state-manager
-        heats = cherrypy.engine.publish(KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE, judge_id).pop()
-        active_heat_id = None
-        if len(heats) > 0:
-            active_heat_id = heats.values()[0][KEY_HEAT_ID]
-
-        if heat_id is None:
-            heat_id = active_heat_id
-
-        if heat_id is None:
-            print 'Error: No heat_id specified and judge has no active heat'
-            return
-
-        if int(heat_id) != int(active_heat_id): # and not is_admin... later: ask for admin roles
-            print 'Error: Specified heat_id does not coincide with active heat of judge'
-            return
-
         db_data['heat_id'] = int(heat_id)
         heat_info = self.collect_heat_info(heat_id)
         participants = heat_info.get('participants', [])
@@ -205,36 +226,8 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_JUDGE, KEY_ROLE_ADMIN))
     def do_modify_score(self, score = None, heat_id = None, judge_id = None):
-        if score is None:
-            print 'do_modify_score: No score given'
-            return
+        return self.do_insert_score(score=score, heat_id=heat_id, judge_id=judge_id)
 
-        score = json.loads(score)
-        db_data = score
-
-        if judge_id is None:
-            judge_id = cherrypy.session.get(KEY_JUDGE_ID)
-            if judge_id is None:
-                print 'do_modify_score: Not registered as judge and no judge id specified'
-                return
-
-        if heat_id is None:
-            print 'do_modify_score: No heat_id specified'
-            return
-
-        heat_id = int(heat_id)
-
-        db_data['judge_id'] = judge_id
-
-        db_data['heat_id'] = heat_id
-        heat_info = self.collect_heat_info(heat_id)
-        participants = heat_info.get('participants', [])
-        color2id = self._get_color2id(participants)
-        db_data['surfer_id'] = int(color2id[score['color']])
-        del db_data['color']
-
-        res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SCORE, db_data).pop()
-        return res
 
 
     @cherrypy.expose
@@ -488,16 +481,92 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     def test_gen_heats(self):
         res = cherrypy.engine.publish(KEY_ENGINE_TM_GENERATE_HEATS, 32, 0, 0, 'standard').pop()
-        print res
+        print str(res)
+
 
     @cherrypy.expose
-    def get_advancing_surfer(self, heat_id=None, seed=None):
-        res = ''
-        res += str(cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, int(heat_id), seed).pop(0))
-        print res
-        return res
+    def do_register_judging_request(self, judge_id=None, heat_id=None):
+        judge_id = self._check_and_get_judge_id(judge_id)
+        if judge_id is None:
+            print 'do_register_judging_request: registered judging request for wrong judge_id'
+            return
+        judge_id = int(judge_id)
+
+        #if heat_id is None:
+        #    heat_id = self._check_and_get_heat_id_for_judge(heat_id, judge_id)
+        #if heat_id is None:
+        #    print 'do_register_judging_request: no heat_id determinable'
+        #    return
+        if heat_id is not None:
+            heat_id = int(heat_id)
+
+        print 'do_register_judging_request: registering request for {} by Judge {} for 10 seconds'.format('Heat {}'.format(heat_id) if heat_id is not None else 'unspecified heat', judge_id)
+        res = cherrypy.engine.publish(KEY_ENGINE_JM_REGISTER_JUDGING_REQUEST, judge_id, heat_id, 10)
+        return
 
     @cherrypy.expose
-    def get_published_results(self, heat_id=None):
+    def do_get_judging_requests(self, heat_id=None, **kwargs):
+        requests = {}
+        if heat_id is not None:
+            heat_id = int(heat_id)
+            specific_requests = cherrypy.engine.publish(KEY_ENGINE_JM_GET_JUDGING_REQUESTS, heat_id).pop()
+            requests.update(specific_requests)
+
+        general_requests = cherrypy.engine.publish(KEY_ENGINE_JM_GET_JUDGING_REQUESTS, None).pop()
+        requests.update(general_requests)
+
+        # get registered judges for the current heat
+        confirmed_judge_ids = set()
+        if heat_id is not None:
+            heat_info = self.collect_heat_info(int(heat_id))
+            judges = heat_info.get('judges', {})
+            confirmed_judge_ids = set(judges)
+
+        # get judge info for judging_requests
+        res = []
+        for judge_id, expires in requests.items():
+            judge_info = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES, {'id': judge_id}).pop()
+            if len(judge_info)>0:
+                judge_info = judge_info[0]
+            else:
+                # request by unknown judge
+                continue
+            if judge_id in confirmed_judge_ids:
+                judge_info['status'] = 'confirmed'
+            else:
+                judge_info['status'] = 'pending'
+            judge_info['judge_id'] = judge_info['id']
+            if heat_id not in judge_info:
+                # fill in heat_id
+                judge_info['heat_id'] = heat_id
+            judge_info['expires'] = str(expires)
+            judge_info['name'] = '{} {}'.format(judge_info['first_name'], judge_info['last_name'])
+            res.append(judge_info)
+            #res.append({'judge_id': judge_id, 'expires': str(expires)})
+
+        # add missing judges
+        for judge_id in confirmed_judge_ids - set(requests):
+            judge_info = judges[judge_id]
+            judge_info['judge_id'] = judge_id
+            judge_info['status'] = 'missing'
+            judge_info['name'] = '{} {}'.format(judge_info['judge_first_name'], judge_info['judge_last_name'])
+            res.append(judge_info)
+
+        return json.dumps(res)
+
+    @cherrypy.expose
+    @cherrypy.tools.render(template='tournament_admin/heat_overview_hub.html')
+    def heat_overview(self):
+        context = self._standard_env()
+        return context
+
+
+    @cherrypy.expose
+    @cherrypy.tools.render(template='tournament_admin/heat_overview_panel.html')
+    def do_get_heat_overview_panel(self, heat_id):
+        if heat_id is None:
+            return
         heat_id = int(heat_id)
-        return json.dumps(cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_RESULTS, {'heat_id': heat_id}).pop())
+        context = self._standard_env()
+        context['heat_id'] = heat_id
+        return context

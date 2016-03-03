@@ -13,7 +13,7 @@ import tournament_generators
 
 class TournamentManager(object):
     def __init__(self, surfjudge):
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
         self.heat_orders = None
         self.advancing_surfers = None

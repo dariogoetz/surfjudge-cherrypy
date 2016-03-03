@@ -303,7 +303,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
-    def do_set_active_judges(self, heat_id=None, judge_ids=None):
+    def do_set_active_judges(self, heat_id=None, judge_ids=None, append=False):
         if heat_id is None:
             return
         if judge_ids is None:
@@ -311,10 +311,21 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         else:
             judge_ids = json.loads(judge_ids)
         data = {'heat_id': int(heat_id), 'judges': judge_ids}
+        if append:
+            data['append'] = True
         cherrypy.engine.publish(KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES, data).pop()
         return
 
-
+    @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
+    def do_delete_active_judge(self, heat_id=None, judge_id=None):
+        if heat_id is None:
+            return
+        if judge_id is None:
+            return
+        data = {'heat_id': int(heat_id), 'judge_id': int(judge_id)}
+        cherrypy.engine.publish(KEY_ENGINE_DB_DELETE_JUDGE_ACTIVITY, data).pop()
+        return
 
     @cherrypy.expose
     def do_get_judges(self, **kwargs):

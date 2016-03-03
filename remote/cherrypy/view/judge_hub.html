@@ -155,7 +155,7 @@ function clear_fields()
 
 <script>
 function toggle_visibility()
-{
+ {
     $.getJSON('do_get_my_active_heat', function(active_heat_info)
         {
         if (! $.isEmptyObject(active_heat_info)){ //if user is not active in any heat
@@ -185,6 +185,7 @@ function toggle_visibility()
             $('#judge_panel').empty();
             $('#judge_panel').data('status', 'inactive');
             $('#waiting_banner').show();
+            $.get('do_register_judging_request');
         }
 
     });
@@ -417,7 +418,7 @@ function enter_score_modal(){
     if ((!isNaN(modal_float) && modal_float >=0 && modal_float<=10) || modal_float == MISSED || modal_float == INTERFERENCE)
     {
         if (selected_wave_idx == next_open_wave_idx){ // add a new wave
-            $.post('do_insert_score', upload_data, function(data){
+            $.post('/do_insert_score', upload_data, function(data){
                 sync_with_server();
             });
         } else { // edit an old wave

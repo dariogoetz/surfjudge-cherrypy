@@ -1,0 +1,161 @@
+{% extends "base_template.html" %}
+
+
+{% block nav_items %}['#nav_item_headjudge']{% endblock nav_items %}
+
+{% block title %}Heat Overview{% endblock title %}
+
+{% block css %}
+{{ super() }}
+<link href="/static/datepicker/css/datepicker.css" rel="stylesheet">
+<link href="/static/bootstrap-timepicker/css/bootstrap-timepicker.min.css" rel="stylesheet">
+<link href="/static/bootstrap_duallistbox/bootstrap-duallistbox.min.css" rel="stylesheet">
+
+<style>
+.datepicker{z-index:1151 !important;}
+.timepicker{z-index:1151 !important;}
+.scrollable-menu{
+    height: auto;
+    max-height: 200px;
+    overflow-x: hidden;
+ }
+ .carousel-control {
+     height: 100px;
+    z-index: 10;
+    width: 50px; // no more gray thing
+ }
+ .carousel-control.left,
+ .carousel-control.right { background: none }
+ .carousel-control.left { left: -30px; }
+ .carousel-control.right { right: -50px; }
+</style>
+{% endblock css %}
+
+
+{% block content %}
+<div class="container-fluid">
+
+    <div id="heat_overview_carousel" class="carousel slide" data-ride="carousel" data-interval=false data-wrap=false>
+        <a class="left carousel-control" href="#heat_overview_carousel" role="button" data-slide="prev">
+            <span class="glyphicon glyphicon-chevron-left" style="color: black" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+            <div class="carousel-inner" role="listbox">
+            </div>
+        <a class="right carousel-control" href="#heat_overview_carousel" role="button" data-slide="next">
+            <span class="glyphicon glyphicon-chevron-right" style="color: black" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+    </div><!-- /.carousel -->
+
+
+</div>
+
+{% endblock content %}
+
+{% block javascript %}
+{{ super() }}
+
+<script>
+ // functionality within judging_requests_table
+ function confirm_judge_activity(heat_id, judge_id){
+     $.get('tournament_admin/do_set_active_judges', {heat_id: heat_id, judge_ids: JSON.stringify([judge_id]), append: true}, function(){
+         refresh_judging_requests_table(heat_id);
+     });
+ }
+ function delete_judge_activity(heat_id, judge_id){
+     $.get('tournament_admin/do_delete_active_judge', {heat_id: heat_id, judge_id: judge_id}, function(){
+         refresh_judging_requests_table(heat_id);
+     });
+ }
+</script>
+
+<script>
+ function append_heat_overview_panel(heat_id, initialize){
+     $.get('/do_get_heat_overview_panel', {heat_id: heat_id}, function(data){
+         var item = $('<div class="item"></div>');
+         $(data).appendTo(item);
+         if ( initialize )
+             $(item).addClass('active');
+         $(item).appendTo($('#heat_overview_carousel .carousel-inner'));
+
+         $('.judging_requests_table').bootstrapTable({
+             rowStyle: rowStyle});
+
+         if (initialize)
+         {
+             console.log('initializing...');
+             refresh_judging_requests_table();
+         }
+     });
+ }
+
+ function rowStyle(row, index){
+     if (row['status'] === 'confirmed')
+         return {css: {'background-color': '#CCFFCC'}};
+     else if (row['status'] === 'missing')
+         return {css: {'background-color': '#FFCCCC'}};
+     else
+         return {}
+ }
+
+ future_heat_order = [];
+ past_heat_order = [];
+ init_n_loaded_panels = 2;
+ $(document).ready(function(){
+     $.getJSON('/tournament_admin/do_get_heat_order', {tournament_id: 0}, function(heat_order){
+         future_heat_order = heat_order;
+         var len = heat_order.length;
+         for (var idx=0; idx<Math.min(len, init_n_loaded_panels); idx++){
+             var active = false;
+             if (idx === 0)
+                 active = true;
+             var heat_id = future_heat_order.shift();
+             append_heat_overview_panel(heat_id, active);
+             past_heat_order.push(heat_id);
+         }
+     });
+ });
+
+
+
+ $('#heat_overview_carousel .carousel-control.left').on('click', function(){
+
+ });
+
+ $('#heat_overview_carousel .carousel-control.right').on('click', function(){
+     if ($('#heat_overview_carousel .carousel-inner .item.active').is('#heat_overview_carousel .carousel-inner :nth-last-child(2)')
+     | $('#heat_overview_carousel .carousel-inner .item.active').is('#heat_overview_carousel .carousel-inner :last-child')){
+         if (future_heat_order.length > 0){
+             var heat_id = future_heat_order.shift();
+             append_heat_overview_panel(heat_id);
+             past_heat_order.push(heat_id);
+         }
+     }
+ });
+
+$('#heat_overview_carousel').bind('slid.bs.carousel', function (e) {
+    refresh_judging_requests_table();
+});
+</script>
+
+<script>
+ function refresh_judging_requests_table(){
+     var heat_id = $('#heat_overview_carousel .active .container').data('heatid');
+     $.getJSON('/do_get_judging_requests', {heat_id: heat_id}, function(data){
+         for (idx in data){
+             var param_str = data[idx]['heat_id'] + ',' + data[idx]['judge_id'];
+             data[idx]['action'] = '';
+             if (data[idx]['status']==='pending'){
+                 data[idx]['action'] ='<a style="color:green" href="#" onclick="confirm_judge_activity(' + param_str + ')"><button class="btn btn-success"><span class="glyphicon glyphicon-ok">&nbspConfirm</span></button></a>';
+             } else if (data[idx]['status'] === 'confirmed') {
+                 data[idx]['action'] ='<a style="color:red" href="#" onclick="delete_judge_activity(' + param_str + ')"><button class="btn btn-default"><span class="glyphicon glyphicon-remove">&nbspRemove</span></button></a>';
+             } else if (data[idx]['status'] === 'missing') {
+                 data[idx]['action'] ='<a style="color:red" href="#" onclick="delete_judge_activity(' + param_str + ')"><button class="btn btn-danger"><span class="glyphicon glyphicon-remove">&nbspRemove</span></button></a>';
+             }
+         }
+         $('#heat_overview_carousel .active .judging_requests_table').bootstrapTable('load', data);
+     });
+ }
+</script>
+{% endblock javascript%}

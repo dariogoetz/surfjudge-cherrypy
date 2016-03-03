@@ -4,6 +4,7 @@ import threading
 
 
 from .user_manager import UserManager
+from .judging_manager import JudgingManager
 
 class RemoteInterface(object):
     '''
@@ -15,6 +16,7 @@ class RemoteInterface(object):
     def __init__(self):
         self.__servers = []
         self.__user_manager = UserManager()
+        self.__judging_manager = JudgingManager()
         self.__threads = []
         return
 
@@ -22,6 +24,10 @@ class RemoteInterface(object):
     @property
     def user_manager(self):
         return self.__user_manager
+
+    @property
+    def judging_manager(self):
+        return self.__judging_manager
 
     @property
     def threads(self):

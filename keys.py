@@ -77,6 +77,7 @@ KEY_ENGINE_DB_DELETE_JUDGE = 'db_delete_judge'
 
 KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES = 'db_retrieve_judge_activities'
 KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES = 'db_set_judge_activities'
+KEY_ENGINE_DB_DELETE_JUDGE_ACTIVITY = 'db_delete_judge_activity'
 KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT = 'db_retrieve_judges_for_heat'
 KEY_ENGINE_DB_RETRIEVE_HEAT_INFO = 'db_retrieve_heat_info'
 KEY_ENGINE_DB_RETRIEVE_RESULTS = 'db_retrieve_results'
@@ -103,6 +104,14 @@ KEY_ENGINE_TM_GET_ADVANCING_SURFERS = 'tm_get_advancing_surfers'
 KEY_ENGINE_TM_SET_ADVANCING_SURFER = 'tm_set_advancing_surfer'
 KEY_ENGINE_TM_GENERATE_HEATS = 'tm_generate_heats'
 
+
+#############################################
+# cherrypy plugins - judging_manager access #
+#############################################
+
+KEY_ENGINE_JM_REGISTER_JUDGING_REQUEST = 'jm_register_judging_request'
+KEY_ENGINE_JM_UNREGISTER_JUDGING_REQUEST = 'jm_unregister_judging_request'
+KEY_ENGINE_JM_GET_JUDGING_REQUESTS = 'jm_get_judging_requests'
 
 
 ###################################

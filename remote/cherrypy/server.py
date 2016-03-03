@@ -107,8 +107,8 @@ class Server(object):
         sm = params.get('statemanager')
         if sm is not None:
             from remote.cherrypy.lib.plugin.statemanager_access import StateManagerPlugin
-            engine.database = StateManagerPlugin(engine, sm)
-            engine.database.subscribe()
+            engine.statemanager = StateManagerPlugin(engine, sm)
+            engine.statemanager.subscribe()
         else:
             raise Exception("Statemanager plugin is not initialized!")
 
@@ -117,10 +117,21 @@ class Server(object):
         tm = params.get('tournament_manager')
         if tm is not None:
             from remote.cherrypy.lib.plugin.tournament_manager_access import TournamentManagerPlugin
-            engine.database = TournamentManagerPlugin(engine, tm)
-            engine.database.subscribe()
+            engine.tournament_manager = TournamentManagerPlugin(engine, tm)
+            engine.tournament_manager.subscribe()
         else:
             raise Exception("TournamentManager plugin is not initialized!")
+
+
+        # judging_manager connect plugin
+        jm = params.get('judging_manager')
+        if jm is not None:
+            from remote.cherrypy.lib.plugin.judging_manager_access import JudgingManagerPlugin
+            engine.judging_manager = JudgingManagerPlugin(engine, jm)
+            engine.judging_manager.subscribe()
+        else:
+            raise Exception("JudgingManager plugin is not initialized!")
+
         return
 
 

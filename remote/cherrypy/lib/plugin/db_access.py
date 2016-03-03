@@ -48,6 +48,7 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
         self.bus.subscribe(KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES, self.set_judge_activities)
+        self.bus.subscribe(KEY_ENGINE_DB_DELETE_JUDGE_ACTIVITY, self.delete_judge_activity)
 
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
         self.bus.subscribe(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, self.get_heat_info)
@@ -89,6 +90,7 @@ class DBAccessPlugin(plugins.SimplePlugin):
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGE_ACTIVITIES, self.get_judge_activities)
         self.bus.unsubscribe(KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES, self.set_judge_activities)
+        self.bus.unsubscribe(KEY_ENGINE_DB_DELETE_JUDGE_ACTIVITY, self.delete_judge_activity)
 
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, self.get_judges_for_heat)
         self.bus.unsubscribe(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, self.get_heat_info)
@@ -196,6 +198,9 @@ class DBAccessPlugin(plugins.SimplePlugin):
         res = self.database.set_judge_activities(data)
         return res
 
+    def delete_judge_activity(self, data):
+        res = self.database.delete_judge_activity(data)
+        return res
 
     def get_judges_for_heat(self, heat_id):
         res = self.database.get_judges_for_heat(heat_id)

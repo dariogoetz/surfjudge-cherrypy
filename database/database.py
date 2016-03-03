@@ -241,6 +241,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
+    def delete_judge_activity(self, data):
+        pipe_recv, pipe_send = multiprocessing.Pipe(False)
+        self.__access_queue.put( (self._delete_judge_activity, data, pipe_send), block=True )
+        res = pipe_recv.recv()
+        return res
+
     def get_judges_for_heat(self, heat_id):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
         self.__access_queue.put( (self._get_judges_for_heat, heat_id, pipe_send), block=True )
@@ -496,12 +502,19 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
     def _set_judge_activities(self, data):
         heat_id = data['heat_id']
         judges = data['judges']
-        if len(self._get_judge_activities({'heat_id': heat_id})) > 0:
-            self._delete_from_db({'heat_id': heat_id}, 'judge_activities')
+        active_judges = [j['judge_id'] for j in self._query_db({'heat_id': heat_id}, 'judge_activities')]
+        if not data.get('append', False):
+            if len(active_judges) > 0:
+                self._delete_from_db({'heat_id': heat_id}, 'judge_activities')
         for judge_id in judges:
-            self._insert_into_db({'heat_id': heat_id, 'judge_id': judge_id}, 'judge_activities')
+            if judge_id not in active_judges:
+                self._insert_into_db({'heat_id': heat_id, 'judge_id': judge_id}, 'judge_activities')
         return
 
+    def _delete_judge_activity(self, data):
+        if len(self._query_db(data, 'judge_activities')) > 0:
+            self._delete_from_db(data, 'judge_activities')
+        return
 
 
     def _get_judges_for_heat(self, heat_id):

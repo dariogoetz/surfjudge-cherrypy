@@ -48,6 +48,7 @@ def doit(args):
 
     if args.webserver:
         cpserver = CherryPyServer(user_manager = surfjudge.interface.user_manager,
+                                  judging_manager = surfjudge.interface.judging_manager,
                                   database = surfjudge.database,
                                   statemanager = surfjudge.statemanager,
                                   tournament_manager = surfjudge.tournament_manager,

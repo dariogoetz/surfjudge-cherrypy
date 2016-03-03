@@ -16,7 +16,7 @@ class UserManager(object):
     '''
 
     def __init__(self):
-        self._critical_section = threading.RLock()
+        self._lock = threading.RLock()
 
 
         self.__active_users = {}
@@ -95,7 +95,7 @@ class UserManager(object):
 
         if self.check_credentials(username, password):
             roles = self._get_roles_from_state_object(username)
-            with self._critical_section:
+            with self._lock:
                 self.__active_users[username] = {KEY_ROLES : roles}
             return True
         else:
@@ -112,7 +112,7 @@ class UserManager(object):
         #username = username.encode(self.encoding)
 
         if username in self.__active_users:
-            with self._critical_section:
+            with self._lock:
                 del self.__active_users[username]
         return True
 
@@ -132,7 +132,7 @@ class UserManager(object):
         if roles is None:
             roles = []
 
-        with self._critical_section:
+        with self._lock:
             if username in self.__registered_users:
                 roles = set(self.__registered_users.setdefault(username, {})[KEY_ROLES]) | set(roles)
             self.__registered_users.setdefault(username, {})[KEY_ROLES] = list(roles)
@@ -144,7 +144,7 @@ class UserManager(object):
 
     def _init_users(self, refresh = False):
         if self.__registered_users is None or refresh:
-            with self._critical_section:
+            with self._lock:
                 self.__registered_users = Config(config =  _CONFIG['users']['users_db'], configspec = _CONFIG['users']['users_db_spec'])
         return
 
@@ -187,7 +187,7 @@ class UserManager(object):
 
         self._init_users()
 
-        with self._critical_section:
+        with self._lock:
             if username in self.__registered_users:
                 print('Resetting password for "{}".'.format(username))
             self.__registered_users.setdefault(username, {})[KEY_PASSWORD] = hashed_pw
@@ -198,7 +198,7 @@ class UserManager(object):
 
 
     def _write_to_disk(self):
-        with self._critical_section:
+        with self._lock:
             with open(self.__registered_users.config_filename, 'w') as f:
                 self.__registered_users.write(f)
         return
@@ -209,7 +209,7 @@ class UserManager(object):
             print 'user manager: user "{}" should be registered as judge but there is no such user'.format(username)
             return False
 
-        with self._critical_section:
+        with self._lock:
             roles = self.__registered_users.setdefault(username, {})[KEY_ROLES]
             if role in roles:
                 return True
@@ -223,7 +223,7 @@ class UserManager(object):
             print 'user manager: user "{}" should be unregistered as judge but there is no such user'.format(username)
             return False
 
-        with self._critical_section:
+        with self._lock:
             roles = self.__registered_users.setdefault(username, {})[KEY_ROLES]
             if role not in roles:
                 return True

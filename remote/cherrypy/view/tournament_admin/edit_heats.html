@@ -194,8 +194,10 @@ function fill_modal(heat_id, heat_name, date, start_time, n_waves, additional_in
              color_option_data['selected'] = true;
          $('<option />', color_option_data).appendTo(s);
      }
-     $(s).wrap('<td></td>');
-     s.appendTo($(row));
+     var td = $('<td></td>');
+     $(s).appendTo(td);
+     console.log(td);
+     td.appendTo($(row));
 
      var action_field = '';
      if (participant['advanced']){
