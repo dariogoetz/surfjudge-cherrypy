@@ -158,14 +158,13 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     # TODO: as POST action
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
-    def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, tournament_id=None, category_id=None, date=None, start_time=None, number_of_waves=None, additional_info=None):
+    def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, category_id=None, date=None, start_time=None, number_of_waves=None, additional_info=None):
         # data is a json with the fields?
         if json_data is not None:
             data = json.loads(json_data)
         else:
             data = {}
             data['id'] = int(heat_id) if len(heat_id)>0 else None
-            data['tournament_id'] = tournament_id
             data['category_id'] = category_id
             data['name'] = heat_name.encode()
             data['start_time'] = start_time.encode()
@@ -478,7 +477,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
         tournament_id = int(tournament_id)
         list_of_heat_ids = json.loads(list_of_heat_ids)
-        res = cherrypy.engine.publish(KEY_ENGINE_TM_SET_HEAT_ORDER, tournament_id, list_of_heat_ids).pop(0)
+        res = cherrypy.engine.publish(KEY_ENGINE_TM_SET_HEAT_ORDER, tournament_id, list_of_heat_ids).pop()
         return json.dumps(res)
 
 
@@ -487,5 +486,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         if heat_id is None:
             return
         heat_id = int(heat_id)
-        res = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop(0)
+        #res = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop()
+        res = self.collect_participants(heat_id, fill_advance=True, confirmed_participants=[])
         return json.dumps(res)

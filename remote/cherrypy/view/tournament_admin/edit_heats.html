@@ -14,7 +14,6 @@
 
 <link href="/static/datepicker/css/datepicker.css" rel="stylesheet">
 <link href="/static/bootstrap-timepicker/css/bootstrap-timepicker.min.css" rel="stylesheet">
-<link href="/static/bootstrap_duallistbox/bootstrap-duallistbox.min.css" rel="stylesheet">
 
 <style>
 .datepicker{z-index:1151 !important;}
@@ -23,7 +22,10 @@
     height: auto;
     max-height: 200px;
     overflow-x: hidden;
-}
+ }
+
+ .surfers_table .selected{background-color: #88FF88 !important;}
+ .participants_table .advanced{background-color: #FF8888 !important;}
 </style>
 
 {% endblock css %}
@@ -62,7 +64,7 @@
 
 
     <div id="data_section"  style="display:none">
-        <button type="button" id="new_btn" class="btn btn-standard btn-lg"><span class="glyphicon glyphicon-plus">&nbsp;</span>New Heat</button>
+        <button type="button" class="btn btn-standard btn-lg new_heat_btn"><span class="glyphicon glyphicon-plus">&nbsp;</span>New Heat</button>
         <br><br>
 
         <table class="table table-striped"
@@ -158,104 +160,24 @@
 </script>
 
 <script>
- // ***** NEW HEAT BUTTON *****
-function fill_modal(heat_id, heat_name, date, start_time, n_waves, additional_info){
-  $('#modal_heat_id').val(heat_id);
-  $('#modal_heat_name').val(heat_name);
-  if (date == null){
-    $('#modal_date_picker').data('datepicker').setValue('');
-  } else {
-    $('#modal_date_picker').data('datepicker').setValue(date);
-  }
-  if (date == null){
-  } else {
-    $('#modal_time_picker').timepicker('setTime', start_time);
-  }
-    // time picker
-  $('#modal_nwaves').val(n_waves);
-  $('#modal_additional_info').val(additional_info);
-  refresh_participants(heat_id);
-}
 
- function remove_pending(heat_id, surfer_id){
-     $('#selected_participant_'+surfer_id).data('pending', false);
-     upload_heat_details();
- }
-
- function add_participant_row(heat_id, participant, elem_handle){
-     var row = $('<tr><td>' + participant['seed'] + '</td><td>' + participant['name'] +'</td></tr>');
-     var s = $('<select id="selected_participant_' + participant['surfer_id'] + '" class="form-control"/>');
-     s.data({'surfer_id': participant['surfer_id'], 'seed': participant['seed'], 'pending': participant['advanced']});
-
-     var colors = {{ lycra_colors }};
-     for(var val in colors) {
-         var color_option_data = {value: colors[val], text: colors[val]};
-         if (participant['surfer_color'] === colors[val])
-             color_option_data['selected'] = true;
-         $('<option />', color_option_data).appendTo(s);
-     }
-     var td = $('<td></td>');
-     $(s).appendTo(td);
-     console.log(td);
-     td.appendTo($(row));
-
-     var action_field = '';
-     if (participant['advanced']){
-         action_field = '<a href="#" class="glyphicon glyphicon-ok" style="color:green"onclick="remove_pending('+ heat_id + ',' + participant['surfer_id']+')"></a>';
-         row.css('background-color', '#FFDDDD');
-     }
-     $('<td align="center">' + action_field +'</td>').appendTo($(row));
-
-     $('#participants_table tbody').append(row);
- }
-
- function refresh_participants(heat_id){
-
-     // TODO: get advancing surfers for all places for info "could advance from ..."
-     // then TODO: fill in (grey) defaults with this info and add
-     $.getJSON('{{ mount_loc }}/do_get_surfers', function(surfer_data){
-         // fill participants_select in participant modal
-         $('#participants_table > tbody').empty();
-         $('#participants_select').empty();
-         for (idx in surfer_data){
-             var surfer_id = surfer_data[idx]['id'];
-             var surfer_name = surfer_data[idx]['name'];
-             $('<option />', {value: surfer_id, text: surfer_name}).appendTo($('#participants_select'));
-         }
-         participants_dlb.bootstrapDualListbox('refresh');
-         if (heat_id === null)
-             return;
-
-         $.getJSON('/headjudge/do_get_participating_surfers', {heat_id: heat_id, fill_advance: true}, function(participants){
-             for (idx in participants){
-                 // fill table in edit_heat modal
-                 add_participant_row(heat_id, participants[idx], '#participants_table > tbody');
-                 // activate in participants_select
-                 if (!participants[idx]['advanced'])
-                     $('#participants_select option[value='+participants[idx]['surfer_id']+']').prop('selected', true);
-             }
-            participants_dlb.bootstrapDualListbox('refresh');
-
-        });
-    });
- }
- // register functionality to choose tournament from dropdown list
- // and table adjusts accordingly
-
-// register functionality for "new heat" button
-$('#new_btn').on('click', function(){
-  fill_modal(null, null, null, null, null, null);
+ // register functionality for "new heat" button
+ $('.new_heat_btn').on('click', function(){
+     heat = new Heat({category_id: $('#categories_dropdown_select').data('select')});
+     heat.fill_heat_modal();
   $('#edit_heat_modal').modal('toggle');
   });
-
 
 // register functionality for selecting heats from table
 $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
     if (typeof(row) !== 'undefined'){
-        fill_modal(row['id'], row['name'], row['date'], row['start_time'], row['number_of_waves'], row['additional_info']);
+        row['category_id'] = $('#categories_dropdown_select').data('select');
+        heat = new Heat(row);
+        heat.fill_heat_modal();
         $('#edit_heat_modal').modal('toggle');
     };
-});
+ });
+
 </script>
 
 <script>
@@ -338,7 +260,7 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
                   </div>
               </div>
               <h4>Participating Surfers</h4>
-              <table id="participants_table" class="table table-striped">
+              <table class="table table-striped participants_table">
                   <thead>
                       <tr>
                           <th data-field="seed">Seed</th>
@@ -350,23 +272,23 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
                   <tbody>
                   </tbody>
               </table>
-              <a id="edit_participants_btn" href="#edit_participants_modal" class="btn btn-standard" data-toggle="modal">Edit Participants</a>
+              <a class="btn btn-standard add_participant_btn"><span class="glyphicon glyphicon-plus">&nbsp;</span>Add Participant</a>
           </div>
 
       </div><!-- /.modal-body -->
 
 
       <div class="modal-footer">
-        <button id="modal_delete" class="btn btn-danger pull-left">Delete</button>
+        <button id="heat_delete" class="btn btn-danger pull-left">Delete</button>
         <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <button id="modal_submit" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+        <button class="btn btn-primary heat_submit">Save changes</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
 <!-- Edit participants modal -->
-<div class="modal fade" id="edit_participants_modal">
+<div class="modal fade add_participant_modal">
     <div class="modal-dialog">
       <div class="modal-content">
 
@@ -378,17 +300,28 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
           <div class="modal-body">
               <div class="well">
 
-                  <!-- participants duallistbox -->
                   <div class="row">
-                      <select multiple="multiple" size="10" name="participants" id="participants_select">
-                      </select>
+                      <table class="table table-striped surfers_table"
+                             data-toggle="table"
+                             data-sort-name="name"
+                             date-sort-order="asc"
+                             data-search=true
+                             data-height="300">
+                          <thead>
+                              <tr>
+                                  <th data-field="name">Surfer Name</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                          </tbody>
+                      </table>
                   </div>
               </div>
 
           </div><!-- /.modal-body -->
           <div class="modal-footer">
               <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-              <button id="participants_submit" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+              <button class="btn btn-primary participant_submit" data-dismiss="modal">Save changes</button>
           </div>
 
       </div><!-- /.modal-content -->
@@ -403,70 +336,54 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 <script src="/static/datepicker/js/bootstrap-datepicker.js"></script>
 <script src="/static/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
 <script src="/static/plusminusinput/plusminusinput.js"></script>
-<script src="/static/bootstrap_duallistbox/jquery.bootstrap-duallistbox.min.js"></script>
 
 <script>
  // ***** MODAL internals *****
- $('#modal_submit').on('click', function(){
-     upload_heat_details();
-});
 
-function upload_heat_details(){
-    var heat_id = $('#modal_heat_id').val();
-    var heat_name = $('#modal_heat_name').val();
-    var date = $('#modal_date_input').val();
-    var start_time = $('#modal_time_picker').val();
-    var number_of_waves = $('#modal_nwaves').val();
-    if (number_of_waves==='')
-         number_of_waves = 10;
-    var additional_info = $('#modal_additional_info').val();
-    var tournament_id = $('#tournaments_dropdown_select').data('select');
-    var category_id = $('#categories_dropdown_select').data('select');
+ // click on confirm button for pending participant row
+ $('.participants_table').on('click', '.remove_pending_btn', function(){
+     heat.remove_pending($(this).data('seed'))
+ });
+
+ $('.participants_table').on('click', '.remove_participant_btn', function(){
+     heat.remove_participant($(this).data('seed'));
+ });
+
+ $('.participants_table').on('click', '.edit_participant_btn', function(){
+    heat.refresh_surfers_table();
+    $('.add_participant_modal').data('seed', $(this).data('seed'));
+    $('.add_participant_modal').modal('toggle');
+ });
 
 
-    if (heat_id == null && heat_name.length == 0) {
-        alert('Empty field "Heat Name"');
-        return
-    };
-    var heat_data = {heat_id: heat_id, heat_name: heat_name, tournament_id: tournament_id, category_id: category_id, date: date, start_time: start_time, number_of_waves: number_of_waves, additional_info: additional_info}
 
-    $.post('{{ mount_loc }}/do_edit_heat', heat_data, function(hid){
-        $('#modal_heat_id').val(hid);
-        $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
+ $('.add_participant_btn').on('click', function(){
+    heat.refresh_surfers_table();
+    $('.add_participant_modal').data('seed', 'new');
+    $('.add_participant_modal').modal('toggle');
+ });
 
-        // push participants to server (here with colors)
-        var participants = [];
-        $('#participants_table select option:selected').each(function(){
-            if (!$(this).parent().data('pending'))
-                participants.push({surfer_color: $(this).val(), surfer_id: $(this).parent().data('surfer_id'), seed: $(this).parent().data('seed')});
-        });
-        participants = JSON.stringify(participants);
 
-        $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: hid, participants: participants}, function(){
-        refresh_participants(heat_id);
-        });
-    });
-  }
+ $('.surfers_table').on('click-row.bs.table', function(e, row, $element){
+     var $apm = $('.add_participant_modal');
+     $apm.data('participant', row);
+     if ($apm.data('selected_element'))
+         $apm.data('selected_element').children().removeClass('selected');
+     $apm.data('selected_element', $element);
+     $element.children().addClass('selected');
+ });
 
-  // click on "save" in second modal to select participants
-  $('#participants_submit').on('click', function(){
-      // push participants to server (here yet without colors or seeds)
-      var heat_id = $('#modal_heat_id').val();
-      // select surfers
-      var participants = []
-      $('#bootstrap-duallistbox-selected-list_participants option').each(function(){
-          participants.push( {surfer_id: parseInt(this.value)} );
-      });
-      participants = JSON.stringify(participants);
-      $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: heat_id, participants: participants});
-      refresh_participants(heat_id);
+// click on "save" in second modal to select participants
+  $('.participant_submit').on('click', function(){
+      var $apm = $('.add_participant_modal');
+      if (!(typeof $apm.data('participant')['id'] === 'undefined')){
+          heat.set_participant($apm.data('seed'), $apm.data('participant'));
+      }
+      else
+          console.log('nothing to submit');
   });
 
-$('#edit_participants_btn').on('click', function(){
-    upload_heat_details();
-});
-
- $('#modal_delete').on('click', function(){
+ $('#heat_delete').on('click', function(){
      var tournament_id = $('#tournaments_dropdown_select').data('select');
      var category_id = $('#categories_dropdown_select').data('select');
      var heat_id = $('#modal_heat_id').val();
@@ -476,6 +393,16 @@ $('#edit_participants_btn').on('click', function(){
      $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: category_id}});
  });
 
+ $('.heat_submit').on('click', function(){
+     heat.fetch_heat_details_from_modal();
+     heat.fetch_surfer_colors();
+     var okay = heat.check_data();
+     if (okay){
+         heat.upload_data();
+         $('#edit_heat_modal').modal('toggle');
+     }
+ });
+
 </script>
 
 
@@ -483,21 +410,287 @@ $('#edit_participants_btn').on('click', function(){
 <script>
  // ***** DATEPICKER *****
 
-$('#modal_date_picker').datepicker({weekStart: 1})
-  .on('changeDate', function(ev){
-    $('#modal_date_picker').datepicker('hide');
-  });
-$('#modal_time_picker').timepicker();
+ $('#modal_date_picker').datepicker({weekStart: 1})
+                        .on('changeDate', function(ev){
+                            $('#modal_date_picker').datepicker('hide');
+                        });
+ $('#modal_time_picker').timepicker();
 
 </script>
+
 
 <script>
-    var participants_dlb = $('#participants_select').bootstrapDualListbox(
-    {nonSelectedListLabel: 'Unselected surfers',
-    selectedListLabel: 'Selected surfers'}
-    );
+ function Heat(row){
+     if (typeof row === 'undefined')
+         row = {};
+     this.heat_id = row['id'];
+     this.category_id = row['category_id'];
+     this.heat_name = row['name'];
+     this.date = row['date'];
+     this.start_time = row['start_time'];
+     this.number_of_waves = row['number_of_waves'];
+     this.additional_info = row['additional_info'];
+
+     this.colors = {{ lycra_colors }};
+
+     this.surfers = [];
+     this.participants = [];
+     this.advanced_participants = [];
+
+     this.init();
+ }
+
+ Heat.prototype.init = function(){
+     function rowStyle(row, index){
+         var res = {};
+         if (row['advanced'])
+             res['classes'] = 'advanced';
+         return res;
+     }
+     $('.participants_table').bootstrapTable({'rowStyle': rowStyle});
+     $('.surfers_table').bootstrapTable();
+     this.refresh_from_server();
+ }
+
+ Heat.prototype.refresh_from_server = function(){
+     var _this = this;
+     this.get_data().done(function(){
+         _this.refresh_surfers_table();
+         _this.refresh_participants_table();
+     });
+}
+
+ Heat.prototype.get_data = function(){
+     this.surfers = [];
+     this.participants = [];
+     this.advanced_participants = [];
+     var deferred_surfers = $.getJSON('{{ mount_loc }}/do_get_surfers');
+     var deferred_participants = $.getJSON('/headjudge/do_get_participating_surfers', {heat_id: this.heat_id, fill_advance: true});
+     var deferred_advanced = $.getJSON('{{ mount_loc }}/do_get_advancing_surfers', {heat_id: this.heat_id});
+
+     var _this = this;
+
+     return $.when(deferred_surfers, deferred_participants, deferred_advanced).done(function(ev_surfers, ev_participants, ev_advanced){
+         _this.surfers = ev_surfers[0];
+         _this.participants = ev_participants[0];
+         _this.advanced_participants = ev_advanced[0];
+     });
+ }
+
+ Heat.prototype.refresh_surfers_table = function(){
+     $('.add_participant_modal').data('participant', {});
+     $('.surfers_table').bootstrapTable('load', this.get_nonparticipating_surfers());
+ }
+
+
+ Heat.prototype.refresh_participants_table = function(){
+     var res = [];
+     for (idx=0; idx < this.participants.length; idx++){
+         // fill table in edit_heat modal
+         if (this.participants[idx])
+             res.push(this._add_interactive_fields(this.participants[idx]));
+     }
+
+     $('.participants_table').bootstrapTable('load', res);
+ }
+
+ Heat.prototype._add_interactive_fields = function(participant){
+     var s = '<select class="form-control"  data-seed="' + participant['seed'] + '">';
+     for (var val in this.colors) {
+         var sel = '';
+         if (participant['surfer_color'] === this.colors[val])
+             sel = 'selected=true';
+         s = s + '<option ' + sel + ' value="' + this.colors[val] + '">' + this.colors[val] + '</option>';
+     }
+     s = s + '</select>';
+
+     var action_field = '';
+     if (participant['advanced']){
+         action_field = '<a href="#" data-seed=' + participant['seed'] + ' class="remove_pending_btn"><button class="btn btn-success"><span class="glyphicon glyphicon-ok"></span></button></a>';
+     } else {
+         action_field = '<a href="#" data-seed=' + participant['seed'] + ' class="remove_participant_btn"><button class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button></a>';
+     }
+     var edit_field = '&nbsp; <a href="#" data-seed=' + participant['seed'] + ' class="edit_participant_btn"><button class="btn btn-info"><span class="glyphicon glyphicon-edit"></span></button></a>';
+
+     var res = $.extend({}, participant);
+     res['color'] = s;
+     res['action'] = action_field + edit_field;
+     return res;
+ }
+
+
+ Heat.prototype.get_confirmed_participants = function(){
+     var res = [];
+     for (idx=0; idx < this.participants.length; idx++){
+         if (this.participants[idx] && !this.participants[idx]['advanced']){
+             res.push(this.participants[idx]);
+         }
+     }
+     return res;
+ }
+
+ Heat.prototype.get_nonparticipating_surfers = function(){
+     var surfers = [];
+     var p = this.get_confirmed_participants();
+     var p_set = new Set();
+     for (idx=0; idx < p.length; idx++){
+         p_set.add(p[idx]['surfer_id']);
+     }
+     for (idx=0; idx < this.surfers.length; idx++){
+         if (!p_set.has(this.surfers[idx]['id']))
+             surfers.push(this.surfers[idx]);
+     }
+     return surfers;
+ }
+
+ Heat.prototype.remove_participant = function(seed){
+     if (seed >= this.advanced_participants.length)
+         this.participants[seed] = null;
+     else
+         this.participants[seed] = $.extend({}, this.advanced_participants[seed]);
+     this.refresh_participants_table();
+     this.refresh_surfers_table();
+ }
+
+ Heat.prototype.confirm_participant = function(seed){
+     if (!(typeof this.participants[seed]['advanced'] === 'undefined'))
+         delete this.participants[seed]['advanced'];
+ }
+
+ Heat.prototype.set_participant = function(seed, data){
+     var new_seed = -1;
+     if (seed == 'new')
+         new_seed = this.participants.length;
+     else
+         new_seed = parseInt(seed);
+     var existing_participant = this.participants[new_seed];
+     this.participants[new_seed] = data;
+     if (existing_participant){
+         this.participants[new_seed]['surfer_color'] = existing_participant['surfer_color'];
+     }
+     else {
+         var color = this.get_available_color();
+         if (color)
+             this.participants[new_seed]['surfer_color'] = color;
+     }
+     this.participants[new_seed]['seed'] = new_seed;
+     this.participants[new_seed]['surfer_id'] = this.participants[new_seed]['id'];
+     this.participants[new_seed]['heat_id'] = this.heat_id;
+     this.refresh_surfers_table();
+     this.refresh_participants_table();
+ }
+
+
+ Heat.prototype.fetch_heat_details_from_modal = function(){
+     this.heat_id = $('#modal_heat_id').val();
+     this.heat_name = $('#modal_heat_name').val();
+     this.date = $('#modal_date_input').val();
+     this.start_time = $('#modal_time_picker').val();
+     this.number_of_waves = $('#modal_nwaves').val();
+     if (this.number_of_waves==='')
+         this.number_of_waves = 10;
+     this.additional_info = $('#modal_additional_info').val();
+ }
+
+ Heat.prototype.check_data = function(){
+
+     if (this.heat_id == null && this.heat_name.length == 0) {
+         alert('Empty field "Heat Name"');
+         return false;
+     };
+
+     var colors = new Set();
+     for (idx = 0; idx < this.participants.length; idx++){
+         if (this.participants[idx] && !this.participants[idx]['advanced']){
+             var color = this.participants[idx]['surfer_color'];
+             if (colors.has(color)){
+                 alert('Double entries for "Surfer Color"');
+                 return false;
+             }
+             colors.add(color);
+         }
+     }
+     return true;
+ }
+
+ Heat.prototype.fetch_surfer_colors = function(){
+     var _this = this;
+
+     $('.participants_table select option:selected').each(function(){
+         var seed = parseInt($(this).parent().data('seed'));
+         if (!_this.participants[seed]['advanced']){
+             _this.participants[seed]['surfer_color'] = $(this).val();
+         }
+     });
+ }
+
+ Heat.prototype.get_available_color = function(){
+     this.fetch_surfer_colors();
+     var taken_colors = new Set();
+     for (idx = 0; idx < this.participants.length; idx++){
+         if (this.participants[idx] && !this.participants[idx]['advanced']){
+             var color = this.participants[idx]['surfer_color'];
+             taken_colors.add(color);
+         }
+     }
+     for (idx = 0; idx < this.colors.length; idx++){
+         var color = this.colors[idx];
+         if (! taken_colors.has(color))
+             return color;
+     }
+     return null;
+ }
+
+ Heat.prototype.upload_data = function(){
+     var _this = this;
+
+     this.fetch_heat_details_from_modal();
+     this.fetch_surfer_colors();
+     var okay = this.check_data();
+     if (!okay){
+         return;
+     }
+
+     var heat_data = {heat_id: this.heat_id, heat_name: this.heat_name, category_id: this.category_id, date: this.date, start_time: this.start_time, number_of_waves: this.number_of_waves, additional_info: this.additional_info};
+     var participants = JSON.stringify(this.get_confirmed_participants());
+
+     console.log('uploading');
+
+     var deferred_heat_data = $.post('{{ mount_loc }}/do_edit_heat', heat_data);
+     var deferred_participants = $.post('{{ mount_loc }}/do_set_participating_surfers', {heat_id: this.heat_id, participants: participants});
+
+     return $.when(deferred_heat_data, deferred_participants).done(function(ev_heat_data, ev_part){
+         _this.heat_id = ev_heat_data[0];
+         $('#heats_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_heats', query: {category_id: _this.category_id}});
+         _this.refresh_from_server();
+     });
+ }
+
+ Heat.prototype.fill_heat_modal = function(){
+     // ***** NEW HEAT BUTTON *****
+     $('#modal_heat_id').val(this.heat_id);
+     $('#modal_heat_name').val(this.heat_name);
+     if (this.date == null){
+         $('#modal_date_picker').data('datepicker').setValue('');
+     } else {
+         $('#modal_date_picker').data('datepicker').setValue(this.date);
+     }
+     if (this.start_time == null){
+     } else {
+         $('#modal_time_picker').timepicker('setTime', this.start_time);
+     }
+     // time picker
+     $('#modal_nwaves').val(this.number_of_waves);
+     $('#modal_additional_info').val(this.additional_info);
+
+     this.refresh_participants_table();
+ }
+
+Heat.prototype.remove_pending = function(seed){
+     heat.confirm_participant(seed);
+     heat.refresh_participants_table();
+ }
 
 </script>
-
 
 {% endblock modal_javascript %}

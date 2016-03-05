@@ -91,15 +91,19 @@ class CherrypyWebInterface(object):
         return heat_info
 
 
-    def collect_participants(self, heat_id, fill_advance=False):
-        participants = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, heat_id).pop()
+    def collect_participants(self, heat_id, fill_advance=False, confirmed_participants=None):
+        if confirmed_participants is None:
+            participants = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, heat_id).pop()
+        else:
+            participants = confirmed_participants
+
         # set 'advanced' to False
         for p in participants:
             p.setdefault('advanced', False)
 
         if fill_advance:
             existing_surfer_ids = set([p['surfer_id'] for p in participants])
-            advanced_participants = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop(0)
+            advanced_participants = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop()
 
             db_seeds = [int(p.get('seed')) for p in participants if p.get('seed') is not None]
             fill_in_participant_seeds = set(advanced_participants.keys()) - set(db_seeds)
@@ -156,33 +160,43 @@ class CherrypyWebInterface(object):
 
     def _complete_participants(self, participants):
         import utils
+
+        confirmed_participants = [p for p in participants if not p.get('advanced')]
+        advanced_participants = [p for p in participants if p.get('advanced')]
+
         colors = utils.read_lycra_colors('lycra_colors.csv')
         seed2color = {int(c['SEEDING']): c for c in colors.values()}
 
         # make participants complete
-
-
         # seed
         taken_seeds = set([p['seed'] for p in participants if 'seed' in p])
         all_seeds = set(range(max(taken_seeds)+2)) if len(taken_seeds)>0 else set([0])
         available_seeds = all_seeds - taken_seeds
-        for p in participants:
+
+        for p in confirmed_participants + advanced_participants:
             if 'seed' not in p:
                 p['seed'] = sorted(available_seeds).pop(0)
+
+
+        confirmed_participants = sorted(confirmed_participants, key=lambda x: x['seed'])
+        advanced_participants = sorted(advanced_participants, key=lambda x: x['seed'])
 
         # color
         taken_colors = set([p['surfer_color'] for p in participants if 'surfer_color' in p])
         available_colors = [seed2color[s]['COLOR'] for s in sorted(seed2color) if seed2color[s]['COLOR'] not in taken_colors]
 
-        for p in participants:
+        for p in confirmed_participants + advanced_participants:
             if 'surfer_color' not in p:
                 pref_c = seed2color[p['seed']]['COLOR']
                 if pref_c not in taken_colors:
-                    p['surfer_color'] = pref_c
+                    color = pref_c
+                if pref_c in available_colors:
                     available_colors.remove(pref_c)
                 else:
                     color = available_colors.pop(0)
 
+                p['surfer_color'] = color
+                taken_colors.add(pref_c)
 
         for participant in participants:
             participant['surfer_color_hex'] = colors.get(participant.get('surfer_color'), {}).get('HEX')
