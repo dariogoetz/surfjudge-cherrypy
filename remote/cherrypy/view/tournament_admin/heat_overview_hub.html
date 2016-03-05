@@ -28,6 +28,10 @@
  .carousel-control.right { background: none }
  .carousel-control.left { left: -30px; }
  .carousel-control.right { right: -50px; }
+
+ .judging_requests_table .missing {background-color: #FF8888 !important;}
+ .judging_requests_table .confirmed {background-color: #88FF88 !important;}
+
 </style>
 {% endblock css %}
 
@@ -92,9 +96,9 @@
 
  function rowStyle(row, index){
      if (row['status'] === 'confirmed')
-         return {css: {'background-color': '#CCFFCC'}};
+         return {classes: 'confirmed'};//{'background-color': '#CCFFCC'}};
      else if (row['status'] === 'missing')
-         return {css: {'background-color': '#FFCCCC'}};
+         return {classes: 'missing'};//ss: {'background-color': '#FFCCCC'}};
      else
          return {}
  }
@@ -147,11 +151,11 @@ $('#heat_overview_carousel').bind('slid.bs.carousel', function (e) {
              var param_str = data[idx]['heat_id'] + ',' + data[idx]['judge_id'];
              data[idx]['action'] = '';
              if (data[idx]['status']==='pending'){
-                 data[idx]['action'] ='<a style="color:green" href="#" onclick="confirm_judge_activity(' + param_str + ')"><button class="btn btn-success"><span class="glyphicon glyphicon-ok">&nbspConfirm</span></button></a>';
+                 data[idx]['action'] ='<a href="#" onclick="confirm_judge_activity(' + param_str + ')"><button class="btn btn-success"><span class="glyphicon glyphicon-ok"></span></button></a>';
              } else if (data[idx]['status'] === 'confirmed') {
-                 data[idx]['action'] ='<a style="color:red" href="#" onclick="delete_judge_activity(' + param_str + ')"><button class="btn btn-default"><span class="glyphicon glyphicon-remove">&nbspRemove</span></button></a>';
+                 data[idx]['action'] ='<a href="#" onclick="delete_judge_activity(' + param_str + ')"><button class="btn btn-default"><span class="glyphicon glyphicon-remove"></span></button></a>';
              } else if (data[idx]['status'] === 'missing') {
-                 data[idx]['action'] ='<a style="color:red" href="#" onclick="delete_judge_activity(' + param_str + ')"><button class="btn btn-danger"><span class="glyphicon glyphicon-remove">&nbspRemove</span></button></a>';
+                 data[idx]['action'] ='<a href="#" onclick="delete_judge_activity(' + param_str + ')"><button class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button></a>';
              }
          }
          $('#heat_overview_carousel .active .judging_requests_table').bootstrapTable('load', data);
