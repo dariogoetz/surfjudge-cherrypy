@@ -563,10 +563,15 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='tournament_admin/heat_overview_panel.html')
-    def do_get_heat_overview_panel(self, heat_id):
+    def do_get_heat_overview_panel(self, heat_id, **kwargs):
         if heat_id is None:
             return
         heat_id = int(heat_id)
+        heat_info = self.collect_heat_info(heat_id)
+
         context = self._standard_env()
         context['heat_id'] = heat_id
+        context['heat_name'] = heat_info['heat_name']
+        context['category_id'] = heat_info['category_id']
+        context['category_name'] = heat_info['category_name']
         return context

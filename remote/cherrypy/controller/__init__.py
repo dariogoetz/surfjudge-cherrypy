@@ -193,7 +193,11 @@ class CherrypyWebInterface(object):
                 if pref_c in available_colors:
                     available_colors.remove(pref_c)
                 else:
-                    color = available_colors.pop(0)
+                    if len(available_colors) > 0:
+                        color = available_colors.pop(0)
+                    else:
+                        print 'Warning: No more colors available'
+                        color = list(taken_colors)[0]
 
                 p['surfer_color'] = color
                 taken_colors.add(pref_c)

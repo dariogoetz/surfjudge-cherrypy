@@ -7,7 +7,9 @@
 
 {% block css %}
 {{ super() }}
-<link href="/static/datepicker/css/datepicker.css" rel="stylesheet">
+
+
+
 <link href="/static/bootstrap-timepicker/css/bootstrap-timepicker.min.css" rel="stylesheet">
 <link href="/static/bootstrap_duallistbox/bootstrap-duallistbox.min.css" rel="stylesheet">
 
@@ -26,11 +28,8 @@
  }
  .carousel-control.left,
  .carousel-control.right { background: none }
- .carousel-control.left { left: -30px; }
+ .carousel-control.left { left: -50px; }
  .carousel-control.right { right: -50px; }
-
- .judging_requests_table .missing {background-color: #FF8888 !important;}
- .judging_requests_table .confirmed {background-color: #88FF88 !important;}
 
 </style>
 {% endblock css %}
@@ -60,47 +59,35 @@
 {% block javascript %}
 {{ super() }}
 
-<script>
- // functionality within judging_requests_table
- function confirm_judge_activity(heat_id, judge_id){
-     $.get('tournament_admin/do_set_active_judges', {heat_id: heat_id, judge_ids: JSON.stringify([judge_id]), append: true}, function(){
-         refresh_judging_requests_table(heat_id);
-     });
- }
- function delete_judge_activity(heat_id, judge_id){
-     $.get('tournament_admin/do_delete_active_judge', {heat_id: heat_id, judge_id: judge_id}, function(){
-         refresh_judging_requests_table(heat_id);
-     });
- }
-</script>
+<script src="/static/surfjudge/js/judging_requests_table.js"></script>
+
+<script src="/static/surfjudge/js/heat.js"></script>
+
 
 <script>
- function append_heat_overview_panel(heat_id, initialize){
-     $.get('/do_get_heat_overview_panel', {heat_id: heat_id}, function(data){
-         var item = $('<div class="item"></div>');
-         $(data).appendTo(item);
-         if ( initialize )
-             $(item).addClass('active');
-         $(item).appendTo($('#heat_overview_carousel .carousel-inner'));
+ function append_heat_overview_panels(heat_ids, initialize){
+     var deferreds = [];
+     for (heat_id in heat_ids){
+         deferreds.push($.get('/do_get_heat_overview_panel', {heat_id: heat_ids[heat_id]}));
+     }
+     $.when.apply($, deferreds).done(function(){
+         // careful: if deferreds contains only one element, then arguments is not a list of result objects but only one result object
+         var ev_data = [];
+         if (heat_ids.length==1)
+             ev_data = [arguments];
+         else
+             ev_data = arguments;
+         for (var idx=0; idx<ev_data.length; idx++){
 
-         $('.judging_requests_table').bootstrapTable({
-             rowStyle: rowStyle});
-
-         if (initialize)
-         {
-             console.log('initializing...');
-             refresh_judging_requests_table();
+             var item = $('<div class="item"></div>');
+             $(ev_data[idx][0]).appendTo(item);
+             $(item).appendTo($('#heat_overview_carousel .carousel-inner'));
+         }
+         if (initialize){
+             $('#heat_overview_carousel .carousel-inner').children().first().addClass('active');
+             refresh_heat_info();
          }
      });
- }
-
- function rowStyle(row, index){
-     if (row['status'] === 'confirmed')
-         return {classes: 'confirmed'};//{'background-color': '#CCFFCC'}};
-     else if (row['status'] === 'missing')
-         return {classes: 'missing'};//ss: {'background-color': '#FFCCCC'}};
-     else
-         return {}
  }
 
  future_heat_order = [];
@@ -110,14 +97,13 @@
      $.getJSON('/tournament_admin/do_get_heat_order', {tournament_id: 0}, function(heat_order){
          future_heat_order = heat_order;
          var len = heat_order.length;
+         var new_panel_ids = [];
          for (var idx=0; idx<Math.min(len, init_n_loaded_panels); idx++){
-             var active = false;
-             if (idx === 0)
-                 active = true;
              var heat_id = future_heat_order.shift();
-             append_heat_overview_panel(heat_id, active);
+             new_panel_ids.push(heat_id);
              past_heat_order.push(heat_id);
          }
+         append_heat_overview_panels(new_panel_ids, true);
      });
  });
 
@@ -132,34 +118,76 @@
      | $('#heat_overview_carousel .carousel-inner .item.active').is('#heat_overview_carousel .carousel-inner :last-child')){
          if (future_heat_order.length > 0){
              var heat_id = future_heat_order.shift();
-             append_heat_overview_panel(heat_id);
+             append_heat_overview_panels([heat_id], false);
              past_heat_order.push(heat_id);
          }
      }
  });
 
-$('#heat_overview_carousel').bind('slid.bs.carousel', function (e) {
-    refresh_judging_requests_table();
+ $('#heat_overview_carousel').bind('slid.bs.carousel', function (e) {
+     refresh_heat_info();
+ });
+ $('#heat_overview_carousel').bind('slide.bs.carousel', function (e) {
+     $('#heat_overview_' + $('#heat_overview_carousel .active .container-fluid').data('heatid')).heat('destroy');
 });
 </script>
 
 <script>
- function refresh_judging_requests_table(){
-     var heat_id = $('#heat_overview_carousel .active .container').data('heatid');
-     $.getJSON('/do_get_judging_requests', {heat_id: heat_id}, function(data){
-         for (idx in data){
-             var param_str = data[idx]['heat_id'] + ',' + data[idx]['judge_id'];
-             data[idx]['action'] = '';
-             if (data[idx]['status']==='pending'){
-                 data[idx]['action'] ='<a href="#" onclick="confirm_judge_activity(' + param_str + ')"><button class="btn btn-success"><span class="glyphicon glyphicon-ok"></span></button></a>';
-             } else if (data[idx]['status'] === 'confirmed') {
-                 data[idx]['action'] ='<a href="#" onclick="delete_judge_activity(' + param_str + ')"><button class="btn btn-default"><span class="glyphicon glyphicon-remove"></span></button></a>';
-             } else if (data[idx]['status'] === 'missing') {
-                 data[idx]['action'] ='<a href="#" onclick="delete_judge_activity(' + param_str + ')"><button class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button></a>';
-             }
-         }
-         $('#heat_overview_carousel .active .judging_requests_table').bootstrapTable('load', data);
+
+ function refresh_heat_info(){
+     var heat_id = $('#heat_overview_carousel .active .container-fluid').data('heatid');
+     $.getJSON('/tournament_admin/do_get_heat_info', {heat_id: heat_id}, function(heat_info){
+         var options = $.extend(heat_info, {'surfers_modal': '#add_participant_modal'});
+         var heat = $('#heat_overview_' + heat_id).heat(options);//heat = new Heat(heat_info, '#heat_overview_' + heat_id);
+         $('#heat_overview_' + heat_id).heat('fill_heat_inputs');
      });
  }
+
 </script>
 {% endblock javascript%}
+
+{% block modals %}
+
+<!-- Edit participants modal -->
+<div id="add_participant_modal" class="modal fade add_participant_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Edit Participants</h4>
+            </div> <!-- /.modal-header -->
+
+            <div class="modal-body">
+                <div class="well">
+
+                    <div class="row">
+                        <table class="table table-striped surfers_table"
+                               data-toggle="table"
+                               data-sort-name="name"
+                               date-sort-order="asc"
+                               data-search=true
+                               data-height="300">
+                            <thead>
+                                <tr>
+                                    <th data-field="name">Surfer Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div><!-- /.modal-body -->
+            <div class="modal-footer">
+                <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary participant_submit" data-dismiss="modal">Save changes</button>
+            </div>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+{% endblock modals %}

@@ -1,6 +1,87 @@
-<div class="container" data-heatid={{ heat_id }}>
-    <h1>Heat {{ heat_id }}</h1>
+<link href="/static/datepicker/css/datepicker.css" rel="stylesheet">
+<link href="/static/surfjudge/css/heat.css" rel="stylesheet">
+<link href="/static/surfjudge/css/judging_requests.css" rel="stylesheet">
+
+
+<div class="container-fluid" data-heatid={{ heat_id }} data-categoryid={{ category_id }} id="heat_overview_{{ heat_id }}">
+    <h1>"{{ heat_name }}" in "{{ category_name }}"</h1>
     <!-- edit_heat -->
+    <div class="well">
+        <h3>Hier kommen die Heat controls hin (start/stop, publish, confirm, e.g.)</h3>
+    </div>
+    <div class="well">
+        <div class="form-horizontal">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Heat name</label>
+                <div class="col-sm-10">
+                    <input type="hidden" class="heat_input" data-key="heat_id">
+                    <input type="text" name="heat_input_name" class="form-control heat_input" data-key="heat_name" placeholder="Heat Name">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-xs-2 control-label">Date</label>
+                <div class="row">
+                    <div class="col-xs-5">
+
+			            <div class="input-group date date_picker" data-date="" data-date-format="dd.mm.yyyy">
+				            <input class="form-control heat_input" data-key="date" id="input_date_input" size="16" type="text" placeholder="Date start" readonly>
+				            <span class="input-group-addon add-on"><i class="glyphicon glyphicon-calendar"></i></span>
+			            </div>
+                    </div>
+                    <div class="col-xs-4">
+                        <div class="input-group bootstrap-timepicker timepicker">
+                            <input data-minute-step="15" data-show-meridian="false" class="form-control heat_input time_picker" data-key="start_time" type="text">
+				            <span class="input-group-addon add-on"><i class="glyphicon glyphicon-time"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-xs-2 control-label">Number of waves</label>
+                <div class="col-xs-10">
+
+                    <div class="input-group plusminusinput">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-danger btn-number"  data-type="minus" data-field="nwaves">
+                                <span class="glyphicon glyphicon-minus"></span>
+                            </button>
+                        </span>
+                        <input type="text" id="input_nwaves" name="nwaves" class="form-control input-number heat_input" data-key="number_of_waves" placeholder="10" min="1" max="100" value = "10"">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-success btn-number" data-type="plus" data-field="nwaves">
+                                <span class="glyphicon glyphicon-plus"></span>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-xs-2 control-label">Additional Info</label>
+                <div class="col-xs-10">
+                    <input type="text" id ="input_additional_info" name="input_additional_info" class="form-control heat_input" data-key="additional_info" placeholder="Additional Info">
+                </div>
+            </div>
+        </div>
+
+        <h4>Participating Surfers</h4>
+        <table class="table table-striped participants_table">
+            <thead>
+                <tr>
+                    <th data-field="seed">Seed</th>
+                    <th data-field="name">Surfer Name</th>
+                    <th data-field="color">Surfer Color</th>
+                    <th data-field="action">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <a class="btn btn-standard add_participant_btn"><span class="glyphicon glyphicon-plus">&nbsp;</span>Add Participant</a>
+
+    </div>
+
     <!-- start/stop and publish/export -->
     <!-- judging requests -->
     <table class="table table-striped judging_requests_table"
@@ -18,3 +99,19 @@
         </thead>
     </table>
 </div>
+
+
+
+<script src="/static/datepicker/js/bootstrap-datepicker.js"></script>
+<script src="/static/bootstrap-timepicker/js/bootstrap-timepicker.min.js"></script>
+<script src="/static/plusminusinput/plusminusinput.js"></script>
+
+<script>
+ $('#heat_overview_{{ heat_id }} .date_picker').datepicker({weekStart: 1})
+                        .on('changeDate', function(ev){
+                            $(this).datepicker('hide');
+                        });
+ $('#heat_overview_{{ heat_id }} .time_picker').timepicker();
+
+ $('#heat_overview_{{ heat_id }}').judging_requests({heat_id: {{ heat_id }} });
+</script>

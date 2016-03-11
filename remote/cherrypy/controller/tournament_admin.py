@@ -130,8 +130,8 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.tools.render(template='tournament_admin/edit_heats.html')
     def heats(self):
         context = self._standard_env()
-        import utils
-        context['lycra_colors'] = [c['COLOR'] for c in sorted(utils.read_lycra_colors('lycra_colors.csv').values(), key=lambda c: c['SEEDING'])]
+        #import utils
+        #context['lycra_colors'] = [c['COLOR'] for c in sorted(utils.read_lycra_colors('lycra_colors.csv').values(), key=lambda c: c['SEEDING'])]
         return context
 
 
@@ -145,7 +145,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    def do_get_heats(self, format=None, category_id=None, **kwargs):
+    def do_get_heats(self, category_id=None, **kwargs):
         query_info = {}
         if category_id is not None:
             query_info['category_id'] = int(category_id)
@@ -155,10 +155,27 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         return json.dumps(res)
 
 
+    @cherrypy.expose
+    def do_get_heat_info(self, heat_id=None, **kwargs):
+        if heat_id is None:
+            return '{}'
+
+        query_info = {}
+        query_info['id'] = int(heat_id)
+        heat = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, query_info).pop()
+        if len(heat)>0:
+            heat = heat[0]
+        else:
+            return '{}'
+
+        heat['date'], heat['start_time'] = dtstr2dstr_and_tstr(heat['start_datetime'])
+        return json.dumps(heat)
+
+
     # TODO: as POST action
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
-    def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, category_id=None, date=None, start_time=None, number_of_waves=None, additional_info=None):
+    def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, category_id=None, date=None, start_time=None, number_of_waves=None, additional_info=None, **kwargs):
         # data is a json with the fields?
         if json_data is not None:
             data = json.loads(json_data)
@@ -489,3 +506,8 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         #res = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop()
         res = self.collect_participants(heat_id, fill_advance=True, confirmed_participants=[])
         return json.dumps(res)
+
+    @cherrypy.expose
+    def do_get_lycra_colors(self):
+        import utils
+        return json.dumps([c['COLOR'] for c in sorted(utils.read_lycra_colors('lycra_colors.csv').values(), key=lambda c: c['SEEDING'])])
