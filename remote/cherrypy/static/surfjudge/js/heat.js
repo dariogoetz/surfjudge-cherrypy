@@ -252,7 +252,7 @@ Heat.prototype.set_participant = function(seed, data){
 }
 
 
-Heat.prototype.fetch_heat_details_from_modal = function(){
+Heat.prototype.fetch_heat_details_from_inputs = function(){
     var _this = this;
     this.element.find('.heat_input').each(function(idx, elem){
         _this.heat_data[$(this).data('key')] = $(this).val();
@@ -313,8 +313,7 @@ Heat.prototype.get_available_color = function(){
 
 Heat.prototype.upload_data = function(){
     var _this = this;
-
-    this.fetch_heat_details_from_modal();
+    this.fetch_heat_details_from_inputs();
     this.fetch_surfer_colors();
     var okay = this.check_data();
     if (!okay){
@@ -326,8 +325,8 @@ Heat.prototype.upload_data = function(){
 
     console.log('uploading');
 
-    var deferred_heat_data = $.post('/tournament_admin/do_edit_heat', heat_data);
-    var deferred_participants = $.post('/tournament_admin/do_set_participating_surfers', {heat_id: this.heat_id, participants: participants});
+    var deferred_heat_data = $.get('/tournament_admin/do_edit_heat', heat_data);
+    var deferred_participants = $.get('/tournament_admin/do_set_participating_surfers', {heat_id: this.heat_id, participants: participants});
 
     return $.when(deferred_heat_data, deferred_participants).done(function(ev_heat_data, ev_part){
         _this.heat_id = ev_heat_data[0];
@@ -372,8 +371,10 @@ $.fn.heat = function(option, val){
     var $this = $(this);
     var data = $this.data('heat');
     var options = typeof option === 'object' && option;
-    if (!data)
+    if (!data){
         $this.data('heat', new Heat(this, $.extend({}, options)));
+        return;
+    }
 
     if (option == 'destroy'){
         data['destroy']();
@@ -381,7 +382,7 @@ $.fn.heat = function(option, val){
         return;
     }
     if (typeof option === 'string'){
-        data[option].apply(data, [].slice.call(arguments,1));//(val);
+        return data[option].apply(data, [].slice.call(arguments,1));//(val);
     }
     return $this.data('heat');
 };

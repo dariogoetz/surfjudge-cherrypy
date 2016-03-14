@@ -127,7 +127,10 @@
      refresh_heat_info();
  });
  $('#heat_overview_carousel').bind('slide.bs.carousel', function (e) {
-     $('#heat_overview_' + $('#heat_overview_carousel .active .container-fluid').data('heatid')).heat('destroy');
+     var previous_heat_id = $('#heat_overview_carousel .active .container-fluid').data('heatid');
+     $('#heat_overview_' + previous_heat_id).heat('upload_data').done(function(){
+         $('#heat_overview_' + previous_heat_id).heat('destroy');
+     });
 });
 </script>
 
@@ -144,8 +147,7 @@
 
 
  function refresh_activity(){
-     $.get('/do_get_all_active_heats', function(data){
-         var active_heats = JSON.parse(data);
+     $.getJSON('/do_get_all_active_heats', function(active_heats){
          var active_heat_ids = [];
          for (var h in active_heats)
              active_heat_ids.push(h['heat_id']);
@@ -153,12 +155,18 @@
          $('.heat_activity_btn').addClass('btn-default');
          $('.heat_activity_btn').removeClass('btn-success');
          $('.heat_activity_btn').data('status', 'inactive');
-         console.log(active_heats);
          $('.heat_activity_btn').each(function(){
              if ($(this).data('heatid') in active_heat_ids){
-                 $(this).addClass('btn-success');
-                 $(this).removeClass('btn-default');
+                 $(this).addClass('btn-danger');
+                 $(this).removeClass('btn-success');
                  $(this).data('status', 'active');
+                 $(this).text('Stop Heat');
+             }
+             else {
+                 $(this).addClass('btn-success');
+                 $(this).removeClass('btn-danger');
+                 $(this).data('status', 'inactive');
+                 $(this).text('Start Heat');
              }
          });
      });

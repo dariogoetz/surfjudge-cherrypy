@@ -145,17 +145,19 @@
 
  function activate(elem){
      $.get('/headjudge/do_activate_heat', {heat_id: elem.data('heatid')}).success(function(){
-         elem.addClass('btn-success');
-         elem.removeClass('btn-default');
+         elem.addClass('btn-danger');
+         elem.removeClass('btn-success');
          elem.data('status', 'active');
+         elem.text('Stop Heat');
      });
  };
  function deactivate(elem){
 
      $.get('/headjudge/do_deactivate_heat', {heat_id: elem.data('heatid')}).success(function(){
-         elem.addClass('btn-default');
-         elem.removeClass('btn-success');
+         elem.addClass('btn-success');
+         elem.removeClass('btn-danger');
          elem.data('status', 'inactive');
+         elem.text('Start Heat');
      });
  };
 

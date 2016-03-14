@@ -32,7 +32,6 @@ JudgingRequests.prototype.register_events = function(){
         _this.delete_judge_activity($(this).data('judgeid'));
     });
     this.element.find('.judging_requests_table').on('click', '.confirmed button', function(){
-        console.log('asdf');
         _this.delete_judge_activity($(this).data('judgeid'));
     });
     this.element.find('.judging_requests_table').on('click', '.pending button', function(){
@@ -55,7 +54,7 @@ JudgingRequests.prototype.get_data_from_server = function(){
             } else if (data[idx]['status'] === 'confirmed') {
                 data[idx]['action'] ='<button data-judgeid=' + data[idx]['judge_id'] + ' class="btn btn-default"><span class="glyphicon glyphicon-remove"></span></button>';
             } else if (data[idx]['status'] === 'missing') {
-                data[idx]['action'] ='<button data-judgeid=' + data[idx]['judge_id'] + '> class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button>';
+                data[idx]['action'] ='<button data-judgeid=' + data[idx]['judge_id'] + ' class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button>';
             }
         }
         _this.judging_requests = data;
