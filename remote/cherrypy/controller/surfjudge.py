@@ -63,7 +63,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         data['surfers'] = dict(zip(ids, colors))
         data['surfer_color_names'] = colors
         data['surfer_color_colors'] = dict(zip(colors, colors_hex))
-        data['number_of_waves'] = int(heat_info['number_of_waves'])
+        data['number_of_waves'] = int(heat_info['number_of_waves']) if heat_info['number_of_waves'] else 0
         return data
 
     @cherrypy.expose
