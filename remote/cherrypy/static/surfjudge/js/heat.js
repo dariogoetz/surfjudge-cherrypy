@@ -172,11 +172,11 @@ Heat.prototype._add_interactive_fields = function(participant){
 
     var action_field = '';
     if (participant['advanced']){
-        action_field = '<a href="#" data-seed=' + participant['seed'] + ' class="remove_pending_btn"><button class="btn btn-success"><span class="glyphicon glyphicon-ok"></span></button></a>';
+        action_field = '<button data-seed=' + participant['seed'] + ' class="btn btn-success remove_pending_btn"><span class="glyphicon glyphicon-ok"></span></button>';
     } else {
-        action_field = '<a href="#" data-seed=' + participant['seed'] + ' class="remove_participant_btn"><button class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button></a>';
+        action_field = '<button data-seed=' + participant['seed'] + ' class="btn btn-danger remove_participant_btn"><span class="glyphicon glyphicon-remove"></span></button>';
     }
-    var edit_field = '&nbsp; <a href="#" data-seed=' + participant['seed'] + ' class="edit_participant_btn"><button class="btn btn-info"><span class="glyphicon glyphicon-edit"></span></button></a>';
+    var edit_field = '&nbsp; <button data-seed=' + participant['seed'] + ' class="btn btn-info edit_participant_btn"><span class="glyphicon glyphicon-edit"></span></button>';
 
     var res = $.extend({}, participant);
     res['color'] = s;

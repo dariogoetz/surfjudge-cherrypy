@@ -22,19 +22,20 @@ JudgingRequests.prototype.init = function(){
                 return {classes: 'pending'}
         }
     });
-    this.register_events();
     this.refresh_from_server();
+    this.register_events();
 }
 
 JudgingRequests.prototype.register_events = function(){
     var _this = this;
-    this.element.find('.judging_requests_table').on('click', '.missing a', function(){
+    this.element.find('.judging_requests_table').on('click', '.missing button', function(){
         _this.delete_judge_activity($(this).data('judgeid'));
     });
-    this.element.find('.judging_requests_table').on('click', '.confirmed a', function(){
+    this.element.find('.judging_requests_table').on('click', '.confirmed button', function(){
+        console.log('asdf');
         _this.delete_judge_activity($(this).data('judgeid'));
     });
-    this.element.find('.judging_requests_table').on('click', '.pending a', function(){
+    this.element.find('.judging_requests_table').on('click', '.pending button', function(){
         _this.confirm_judge_activity($(this).data('judgeid'));
     });
 
@@ -50,11 +51,11 @@ JudgingRequests.prototype.get_data_from_server = function(){
             var param_str = data[idx]['heat_id'] + ',' + data[idx]['judge_id'];
             data[idx]['action'] = '';
             if (data[idx]['status']==='pending'){
-                data[idx]['action'] ='<a href="#" data-judgeid=' + data[idx]['judge_id'] + '><button class="btn btn-success"><span class="glyphicon glyphicon-ok"></span></button></a>';
+                data[idx]['action'] ='<button data-judgeid=' + data[idx]['judge_id'] + ' class="btn btn-success"><span class="glyphicon glyphicon-ok"></span></button>';
             } else if (data[idx]['status'] === 'confirmed') {
-                data[idx]['action'] ='<a href="#" data-judgeid=' + data[idx]['judge_id'] + '><button class="btn btn-default"><span class="glyphicon glyphicon-remove"></span></button></a>';
+                data[idx]['action'] ='<button data-judgeid=' + data[idx]['judge_id'] + ' class="btn btn-default"><span class="glyphicon glyphicon-remove"></span></button>';
             } else if (data[idx]['status'] === 'missing') {
-                data[idx]['action'] ='<a href="#" data-judgeid=' + data[idx]['judge_id'] + '><button class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button></a>';
+                data[idx]['action'] ='<button data-judgeid=' + data[idx]['judge_id'] + '> class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button>';
             }
         }
         _this.judging_requests = data;
@@ -86,10 +87,10 @@ JudgingRequests.prototype.confirm_judge_activity = function(judge_id){
 
 JudgingRequests.prototype.delete_judge_activity = function(judge_id){
     var _this = this;
-     $.get('tournament_admin/do_delete_active_judge', {heat_id: _this.heat_id, judge_id: judge_id}, function(){
-         _this.refresh_from_server();
-     });
- }
+    $.get('tournament_admin/do_delete_active_judge', {heat_id: _this.heat_id, judge_id: judge_id}, function(){
+        _this.refresh_from_server();
+    });
+}
 
 
 
