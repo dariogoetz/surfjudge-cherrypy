@@ -6,7 +6,7 @@
             <div class="panel-heading">{{ category['name'] }}</div>
             <div class="panel-body">
                 {% for heat in heats[category['id']] %}
-                <div class="btn btn-default heat_activity_button" id="heat_activity_button_{{ heat['id'] }}"" data-index="{{ heat['id'] }}" data-status="inactive">{{ heat['name'] }}</div>
+                <div class="btn btn-default heat_activity_btn" id="heat_activity_btn_{{ heat['id'] }}"" data-index="{{ heat['id'] }}" data-status="inactive">{{ heat['name'] }}</div>
                 {% endfor %}
             </div>
         </div>

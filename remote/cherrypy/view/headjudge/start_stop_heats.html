@@ -91,7 +91,7 @@
      $.get('{{ mount_loc }}/do_deactivate_heat', {heat_id: elem.data('index')});
  };
 
- $('#activity_panels').on('click', '.heat_activity_button', function(e){
+ $('#activity_panels').on('click', '.heat_activity_btn', function(e){
      if ($(this).data('status') === 'inactive')
          activate($(this));
      else
@@ -107,11 +107,11 @@
  function refresh_activity(){
      $.get('/do_get_all_active_heats', function(data){
          var active_heats = JSON.parse(data);
-         $('.heat_activity_button').addClass('btn-default');
-         $('.heat_activity_button').removeClass('btn-success');
-         $('.heat_activity_button').data('status', 'inactive');
+         $('.heat_activity_btn').addClass('btn-default');
+         $('.heat_activity_btn').removeClass('btn-success');
+         $('.heat_activity_btn').data('status', 'inactive');
          for (id in active_heats){
-             var button_id = '#heat_activity_button_'+active_heats[id]['heat_id'];
+             var button_id = '#heat_activity_btn_'+active_heats[id]['heat_id'];
              $(button_id).addClass('btn-success');
              $(button_id).removeClass('btn-default');
              $(button_id).data('status', 'active');

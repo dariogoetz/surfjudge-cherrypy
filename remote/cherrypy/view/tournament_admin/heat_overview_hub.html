@@ -43,17 +43,15 @@
             <span class="glyphicon glyphicon-chevron-left" style="color: black" aria-hidden="true"></span>
             <span class="sr-only">Previous</span>
         </a>
-            <div class="carousel-inner" role="listbox">
-            </div>
+        <div class="carousel-inner" role="listbox">
+        </div>
         <a class="right carousel-control" href="#heat_overview_carousel" role="button" data-slide="next">
             <span class="glyphicon glyphicon-chevron-right" style="color: black" aria-hidden="true"></span>
             <span class="sr-only">Next</span>
         </a>
     </div><!-- /.carousel -->
 
-
 </div>
-
 {% endblock content %}
 
 {% block javascript %}
@@ -86,6 +84,7 @@
          if (initialize){
              $('#heat_overview_carousel .carousel-inner').children().first().addClass('active');
              refresh_heat_info();
+             refresh_activity();
          }
      });
  }
@@ -142,6 +141,28 @@
          $('#heat_overview_' + heat_id).heat('fill_heat_inputs');
      });
  }
+
+
+ function refresh_activity(){
+     $.get('/do_get_all_active_heats', function(data){
+         var active_heats = JSON.parse(data);
+         var active_heat_ids = [];
+         for (var h in active_heats)
+             active_heat_ids.push(h['heat_id']);
+
+         $('.heat_activity_btn').addClass('btn-default');
+         $('.heat_activity_btn').removeClass('btn-success');
+         $('.heat_activity_btn').data('status', 'inactive');
+         console.log(active_heats);
+         $('.heat_activity_btn').each(function(){
+             if ($(this).data('heatid') in active_heat_ids){
+                 $(this).addClass('btn-success');
+                 $(this).removeClass('btn-default');
+                 $(this).data('status', 'active');
+             }
+         });
+     });
+ };
 
 </script>
 {% endblock javascript%}

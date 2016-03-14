@@ -5,10 +5,25 @@
 
 <div class="container-fluid" data-heatid={{ heat_id }} data-categoryid={{ category_id }} id="heat_overview_{{ heat_id }}">
     <h1>"{{ heat_name }}" in "{{ category_name }}"</h1>
-    <!-- edit_heat -->
+
+    <!-- start/stop and publish/export -->
+    <h3>Activities</h3>
     <div class="well">
-        <h3>Hier kommen die Heat controls hin (start/stop, publish, confirm, e.g.)</h3>
+        <div class="row">
+        <div class="col-xs-4">
+            <button class="btn btn-default btn-lg heat_activity_btn" data-heatid={{ heat_id }} data-status="inactive">Start/Stop Heat</button>
+        </div>
+        <div class="col-xs-4">
+        <button class="btn btn-standard btn-lg publish_btn">Publish Results</button>
+        </div>
+        <div class="col-xs-4">
+            <button class="btn btn-standard btn-lg export_btn">Export Excel</button>
+        </div>
+        </div>
     </div>
+
+    <!-- edit_heat -->
+    <h3>Edit Heat</h3>
     <div class="well">
         <div class="form-horizontal">
             <div class="form-group">
@@ -82,8 +97,8 @@
 
     </div>
 
-    <!-- start/stop and publish/export -->
     <!-- judging requests -->
+    <h3>Judging Requests</h3>
     <table class="table table-striped judging_requests_table"
            data-toggle="table"
            data-sort-name="judge_id"
@@ -114,4 +129,43 @@
  $('#heat_overview_{{ heat_id }} .time_picker').timepicker();
 
  $('#heat_overview_{{ heat_id }}').judging_requests({heat_id: {{ heat_id }} });
+
+ $('#heat_overview_{{ heat_id }}').on('click', '.export_btn', function(){
+     // trigger file download
+     window.location.replace('/export_scores?heat_id='+ {{ heat_id }});
+ });
+
+ $('#heat_overview_{{ heat_id }}').on('click', '.publish_btn', function(){
+     // publish data
+     $.get('/headjudge/do_publish_results?heat_id='+heat_id, function(){
+         alert('Published Results for Heat '+heat_id);
+     });
+ });
+
+
+ function activate(elem){
+     $.get('/headjudge/do_activate_heat', {heat_id: elem.data('heatid')}).success(function(){
+         elem.addClass('btn-success');
+         elem.removeClass('btn-default');
+         elem.data('status', 'active');
+     });
+ };
+ function deactivate(elem){
+
+     $.get('/headjudge/do_deactivate_heat', {heat_id: elem.data('heatid')}).success(function(){
+         elem.addClass('btn-default');
+         elem.removeClass('btn-success');
+         elem.data('status', 'inactive');
+     });
+ };
+
+ $('#heat_overview_{{ heat_id }} .heat_activity_btn').on('click', function(e){
+     if ($(this).data('status') == 'inactive'){
+         activate($(this));
+         $('#heat_overview_{{ heat_id }}').heat('upload_data');
+     }
+     else
+         deactivate($(this));
+ });
+
 </script>
