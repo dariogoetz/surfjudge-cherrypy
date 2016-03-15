@@ -66,7 +66,7 @@
  function append_heat_overview_panels(heat_ids, initialize){
      var deferreds = [];
      for (heat_id in heat_ids){
-         deferreds.push($.get('/do_get_heat_overview_panel', {heat_id: heat_ids[heat_id]}));
+         deferreds.push($.get('/headjudge/do_get_heat_overview_panel', {heat_id: heat_ids[heat_id]}));
      }
      $.when.apply($, deferreds).done(function(){
          // careful: if deferreds contains only one element, then arguments is not a list of result objects but only one result object

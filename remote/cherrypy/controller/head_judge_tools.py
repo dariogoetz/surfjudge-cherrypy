@@ -12,6 +12,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template = 'headjudge/start_stop_heats.html')
+    @cherrypy.tools.relocate()
     @require(has_one_role(KEY_ROLE_HEADJUDGE))
     def start_stop_heats(self):
         context = self._standard_env()
@@ -27,6 +28,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_HEADJUDGE))
     @cherrypy.tools.render(template = 'headjudge/judge_activities_hub.html')
+    @cherrypy.tools.relocate()
     def judge_activities(self):
 
         data = self._standard_env()
@@ -62,6 +64,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='headjudge/heat_activation_panel.html')
+    @cherrypy.tools.relocate()
     @require(has_one_role(KEY_ROLE_HEADJUDGE))
     def get_heat_activation_panel(self, tournament_id=None):
         context = self._standard_env()
@@ -89,6 +92,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='headjudge/judge_activities_panel.html')
+    @cherrypy.tools.relocate()
     def do_get_judge_activities_panel(self, heat_id=None):
         if heat_id is None:
             return ''
@@ -142,3 +146,80 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
             res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_RESULT, {'surfer_id': surfer_id, 'heat_id': heat_id, 'wave_scores': json_scores, 'place': place, 'total_score': total_score})
         return
+
+
+    @cherrypy.expose
+    def do_get_judging_requests(self, heat_id=None, **kwargs):
+        requests = {}
+        if heat_id is not None:
+            heat_id = int(heat_id)
+            specific_requests = cherrypy.engine.publish(KEY_ENGINE_JM_GET_JUDGING_REQUESTS, heat_id).pop()
+            requests.update(specific_requests)
+
+        general_requests = cherrypy.engine.publish(KEY_ENGINE_JM_GET_JUDGING_REQUESTS, None).pop()
+        requests.update(general_requests)
+
+        # get registered judges for the current heat
+        confirmed_judge_ids = set()
+        if heat_id is not None:
+            heat_info = self.collect_heat_info(int(heat_id))
+            judges = heat_info.get('judges', {})
+            confirmed_judge_ids = set(judges)
+
+        # get judge info for judging_requests
+        res = []
+        for judge_id, expires in requests.items():
+            judge_info = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES, {'id': judge_id}).pop()
+            if len(judge_info)>0:
+                judge_info = judge_info[0]
+            else:
+                # request by unknown judge
+                continue
+            if judge_id in confirmed_judge_ids:
+                judge_info['status'] = 'confirmed'
+            else:
+                judge_info['status'] = 'pending'
+            judge_info['judge_id'] = judge_info['id']
+            if heat_id not in judge_info:
+                # fill in heat_id
+                judge_info['heat_id'] = heat_id
+            judge_info['expires'] = str(expires)
+            judge_info['name'] = '{} {}'.format(judge_info['first_name'], judge_info['last_name'])
+            res.append(judge_info)
+            #res.append({'judge_id': judge_id, 'expires': str(expires)})
+
+        # add missing judges
+        for judge_id in confirmed_judge_ids - set(requests):
+            judge_info = judges[judge_id]
+            judge_info['judge_id'] = judge_id
+            judge_info['status'] = 'missing'
+            judge_info['name'] = '{} {}'.format(judge_info['judge_first_name'], judge_info['judge_last_name'])
+            res.append(judge_info)
+
+        return json.dumps(res)
+
+    @cherrypy.expose
+    @cherrypy.tools.render(template='tournament_admin/heat_overview_hub.html')
+    @cherrypy.tools.relocate()
+    def heat_overview(self):
+        context = self._standard_env()
+        return context
+
+
+    @cherrypy.expose
+    @cherrypy.tools.render(template='tournament_admin/heat_overview_panel.html')
+    @cherrypy.tools.relocate()
+    @require(has_one_role(KEY_ROLE_HEADJUDGE, KEY_ROLE_ADMIN))
+    def do_get_heat_overview_panel(self, heat_id, **kwargs):
+        if heat_id is None:
+            return
+        heat_id = int(heat_id)
+        heat_info = self.collect_heat_info(heat_id)
+
+        context = self._standard_env()
+        context['heat_id'] = heat_id
+        context['heat_name'] = heat_info['heat_name']
+        context['category_id'] = heat_info['category_id']
+        context['category_name'] = heat_info['category_name']
+        return context
+

@@ -31,6 +31,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='tournament_admin/edit_tournaments.html')
+    @cherrypy.tools.relocate()
     @require(has_all_roles(KEY_ROLE_ADMIN))
     def tournaments(self):
         context = self._standard_env()
@@ -85,6 +86,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/edit_categories.html')
+    @cherrypy.tools.relocate()
     def categories(self):
         context = self._standard_env()
         return context
@@ -131,6 +133,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/edit_heats.html')
+    @cherrypy.tools.relocate()
     def heats(self):
         context = self._standard_env()
         #import utils
@@ -201,6 +204,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/edit_surfers.html')
+    @cherrypy.tools.relocate()
     def surfers(self):
         context = self._standard_env()
         return context
@@ -300,6 +304,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/edit_judges.html')
+    @cherrypy.tools.relocate()
     def judges(self):
         context = self._standard_env()
         return context
@@ -307,6 +312,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='tournament_admin/judge_activities.html')
+    @cherrypy.tools.relocate()
     def judge_activities(self):
         context = self._standard_env()
         return context
@@ -392,6 +398,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='/tournament_admin/edit_scores_hub.html')
+    @cherrypy.tools.relocate()
     def edit_scores(self):
         data = self._standard_env()
         return data
@@ -437,6 +444,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @require(has_all_roles(KEY_ROLE_ADMIN))
     #@require(is_admin()) # later ask for judge or similar
     @cherrypy.tools.render(template='/tournament_admin/edit_scores_panel.html')
+    @cherrypy.tools.relocate()
     def do_get_editor_panel(self, heat_id = None): #--------editiert-------------
         if heat_id is None:
             return ''
@@ -463,6 +471,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
     @cherrypy.tools.render(template='/tournament_admin/edit_logins.html')
+    @cherrypy.tools.relocate()
     def logins(self, **kwargs):
         data = self._standard_env()
         return data

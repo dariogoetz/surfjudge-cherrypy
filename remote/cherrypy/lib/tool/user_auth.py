@@ -4,6 +4,21 @@ from keys import *
 
 LOGIN_PAGE = '/auth/login'
 
+class Relocate(cherrypy.Tool):
+    '''
+    Sets relocation request if authentication fails.
+    '''
+
+    def __init__(self):
+        cherrypy.Tool.__init__(self, 'before_handler',
+                               self._set_relocation,
+                               priority = 10)
+        return
+
+    def _set_relocation(self):
+        print 'requesting relocation'
+        cherrypy.request.config['auth.relocate'] = True
+
 
 class UserAuthenticationTool(cherrypy.Tool):
     '''
@@ -13,7 +28,7 @@ class UserAuthenticationTool(cherrypy.Tool):
     def __init__(self):
         cherrypy.Tool.__init__(self, 'before_handler',
                                self._get_user_info,
-                               priority = 10)
+                               priority = 20)
         return
 
 
@@ -27,6 +42,8 @@ class UserAuthenticationTool(cherrypy.Tool):
         conditions are not met, the user gets redirected to
         the login page.
         '''
+
+        relocate = cherrypy.request.config.get('auth.relocate', False)
 
         # Check if there are conditions and get them
         # The field "auth.require" in the request config
@@ -61,7 +78,10 @@ class UserAuthenticationTool(cherrypy.Tool):
 
         # Check if the user is logged in on the webserver.
         if username is None:
-            raise cherrypy.HTTPRedirect(LOGIN_PAGE + '?' + from_page)
+            if relocate:
+                raise cherrypy.HTTPRedirect(LOGIN_PAGE + '?' + from_page)
+            else:
+                raise cherrypy.HTTPError(status=403, message='auth: No username given')
 
         uname_str = 'username={}'.format(username)
         if user_info is None: # for whatever reason, the session has no user_info
@@ -71,7 +91,10 @@ class UserAuthenticationTool(cherrypy.Tool):
         if user_info is None:
             msg = 'msg={}'.format('User "{}" not logged in.'.format(username))
             del cherrypy.session[KEY_USERNAME]
-            raise cherrypy.HTTPRedirect(LOGIN_PAGE + '?' + '&'.join([uname_str, from_page, msg]) )
+            if relocate:
+                raise cherrypy.HTTPRedirect(LOGIN_PAGE + '?' + '&'.join([uname_str, from_page, msg]) )
+            else:
+                raise cherrypy.HTTPError(status=403, message='auth: User not logged in')
 
 
         # User is still logged in, so credentials were okay.
@@ -86,8 +109,11 @@ class UserAuthenticationTool(cherrypy.Tool):
 
         for condition in conditions:
             if not condition():
-                msg = 'msg={}'.format('Insufficient rights to access page.')
-                raise cherrypy.HTTPRedirect(LOGIN_PAGE + '?' + '&'.join( [uname_str, from_page, msg]) )
+                if relocate:
+                    msg = 'msg={}'.format('Insufficient rights to access page.')
+                    raise cherrypy.HTTPRedirect(LOGIN_PAGE + '?' + '&'.join( [uname_str, from_page, msg]) )
+                else:
+                    raise cherrypy.HTTPError(status=403, message='auth: Insufficient rights')
 
         # Everything is okay.
         return

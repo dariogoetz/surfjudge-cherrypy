@@ -59,6 +59,10 @@ class Server(object):
 
 
     def _load_tools(self):
+
+        from remote.cherrypy.lib.tool.user_auth import Relocate
+        cherrypy.tools.relocate = Relocate()
+
         from remote.cherrypy.lib.tool.user_auth import UserAuthenticationTool
         cherrypy.tools.session_authenticate = UserAuthenticationTool()
 

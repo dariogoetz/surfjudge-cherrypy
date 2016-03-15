@@ -43,7 +43,7 @@ JudgingRequests.prototype.register_events = function(){
 JudgingRequests.prototype.get_data_from_server = function(){
     var _this = this;
     this.judging_requests = [];
-    var deferred_judging_requests = $.getJSON('/do_get_judging_requests', {heat_id: _this.heat_id});
+    var deferred_judging_requests = $.getJSON('/headjudge/do_get_judging_requests', {heat_id: _this.heat_id});
     return $.when(deferred_judging_requests).done(function(ev_judging_requests){
         var data = ev_judging_requests;
         for (var idx in data){
