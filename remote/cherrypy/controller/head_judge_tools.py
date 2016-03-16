@@ -64,7 +64,6 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='headjudge/heat_activation_panel.html')
-    @cherrypy.tools.relocate()
     @require(has_one_role(KEY_ROLE_HEADJUDGE))
     def get_heat_activation_panel(self, tournament_id=None):
         context = self._standard_env()
@@ -92,7 +91,6 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='headjudge/judge_activities_panel.html')
-    @cherrypy.tools.relocate()
     def do_get_judge_activities_panel(self, heat_id=None):
         if heat_id is None:
             return ''
@@ -129,7 +127,19 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_ADMIN, KEY_ROLE_HEADJUDGE))
+    def do_delete_published_results(self, heat_id=None):
+        if heat_id is None:
+            return
+        heat_id = int(heat_id)
+        print 'deleting'
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_DELETE_RESULTS, {'heat_id': heat_id})
+        return
+
+    @cherrypy.expose
+    @require(has_one_role(KEY_ROLE_ADMIN, KEY_ROLE_HEADJUDGE))
     def do_publish_results(self, heat_id=None, n_best_waves=CherrypyWebInterface.N_BEST_WAVES):
+        if heat_id is None:
+            return
         heat_id = int(heat_id)
         heat_info = self.collect_heat_info(heat_id)
         judges = set(heat_info.get('judges', []))
@@ -208,7 +218,6 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='tournament_admin/heat_overview_panel.html')
-    @cherrypy.tools.relocate()
     @require(has_one_role(KEY_ROLE_HEADJUDGE, KEY_ROLE_ADMIN))
     def do_get_heat_overview_panel(self, heat_id, **kwargs):
         if heat_id is None:
@@ -222,4 +231,3 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
         context['category_id'] = heat_info['category_id']
         context['category_name'] = heat_info['category_name']
         return context
-
