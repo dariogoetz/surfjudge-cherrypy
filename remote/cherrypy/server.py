@@ -40,6 +40,8 @@ class Server(object):
         # Mount applications (websites)
         self._load_applications()
 
+        self.configure_logger(cherrypy)
+
         return
 
 
@@ -147,7 +149,6 @@ class Server(object):
         sj_web_interface = SurfJudgeWebInterface(mount_loc)
         conf_path = os.path.join(self.conf_path, _CONFIG['config_files']['SurfJudgeWebInterface'])
         app = self.mount_app(sj_web_interface, mount_loc, conf_path)
-        self.make_rotate_logger(app)
 
 
         # User Authentication app
@@ -191,7 +192,7 @@ class Server(object):
 
 
 
-    def make_rotate_logger(self, app):
+    def configure_logger(self, app):
         # see http://www.cherrypy.org/wiki/Logging#CustomHandlers
         log = app.log
 
