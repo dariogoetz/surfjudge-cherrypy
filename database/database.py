@@ -272,9 +272,9 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         res = pipe_recv.recv()
         return res
 
-    def delete_result(self, query_info):
+    def delete_results(self, query_info):
         pipe_recv, pipe_send = multiprocessing.Pipe(False)
-        self.__access_queue.put( (self._delete_result, query_info, pipe_send), block=True )
+        self.__access_queue.put( (self._delete_results, query_info, pipe_send), block=True )
         res = pipe_recv.recv()
         return res
 
@@ -503,9 +503,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         heat_id = data['heat_id']
         judges = data['judges']
         active_judges = [j['judge_id'] for j in self._query_db({'heat_id': heat_id}, 'judge_activities')]
+
         if not data.get('append', False):
             if len(active_judges) > 0:
                 self._delete_from_db({'heat_id': heat_id}, 'judge_activities')
+                active_judges = []
+
         for judge_id in judges:
             if judge_id not in active_judges:
                 self._insert_into_db({'heat_id': heat_id, 'judge_id': judge_id}, 'judge_activities')
@@ -569,7 +572,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             self._insert_into_db(result, 'results')
         return
 
-    def _delete_result(self, query_info):
+    def _delete_results(self, query_info):
         self._delete_from_db(query_info, 'results')
         return
 
