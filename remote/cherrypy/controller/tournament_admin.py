@@ -311,9 +311,9 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
-    @cherrypy.tools.render(template='tournament_admin/judge_activities.html')
+    @cherrypy.tools.render(template='tournament_admin/edit_judge_activities.html')
     @cherrypy.tools.relocate()
-    def judge_activities(self):
+    def edit_judge_activities(self):
         context = self._standard_env()
         return context
 
@@ -324,6 +324,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             return '[]'
         heat_id=int(heat_id)
         judges = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, heat_id).pop()
+
         return json.dumps(judges)
 
     @cherrypy.expose
@@ -335,9 +336,11 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             judge_ids = []
         else:
             judge_ids = json.loads(judge_ids)
+
         data = {'heat_id': int(heat_id), 'judges': judge_ids}
         if append:
             data['append'] = True
+
         cherrypy.engine.publish(KEY_ENGINE_DB_SET_JUDGE_ACTIVITIES, data).pop()
         return
 

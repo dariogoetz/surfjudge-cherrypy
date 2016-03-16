@@ -242,19 +242,19 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
 <script>
 
  $('#active_judges_submit').on('click', function(){
-    var heat_id = $('#modal_heat_id').val();
-    var judge_ids = []
-    $('#bootstrap-duallistbox-selected-list_active_judges option').each(function(){
-        judge_ids.push( parseInt(this.value) );
-    });
-    judge_ids = JSON.stringify(judge_ids);
-    $.post('{{ mount_loc }}/do_set_active_judges', {heat_id: heat_id, judge_ids: judge_ids});
+     var heat_id = $('#modal_heat_id').val();
+     var judge_ids = []
+     $('#bootstrap-duallistbox-selected-list_active_judges option').each(function(){
+         judge_ids.push( parseInt(this.value) );
+     });
+     judge_ids = JSON.stringify(judge_ids);
+     $.post('{{ mount_loc }}/do_set_active_judges', {heat_id: heat_id, judge_ids: judge_ids});
  });
 
-var active_judges_dlb = $('#active_judges_select').bootstrapDualListbox(
-    {nonSelectedListLabel: 'Unselected judges',
-    selectedListLabel: 'Selected judges'}
-);
+ var active_judges_dlb = $('#active_judges_select').bootstrapDualListbox(
+     {nonSelectedListLabel: 'Unselected judges',
+      selectedListLabel: 'Selected judges'}
+ );
 
 </script>
 
