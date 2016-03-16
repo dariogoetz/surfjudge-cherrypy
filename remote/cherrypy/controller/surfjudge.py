@@ -39,7 +39,6 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
     @cherrypy.expose
     @require(has_one_role(KEY_ROLE_JUDGE)) # later ask for judge or similar
     @cherrypy.tools.render(template='judge_panel.html')
-    @cherrypy.tools.relocate()
     def do_get_judge_panel(self, heat_id = None):
         if heat_id is None:
             return ''
@@ -307,13 +306,18 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     def do_get_published_scores(self, heat_id=None, n_best_waves=CherrypyWebInterface.N_BEST_WAVES, **kwargs):
+        if heat_id is None:
+            return '[]'
+
         heat_id = int(heat_id)
         heat_info = self.collect_heat_info(heat_id)
         if heat_info is None:
-            return ''
+            return '[]'
         participants = heat_info.get('participants', [])
 
         scores = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_RESULTS, {'heat_id': heat_id}).pop()
+        if len(scores) == 0:
+            return '[]'
         average_scores = {p['surfer_id']: dict(enumerate(json.loads(p['wave_scores']))) for p in scores}
         out_data = self._gen_score_table_data(average_scores, n_best_waves, participants)
         return json.dumps(out_data)
