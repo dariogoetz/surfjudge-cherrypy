@@ -58,7 +58,6 @@
 {{ super() }}
 
 <script src="/static/surfjudge/js/judging_requests_table.js"></script>
-
 <script src="/static/surfjudge/js/heat.js"></script>
 
 
@@ -80,12 +79,15 @@
              var item = $('<div class="item"></div>');
              $(ev_data[idx][0]).appendTo(item);
              $(item).appendTo($('#heat_overview_carousel .carousel-inner'));
+
          }
          if (initialize){
-             $('#heat_overview_carousel .carousel-inner').children().first().addClass('active');
-             refresh_heat_info();
-             refresh_activity();
+             var elem = $('#heat_overview_carousel .carousel-inner').children().first();
+             elem.addClass('active');
+             var heat_id = elem.find('.container-fluid').data('heat_id');
+             refresh(heat_id); // is defined in heat_overview_panel.html
          }
+
      });
  }
 
@@ -124,55 +126,21 @@
  });
 
  $('#heat_overview_carousel').bind('slid.bs.carousel', function (e) {
-     refresh_heat_info();
+     var heat_id = $('#heat_overview_carousel .active .container-fluid').data('heat_id');
+     refresh(heat_id); // is defined in heat_overview_panel.html
  });
  $('#heat_overview_carousel').bind('slide.bs.carousel', function (e) {
-     var previous_heat_id = $('#heat_overview_carousel .active .container-fluid').data('heatid');
+     var previous_heat_id = $('#heat_overview_carousel .active .container-fluid').data('heat_id');
      $('#heat_overview_' + previous_heat_id).heat('upload_data').done(function(){
          $('#heat_overview_' + previous_heat_id).heat('destroy');
+         $('#heat_overview_' + previous_heat_id).judging_requests('destroy');
+
      });
 });
-</script>
-
-<script>
-
- function refresh_heat_info(){
-     var heat_id = $('#heat_overview_carousel .active .container-fluid').data('heatid');
-     $.getJSON('/tournament_admin/do_get_heat_info', {heat_id: heat_id}, function(heat_info){
-         var options = $.extend(heat_info, {'surfers_modal': '#add_participant_modal'});
-         var heat = $('#heat_overview_' + heat_id).heat(options);//heat = new Heat(heat_info, '#heat_overview_' + heat_id);
-         $('#heat_overview_' + heat_id).heat('fill_heat_inputs');
-     });
- }
-
-
- function refresh_activity(){
-     $.getJSON('/do_get_all_active_heats', function(active_heats){
-         var active_heat_ids = [];
-         for (var h in active_heats)
-             active_heat_ids.push(h['heat_id']);
-
-         $('.heat_activity_btn').addClass('btn-default');
-         $('.heat_activity_btn').removeClass('btn-success');
-         $('.heat_activity_btn').data('status', 'inactive');
-         $('.heat_activity_btn').each(function(){
-             if ($(this).data('heatid') in active_heat_ids){
-                 $(this).addClass('btn-danger');
-                 $(this).removeClass('btn-success');
-                 $(this).data('status', 'active');
-                 $(this).text('Stop Heat');
-             }
-             else {
-                 $(this).addClass('btn-success');
-                 $(this).removeClass('btn-danger');
-                 $(this).data('status', 'inactive');
-                 $(this).text('Start Heat');
-             }
-         });
-     });
- };
 
 </script>
+
+
 {% endblock javascript%}
 
 {% block modals %}

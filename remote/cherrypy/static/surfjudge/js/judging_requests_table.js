@@ -26,6 +26,15 @@ JudgingRequests.prototype.init = function(){
     this.register_events();
 }
 
+JudgingRequests.prototype.destroy = function(){
+}
+
+JudgingRequests.prototype.unregister_events = function(){
+    this.element.find('.judging_requests_table').off('click', '.missing button');
+    this.element.find('.judging_requests_table').off('click', '.confirmed button');
+    this.element.find('.judging_requests_table').off('click', '.pending button');
+}
+
 JudgingRequests.prototype.register_events = function(){
     var _this = this;
     this.element.find('.judging_requests_table').on('click', '.missing button', function(){
@@ -70,15 +79,13 @@ JudgingRequests.prototype.refresh_from_server = function(){
 
 
 JudgingRequests.prototype.refresh_judging_requests_table = function(){
-    var _this = this;
-
-    _this.element.find('.judging_requests_table').bootstrapTable('load', this.judging_requests);
+    this.element.find('.judging_requests_table').bootstrapTable('load', this.judging_requests);
 }
 
 
 JudgingRequests.prototype.confirm_judge_activity = function(judge_id){
     var _this = this;
-    $.get('tournament_admin/do_set_active_judges', {heat_id: _this.heat_id, judge_ids: JSON.stringify([judge_id]), append: true}, function(){
+    $.get('/tournament_admin/do_set_active_judges', {heat_id: _this.heat_id, judge_ids: JSON.stringify([judge_id]), append: true}, function(){
         _this.refresh_from_server();
      });
 }
@@ -86,7 +93,7 @@ JudgingRequests.prototype.confirm_judge_activity = function(judge_id){
 
 JudgingRequests.prototype.delete_judge_activity = function(judge_id){
     var _this = this;
-    $.get('tournament_admin/do_delete_active_judge', {heat_id: _this.heat_id, judge_id: judge_id}, function(){
+    $.get('/tournament_admin/do_delete_active_judge', {heat_id: _this.heat_id, judge_id: judge_id}, function(){
         _this.refresh_from_server();
     });
 }
@@ -101,10 +108,18 @@ $.fn.judging_requests = function(option, val){
     var $this = $(this);
     var data = $this.data('judging_requests');
     var options = typeof option === 'object' && option;
-    if (!data)
+    if (!data){
         $this.data('judging_requests', new JudgingRequests(this, $.extend({}, options)));
+        return;
+    }
+    if (option == 'destroy'){
+        data['destroy']();
+        $this.data('judging_requests', null);
+        return;
+    }
     if (typeof option === 'string')
-        data[option].apply($this.data('heat'), [].slice.call(arguments,1));//(val);
+        return data[option].apply($this.data('judging_requests'), [].slice.call(arguments,1));//(val);
+    return $this.data('judging_requests');
 };
 
 $.fn.judging_requests.Constructor = JudgingRequests;

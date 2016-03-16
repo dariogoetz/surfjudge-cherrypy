@@ -3,24 +3,46 @@
 <link href="/static/surfjudge/css/judging_requests.css" rel="stylesheet">
 
 
-<div class="container-fluid" data-heatid={{ heat_id }} data-categoryid={{ category_id }} id="heat_overview_{{ heat_id }}">
+<div class="container-fluid" data-heat_id={{ heat_id }} data-categoryid={{ category_id }} id="heat_overview_{{ heat_id }}">
     <h1>"{{ heat_name }}" in "{{ category_name }}"</h1>
 
     <!-- start/stop and publish/export -->
+    <button class="btn btn-default btn-lg pull-right refresh_btn"><span class="glyphicon glyphicon-refresh">&nbsp;Refresh</span></button>
     <h3>Activities</h3>
     <div class="well">
         <div class="row">
         <div class="col-xs-4">
-            <button class="btn btn-default btn-lg heat_activity_btn" data-heatid={{ heat_id }} data-status="inactive">Start/Stop Heat</button>
+            <button class="btn btn-default btn-lg heat_activity_btn" data-heat_id={{ heat_id }} data-status="inactive">Start/Stop Heat</button>
         </div>
         <div class="col-xs-4">
-        <button class="btn btn-standard btn-lg publish_btn">Publish Results</button>
+            <div class="btn-group">
+                <button class="btn btn-default btn-lg publish_btn" data-heat_id="{{ heat_id }}">Publish</button>
+                <button class="btn btn-danger btn-lg unpublish_btn" data-heat_id="{{ heat_id }}"><span class="glyphicon glyphicon-remove"></span></button>
+            </div>
         </div>
         <div class="col-xs-4">
-            <button class="btn btn-standard btn-lg export_btn">Export Excel</button>
+            <button class="btn btn-standard btn-lg export_btn pull-right">Export Excel</button>
         </div>
         </div>
     </div>
+
+    <!-- judging requests -->
+    <h3>Judging Requests</h3>
+    <table class="table table-striped judging_requests_table"
+           data-toggle="table"
+           data-sort-name="judge_id"
+           date-sort-order="asc">
+        <thead>
+            <tr>
+                <th data-field="judge_id">Judge ID</th>
+                <th data-field="name" data-sortable="true">Judge Name</th>
+                <th data-field="expires" data-sortable="true">Expires</th>
+                <th data-field="status" data-sortable="true">Status</th>
+                <th data-field="action"">Action</th>
+            </tr>
+        </thead>
+    </table>
+
 
     <!-- edit_heat -->
     <h3>Edit Heat</h3>
@@ -96,23 +118,6 @@
         <a class="btn btn-standard add_participant_btn"><span class="glyphicon glyphicon-plus">&nbsp;</span>Add Participant</a>
 
     </div>
-
-    <!-- judging requests -->
-    <h3>Judging Requests</h3>
-    <table class="table table-striped judging_requests_table"
-           data-toggle="table"
-           data-sort-name="judge_id"
-           date-sort-order="asc">
-        <thead>
-            <tr>
-                <th data-field="judge_id">Judge ID</th>
-                <th data-field="name" data-sortable="true">Judge Name</th>
-                <th data-field="expires" data-sortable="true">Expires</th>
-                <th data-field="status" data-sortable="true">Status</th>
-                <th data-field="action"">Action</th>
-            </tr>
-        </thead>
-    </table>
 </div>
 
 
@@ -128,38 +133,30 @@
                         });
  $('#heat_overview_{{ heat_id }} .time_picker').timepicker();
 
- $('#heat_overview_{{ heat_id }}').judging_requests({heat_id: {{ heat_id }} });
-
  $('#heat_overview_{{ heat_id }}').on('click', '.export_btn', function(){
      // trigger file download
-     window.location.replace('/export_scores?heat_id='+ {{ heat_id }});
+     window.location.replace('/export_scores?heat_id={{ heat_id }}');
  });
 
  $('#heat_overview_{{ heat_id }}').on('click', '.publish_btn', function(){
      // publish data
-     $.get('/headjudge/do_publish_results?heat_id='+heat_id, function(){
-         alert('Published Results for Heat '+heat_id);
+     $.get('/headjudge/do_publish_results', {heat_id: {{ heat_id }}}, function(){
+         //alert('Published Results for Heat '+ {{ heat_id }});
+         refresh({{ heat_id }});
      });
  });
 
-
- function activate(elem){
-     $.get('/headjudge/do_activate_heat', {heat_id: elem.data('heatid')}).success(function(){
-         elem.addClass('btn-danger');
-         elem.removeClass('btn-success');
-         elem.data('status', 'active');
-         elem.text('Stop Heat');
+ $('#heat_overview_{{ heat_id }}').on('click', '.unpublish_btn', function(){
+     // publish data
+     $.get('/headjudge/do_delete_published_results', {heat_id: {{ heat_id }}}, function(){
+         //alert('Published Results for Heat '+ {{ heat_id }});
+         refresh({{ heat_id }});
      });
- };
- function deactivate(elem){
+ });
 
-     $.get('/headjudge/do_deactivate_heat', {heat_id: elem.data('heatid')}).success(function(){
-         elem.addClass('btn-success');
-         elem.removeClass('btn-danger');
-         elem.data('status', 'inactive');
-         elem.text('Start Heat');
-     });
- };
+ $('#heat_overview_{{ heat_id }}').on('click', '.refresh_btn', function(){
+     refresh({{ heat_id }});
+ });
 
  $('#heat_overview_{{ heat_id }} .heat_activity_btn').on('click', function(e){
      if ($(this).data('status') == 'inactive'){
@@ -168,6 +165,79 @@
      }
      else
          deactivate($(this));
+     refresh({{ heat_id }});
  });
+
+ function refresh(heat_id){
+     // refresh the various fields
+     refresh_activity(heat_id);
+     refresh_published(heat_id);
+     refresh_heat_info(heat_id);
+     refresh_judging_requests(heat_id);
+ }
+
+ function refresh_judging_requests(heat_id){
+     if ($('#heat_overview_' + heat_id).data('judging_requests')){
+         $('#heat_overview_' + heat_id).judging_requests('destroy');
+     }
+     $('#heat_overview_' + heat_id).judging_requests({heat_id: heat_id});
+ }
+
+ function refresh_published(heat_id){
+     var pub_btn = $('#heat_overview_' + heat_id + ' .publish_btn');
+     $.getJSON('/do_get_published_scores', {heat_id: heat_id}, function(data){
+             if (data.length > 0){
+                 $(pub_btn).text('RE-publish');
+             }
+             else {
+                 $(pub_btn).text('Publish');
+             }
+     });
+ }
+
+ function refresh_heat_info(heat_id){
+     $.getJSON('/tournament_admin/do_get_heat_info', {heat_id: heat_id}, function(heat_info){
+         var options = $.extend(heat_info, {'surfers_modal': '#add_participant_modal'});
+         if ($('#heat_overview_' + heat_id).data('heat'))
+             $('#heat_overview_' + heat_id).heat('destroy');
+         var heat = $('#heat_overview_' + heat_id).heat(options);//heat = new Heat(heat_info, '#heat_overview_' + heat_id);
+         $('#heat_overview_' + heat_id).heat('fill_heat_inputs');
+     });
+ }
+
+
+ function refresh_activity(heat_id){
+     $.getJSON('/do_get_all_active_heats', function(active_heats){
+         var ha_btn = $('#heat_overview_' + heat_id + ' .heat_activity_btn');
+         var active_heat_ids = [];
+         for (var h in active_heats)
+             active_heat_ids.push(h['heat_id']);
+
+         if (heat_id in active_heat_ids){
+             activate(ha_btn);
+         }
+         else {
+             deactivate(ha_btn);
+         }
+     });
+ }
+
+ function activate(elem){
+     $.get('/headjudge/do_activate_heat', {heat_id: elem.data('heat_id')}).success(function(){
+         elem.addClass('btn-danger');
+         elem.removeClass('btn-success');
+         elem.data('status', 'active');
+         elem.text('Stop Heat');
+     });
+ };
+ function deactivate(elem){
+
+     $.get('/headjudge/do_deactivate_heat', {heat_id: elem.data('heat_id')}).success(function(){
+         elem.addClass('btn-success');
+         elem.removeClass('btn-danger');
+         elem.data('status', 'inactive');
+         elem.text('Start Heat');
+     });
+ };
 
 </script>
