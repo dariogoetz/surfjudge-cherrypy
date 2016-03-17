@@ -325,8 +325,8 @@ Heat.prototype.upload_data = function(){
 
     console.log('uploading');
 
-    var deferred_heat_data = $.get('/tournament_admin/do_edit_heat', heat_data);
-    var deferred_participants = $.get('/tournament_admin/do_set_participating_surfers', {heat_id: this.heat_id, participants: participants});
+    var deferred_heat_data = $.post('/tournament_admin/do_edit_heat', heat_data);
+    var deferred_participants = $.post('/tournament_admin/do_set_participating_surfers', {heat_id: this.heat_id, participants: participants});
 
     var jqxhr = $.when(deferred_heat_data, deferred_participants);
     jqxhr.done(function(ev_heat_data, ev_part){

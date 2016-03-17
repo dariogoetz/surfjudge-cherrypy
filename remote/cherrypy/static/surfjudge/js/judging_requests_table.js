@@ -85,7 +85,7 @@ JudgingRequests.prototype.refresh_judging_requests_table = function(){
 
 JudgingRequests.prototype.confirm_judge_activity = function(judge_id){
     var _this = this;
-    $.get('/tournament_admin/do_set_active_judges', {heat_id: _this.heat_id, judge_ids: JSON.stringify([judge_id]), append: true}, function(){
+    $.post('/tournament_admin/do_set_active_judges', {heat_id: _this.heat_id, judge_ids: JSON.stringify([judge_id]), append: true}, function(){
         _this.refresh_from_server();
      });
 }
@@ -93,7 +93,7 @@ JudgingRequests.prototype.confirm_judge_activity = function(judge_id){
 
 JudgingRequests.prototype.delete_judge_activity = function(judge_id){
     var _this = this;
-    $.get('/tournament_admin/do_delete_active_judge', {heat_id: _this.heat_id, judge_id: judge_id}, function(){
+    $.post('/tournament_admin/do_delete_active_judge', {heat_id: _this.heat_id, judge_id: judge_id}, function(){
         _this.refresh_from_server();
     });
 }

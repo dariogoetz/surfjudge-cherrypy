@@ -243,14 +243,14 @@
  }
 
  function activate(elem){
-     var jqxhr = $.get('/headjudge/do_activate_heat', {heat_id: elem.data('heat_id')});
+     var jqxhr = $.post('/headjudge/do_activate_heat', {heat_id: elem.data('heat_id')});
      jqxhr.success(function(){
          visualize_active(elem);
      });
      return jqxhr;
  };
  function deactivate(elem){
-     var jqxhr = $.get('/headjudge/do_deactivate_heat', {heat_id: elem.data('heat_id')});
+     var jqxhr = $.post('/headjudge/do_deactivate_heat', {heat_id: elem.data('heat_id')});
      jqxhr.success(function(){
          visualize_inactive(elem);
      });
