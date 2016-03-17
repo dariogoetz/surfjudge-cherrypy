@@ -328,10 +328,12 @@ Heat.prototype.upload_data = function(){
     var deferred_heat_data = $.get('/tournament_admin/do_edit_heat', heat_data);
     var deferred_participants = $.get('/tournament_admin/do_set_participating_surfers', {heat_id: this.heat_id, participants: participants});
 
-    return $.when(deferred_heat_data, deferred_participants).done(function(ev_heat_data, ev_part){
+    var jqxhr = $.when(deferred_heat_data, deferred_participants);
+    jqxhr.done(function(ev_heat_data, ev_part){
         _this.heat_id = ev_heat_data[0];
         _this.refresh_from_server();
     });
+    return jqxhr;
 }
 
 Heat.prototype.fill_heat_inputs = function(){

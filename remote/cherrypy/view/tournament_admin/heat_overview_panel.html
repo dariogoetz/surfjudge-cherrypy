@@ -139,7 +139,6 @@
  });
 
  $('#heat_overview_{{ heat_id }}').on('click', '.publish_btn', function(){
-     // publish data
      $.get('/headjudge/do_publish_results', {heat_id: {{ heat_id }}}, function(){
          //alert('Published Results for Heat '+ {{ heat_id }});
          refresh({{ heat_id }});
@@ -147,7 +146,6 @@
  });
 
  $('#heat_overview_{{ heat_id }}').on('click', '.unpublish_btn', function(){
-     // publish data
      $.get('/headjudge/do_delete_published_results', {heat_id: {{ heat_id }}}, function(){
          //alert('Published Results for Heat '+ {{ heat_id }});
          refresh({{ heat_id }});
@@ -159,13 +157,21 @@
  });
 
  $('#heat_overview_{{ heat_id }} .heat_activity_btn').on('click', function(e){
-     if ($(this).data('status') == 'inactive'){
-         activate($(this));
-         $('#heat_overview_{{ heat_id }}').heat('upload_data');
-     }
-     else
-         deactivate($(this));
-     refresh({{ heat_id }});
+     var _this = this;
+     var tmp = $('#heat_overview_{{ heat_id }}').heat('upload_data');
+     tmp.done(function(){
+         var jqxhr = null;
+         if ($(_this).data('status') == 'inactive'){
+             jqxhr = activate($(_this));
+         }
+         else {
+             jqxhr = deactivate($(_this));
+         }
+         jqxhr.success(function(){
+             refresh({{ heat_id }});
+         });
+     });
+
  });
 
  function refresh(heat_id){
@@ -186,12 +192,12 @@
  function refresh_published(heat_id){
      var pub_btn = $('#heat_overview_' + heat_id + ' .publish_btn');
      $.getJSON('/do_get_published_scores', {heat_id: heat_id}, function(data){
-             if (data.length > 0){
-                 $(pub_btn).text('RE-publish');
-             }
-             else {
-                 $(pub_btn).text('Publish');
-             }
+         if (data.length > 0){
+             $(pub_btn).text('RE-publish');
+         }
+         else {
+             $(pub_btn).text('Publish');
+         }
      });
  }
 
@@ -209,35 +215,46 @@
  function refresh_activity(heat_id){
      $.getJSON('/do_get_all_active_heats', function(active_heats){
          var ha_btn = $('#heat_overview_' + heat_id + ' .heat_activity_btn');
-         var active_heat_ids = [];
-         for (var h in active_heats)
-             active_heat_ids.push(h['heat_id']);
-
-         if (heat_id in active_heat_ids){
-             activate(ha_btn);
+         var active_heat_ids = new Set();
+         for (var idx in active_heats){
+             active_heat_ids.add(active_heats[idx]['heat_id']);
+         }
+         if (active_heat_ids.has(heat_id)){
+             visualize_active(ha_btn);
          }
          else {
-             deactivate(ha_btn);
+             visualize_inactive(ha_btn);
          }
      });
  }
 
+ function visualize_active(elem){
+     elem.addClass('btn-danger');
+     elem.removeClass('btn-success');
+     elem.data('status', 'active');
+     elem.text('Stop Heat');
+ }
+
+ function visualize_inactive(elem){
+     elem.addClass('btn-success');
+     elem.removeClass('btn-danger');
+     elem.data('status', 'inactive');
+     elem.text('Start Heat');
+ }
+
  function activate(elem){
-     $.get('/headjudge/do_activate_heat', {heat_id: elem.data('heat_id')}).success(function(){
-         elem.addClass('btn-danger');
-         elem.removeClass('btn-success');
-         elem.data('status', 'active');
-         elem.text('Stop Heat');
+     var jqxhr = $.get('/headjudge/do_activate_heat', {heat_id: elem.data('heat_id')});
+     jqxhr.success(function(){
+         visualize_active(elem);
      });
+     return jqxhr;
  };
  function deactivate(elem){
-
-     $.get('/headjudge/do_deactivate_heat', {heat_id: elem.data('heat_id')}).success(function(){
-         elem.addClass('btn-success');
-         elem.removeClass('btn-danger');
-         elem.data('status', 'inactive');
-         elem.text('Start Heat');
+     var jqxhr = $.get('/headjudge/do_deactivate_heat', {heat_id: elem.data('heat_id')});
+     jqxhr.success(function(){
+         visualize_inactive(elem);
      });
+     return jqxhr;
  };
 
 </script>
