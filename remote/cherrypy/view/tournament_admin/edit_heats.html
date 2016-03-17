@@ -354,7 +354,7 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
  });
 
  $('.heat_submit').on('click', function(){
-     $('#edit_heat_modal').heat('fetch_heat_details_from_modal');
+     $('#edit_heat_modal').heat('fetch_heat_details_from_inputs');
      $('#edit_heat_modal').heat('fetch_surfer_colors');
      var okay = $('#edit_heat_modal').heat('check_data');
      if (okay){
