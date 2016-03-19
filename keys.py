@@ -101,6 +101,8 @@ KEY_ENGINE_SM_GET_HEATS_FOR_JUDGE = 'sm_get_heats_for_judge'
 
 KEY_ENGINE_TM_GET_HEAT_ORDER = 'tm_get_heat_order'
 KEY_ENGINE_TM_SET_HEAT_ORDER = 'tm_set_heat_order'
+KEY_ENGINE_TM_GET_CURRENT_HEAT_ID = 'tm_get_current_heat_id'
+KEY_ENGINE_TM_SET_CURRENT_HEAT_ID = 'tm_set_current_heat_id'
 KEY_ENGINE_TM_GET_ADVANCING_SURFERS = 'tm_get_advancing_surfers'
 KEY_ENGINE_TM_SET_ADVANCING_SURFER = 'tm_set_advancing_surfer'
 KEY_ENGINE_TM_GENERATE_HEATS = 'tm_generate_heats'

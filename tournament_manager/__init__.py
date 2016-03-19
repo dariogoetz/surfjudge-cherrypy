@@ -3,6 +3,7 @@ import threading
 
 HEAT_ORDERS_FILENAME = 'heat_orders.json'
 ADVANCING_SURFERS_FILENAME = 'advancing_surfers.json'
+CURRENT_HEAT_ID_FILENAME = 'current_heat_ids.json'
 
 # tournament_data is a dictionary
 # tournament_id
@@ -17,8 +18,10 @@ class TournamentManager(object):
 
         self.heat_orders = None
         self.advancing_surfers = None
+        self.current_heat_id = None
         self._load_heat_orders()
         self._load_advancing_surfers()
+        self._load_current_heat()
 
 
         self.tournament_generators = {}
@@ -69,11 +72,50 @@ class TournamentManager(object):
                         self.advancing_surfers.setdefault(int(hid), {})[int(place)] = from_data
         return
 
+    def _load_current_heat(self):
+        with self._lock:
+            tmp = None
+            try:
+                with open(CURRENT_HEAT_ID_FILENAME, 'rb') as fp:
+                    tmp = json.load(fp)
+            except IOError as e:
+                try:
+                    print 'TournamentManager: initializing current heat ids'
+                    json.dump({}, open(CURRENT_HEAT_ID_FILENAME, 'wb'))
+                except:
+                    print 'TournamentManager: could not read/initialize current heat ids'
+            self.current_heat_id = {}
+            if tmp is not None:
+                # make ids into ints
+                for tid, data in tmp.items():
+                    self.current_heat_id[int(tid)] = data
+        return
+
+
     def _write_advancing_surfers(self):
         with self._lock:
             with open(ADVANCING_SURFERS_FILENAME, 'wb') as fp:
                 json.dump(self.advancing_surfers, fp, indent=4)
         return
+
+
+    def _write_current_heat_id(self):
+        with self._lock:
+            with open(CURRENT_HEAT_ID_FILENAME, 'wb') as fp:
+                 json.dump(self.current_heat_id, fp, indent=4)
+        return
+
+    def set_current_heat_id(self, tournament_id, heat_id):
+        self.current_heat_id[int(tournament_id)] = heat_id
+        return
+
+    def get_current_heat_id(self, tournament_id):
+        default_heat_id = self.heat_orders.get(int(tournament_id), {}).get('heat_order', [None])[0]
+        res = self.current_heat_id.get(int(tournament_id), default_heat_id)
+        if res is None:
+            print 'TournamentManager: no current heat id for Tournament {} known and no heat order available'.format(tournament_id)
+        self._write_current_heat_id()
+        return res
 
 
     def get_heat_order(self, tournament_id):

@@ -19,6 +19,8 @@ class TournamentManagerPlugin(plugins.SimplePlugin):
         self.bus.log('Setting up tournament_manager access resources')
         self.bus.subscribe(KEY_ENGINE_TM_GET_HEAT_ORDER, self.get_heat_order)
         self.bus.subscribe(KEY_ENGINE_TM_SET_HEAT_ORDER, self.set_heat_order)
+        self.bus.subscribe(KEY_ENGINE_TM_GET_CURRENT_HEAT_ID, self.get_current_heat_id)
+        self.bus.subscribe(KEY_ENGINE_TM_SET_CURRENT_HEAT_ID, self.set_current_heat_id)
         self.bus.subscribe(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, self.get_advancing_surfers)
         self.bus.subscribe(KEY_ENGINE_TM_SET_ADVANCING_SURFER, self.set_advancing_surfer)
         self.bus.subscribe(KEY_ENGINE_TM_GENERATE_HEATS, self.generate_heats)
@@ -29,6 +31,8 @@ class TournamentManagerPlugin(plugins.SimplePlugin):
         self.bus.log('Freeing tournament_manager access resources')
         self.bus.unsubscribe(KEY_ENGINE_TM_GET_HEAT_ORDER, self.get_heat_order)
         self.bus.unsubscribe(KEY_ENGINE_TM_SET_HEAT_ORDER, self.set_heat_order)
+        self.bus.unsubscribe(KEY_ENGINE_TM_GET_CURRENT_HEAT_ID, self.get_current_heat_id)
+        self.bus.unsubscribe(KEY_ENGINE_TM_SET_CURRENT_HEAT_ID, self.set_current_heat_id)
         self.bus.unsubscribe(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, self.get_advancing_surfers)
         self.bus.unsubscribe(KEY_ENGINE_TM_SET_ADVANCING_SURFER, self.set_advancing_surfer)
         self.bus.unsubscribe(KEY_ENGINE_TM_GENERATE_HEATS, self.generate_heats)
@@ -45,6 +49,15 @@ class TournamentManagerPlugin(plugins.SimplePlugin):
         return res
 
 
+    def get_current_heat_id(self, tournament_id):
+        res = self.tournament_manager.get_current_heat_id(tournament_id)
+        return res
+
+    def set_current_heat_id(self, tournament_id, heat_id):
+        res = self.tournament_manager.set_current_heat_id(tournament_id, heat_id)
+        return res
+
+
     def get_advancing_surfers(self, heat_id):
         res = self.tournament_manager.get_advancing_surfers(heat_id)
         return res
@@ -57,3 +70,4 @@ class TournamentManagerPlugin(plugins.SimplePlugin):
     def generate_heats(self, nparticipants, tournament_id, category_id, tournament_generator):
         res = self.tournament_manager.generate_heats(nparticipants, tournament_id=tournament_id, category_id=category_id, tournament_generator=tournament_generator)
         return res
+
