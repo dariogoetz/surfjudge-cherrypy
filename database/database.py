@@ -611,7 +611,14 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
     def _where_str(self, table, col_names, val_dict):
-        conditions = ['{}.{} = "{}"'.format(table, c, val_dict[c]) for c in col_names]
+        conditions = []
+        for c in col_names:
+            if isinstance(val_dict[c], list) or isinstance(val_dict[c], set):
+                cond = '{}.{} IN ({})'.format(table, c, ','.join(map(str, val_dict[c])))
+            else:
+                cond = '{}.{} = "{}"'.format(table, c, val_dict[c])
+            conditions.append(cond)
+        #conditions = ['{}.{} = "{}"'.format(table, c, val_dict[c]) for c in col_names]
         where_str = ' AND '.join(conditions)
         return where_str
 
