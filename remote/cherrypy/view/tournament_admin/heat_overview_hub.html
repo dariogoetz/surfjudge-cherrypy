@@ -64,12 +64,15 @@
 
 
 <script>
- function append_heat_overview_panels(heat_ids, initialize){
+ function add_heat_overview_panels(heat_ids, prepend, activate_hid){
      var deferreds = [];
-     for (heat_id in heat_ids){
-         deferreds.push($.get('/headjudge/do_get_heat_overview_panel', {heat_id: heat_ids[heat_id]}));
+     console.log('adding ' + heat_ids);
+     for (var idx in heat_ids){
+         deferreds.push($.get('/headjudge/do_get_heat_overview_panel', {heat_id: heat_ids[idx]}));
      }
-     $.when.apply($, deferreds).done(function(){
+     var panels = [];
+     var jqxhr = $.when.apply($, deferreds);
+     jqxhr.done(function(){
          // careful: if deferreds contains only one element, then arguments is not a list of result objects but only one result object
          var ev_data = [];
          if (heat_ids.length==1)
@@ -79,52 +82,115 @@
          for (var idx=0; idx<ev_data.length; idx++){
 
              var item = $('<div class="item"></div>');
+             if (heat_ids[idx] == activate_hid)
+                 item.addClass('active');
              $(ev_data[idx][0]).appendTo(item);
-             $(item).appendTo($('#heat_overview_carousel .carousel-inner'));
-
+             if (prepend)
+                 $(item).prependTo($('#heat_overview_carousel .carousel-inner'));
+             else
+                 $(item).appendTo($('#heat_overview_carousel .carousel-inner'));
          }
-         if (initialize){
-             var elem = $('#heat_overview_carousel .carousel-inner').children().first();
-             elem.addClass('active');
-             var heat_id = elem.find('.container-fluid').data('heat_id');
-             refresh(heat_id); // is defined in heat_overview_panel.html
-         }
+         //if (activate_hid != null){
+         //    refresh(activate_hid);
+         //}
+     });
+     return jqxhr;
+ }
 
+ function set_heat_overview_panel(heat_id){
+     $('#heat_overview_carousel .carousel-inner').empty();
+     var idx = heat_order.indexOf(heat_id);
+     var heat_ids = [];
+     if (idx > 0)
+         heat_ids.push(idx-1);
+     heat_ids.push(idx);
+     if (idx < heat_order.length -1)
+         heat_ids.push(idx+1);
+     add_heat_overview_panels(heat_ids, false, heat_id).done(function(){
+         current_heat_order_idx = idx;
+         refresh(heat_id);
      });
  }
 
- future_heat_order = [];
- past_heat_order = [];
- init_n_loaded_panels = 2;
+
+ function shift_heat_overview_panels_back(){
+     console.log('shifting back');
+     var elem = null;
+     var new_heat_order_idx = -1;
+     if (current_heat_order_idx > 0){
+         elem = $('#heat_overview_carousel .carousel-inner').children().last();
+         new_heat_order_idx = current_heat_order_idx - 1;
+     }
+     else {
+         console.log('reached end of heat_order');
+         return;
+     }
+
+     if (current_heat_order_idx < heat_order.length -1)
+         elem.remove();
+
+     if (current_heat_order_idx > 1){
+         add_heat_overview_panels([heat_order[new_heat_order_idx-1]], true).done(function(){
+             current_heat_order_idx = new_heat_order_idx;
+         });
+     }
+     else {
+         console.log('current heat was second in order -> not loading new one');
+         current_heat_order_idx = new_heat_order_idx;
+     }
+ }
+
+ function shift_heat_overview_panels_forward(){
+     console.log('shifting forward');
+     var elem = null;
+     var new_heat_order_idx = -1;
+     if (current_heat_order_idx < heat_order.length - 1) {
+         elem = $('#heat_overview_carousel .carousel-inner').children().first();
+         new_heat_order_idx = current_heat_order_idx + 1;
+     }
+     else {
+         console.log('reached end of heat_order');
+         return;
+     }
+     if (current_heat_order_idx > 0)
+         elem.remove();
+     if (current_heat_order_idx < heat_order.length - 2){
+         add_heat_overview_panels([heat_order[new_heat_order_idx+1]]).done(function(){
+             current_heat_order_idx = new_heat_order_idx;
+         });
+     }
+     else {
+         console.log('was last but first -> not loading new one');
+         current_heat_order_idx = new_heat_order_idx;
+     }
+ }
+
+ heat_order = [];
+ current_heat_order_idx = -1;
  $(document).ready(function(){
-     $.getJSON('/tournament_admin/do_get_heat_order', {tournament_id: 0}, function(heat_order){
-         future_heat_order = heat_order;
-         var len = heat_order.length;
-         var new_panel_ids = [];
-         for (var idx=0; idx<Math.min(len, init_n_loaded_panels); idx++){
-             var heat_id = future_heat_order.shift();
-             new_panel_ids.push(heat_id);
-             past_heat_order.push(heat_id);
+     var ho_jqxhr = $.getJSON('/tournament_admin/do_get_heat_order', {tournament_id: 0});
+
+     var chid_jqxhr = $.get('/tournament_admin/do_get_current_heat_id', {tournament_id:0});
+     $.when(ho_jqxhr, chid_jqxhr).done(function(ev_heat_order, ev_current_heat_id){
+         heat_order = ev_heat_order[0];
+         var current_heat_id = parseInt(ev_current_heat_id[0]);
+         current_heat_order_idx = heat_order.indexOf(current_heat_id);
+         if (current_heat_order_idx < 0){
+             console.log('current heat_id ' + current_heat_id + ' not in heat_order ' + heat_order);
+             return;
          }
-         append_heat_overview_panels(new_panel_ids, true);
+         set_heat_overview_panel(current_heat_id);
      });
  });
 
 
 
  $('#heat_overview_carousel .carousel-control.left').on('click', function(){
-
+     shift_heat_overview_panels_back();
  });
 
  $('#heat_overview_carousel .carousel-control.right').on('click', function(){
-     if ($('#heat_overview_carousel .carousel-inner .item.active').is('#heat_overview_carousel .carousel-inner :nth-last-child(2)')
-     | $('#heat_overview_carousel .carousel-inner .item.active').is('#heat_overview_carousel .carousel-inner :last-child')){
-         if (future_heat_order.length > 0){
-             var heat_id = future_heat_order.shift();
-             append_heat_overview_panels([heat_id], false);
-             past_heat_order.push(heat_id);
-         }
-     }
+     shift_heat_overview_panels_forward();
  });
 
  $('#heat_overview_carousel').bind('slid.bs.carousel', function (e) {
