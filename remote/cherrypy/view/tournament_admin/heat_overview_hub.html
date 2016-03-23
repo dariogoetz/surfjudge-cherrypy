@@ -166,13 +166,20 @@
  }
 
  heat_order = [];
+ heat_order_names = [];
  current_heat_order_idx = -1;
  $(document).ready(function(){
      var ho_jqxhr = $.getJSON('/tournament_admin/do_get_heat_order', {tournament_id: 0});
 
      var chid_jqxhr = $.get('/tournament_admin/do_get_current_heat_id', {tournament_id:0});
      $.when(ho_jqxhr, chid_jqxhr).done(function(ev_heat_order, ev_current_heat_id){
-         heat_order = ev_heat_order[0];
+         var heat_order_info = ev_heat_order[0];
+         heat_order = [];
+         heat_order_names = [];
+         for (var idx=0; idx<heat_order_info.length; idx++){
+             heat_order.push(heat_order_info[idx]['id']);
+             heat_order_names.push(heat_order_info[idx]['name']);
+         }
          var current_heat_id = parseInt(ev_current_heat_id[0]);
          current_heat_order_idx = heat_order.indexOf(current_heat_id);
          if (current_heat_order_idx < 0){
