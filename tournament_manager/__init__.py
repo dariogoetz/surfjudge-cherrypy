@@ -144,7 +144,7 @@ class TournamentManager(object):
 
         with self._lock:
             val = order.pop(orig_pos)
-            order.insert(orig_pos-1, order.opo(orig_pos))
+            order.insert(orig_pos-1, order.pop(orig_pos))
         return
 
     def lower_heat(self, tournament_id, heat_id):
