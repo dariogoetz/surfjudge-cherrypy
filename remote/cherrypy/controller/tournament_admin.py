@@ -499,7 +499,9 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         if tournament_id is None:
             return
         tournament_id = int(tournament_id)
-        res = cherrypy.engine.publish(KEY_ENGINE_TM_GET_HEAT_ORDER, tournament_id).pop(0)
+
+        hids = cherrypy.engine.publish(KEY_ENGINE_TM_GET_HEAT_ORDER, tournament_id).pop(0)
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, {'id': hids}).pop(0)
         return json.dumps(res)
 
     @cherrypy.expose
