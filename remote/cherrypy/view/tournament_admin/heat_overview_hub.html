@@ -37,6 +37,9 @@
 
 {% block content %}
 <div class="container-fluid">
+    <div class="heat_order_list">
+
+    </div>
 
     <div id="heat_overview_carousel" class="carousel slide" data-ride="carousel" data-interval=false data-wrap=false>
         <a class="left carousel-control" href="#heat_overview_carousel" role="button" data-slide="prev">
@@ -97,6 +100,23 @@
      return jqxhr;
  }
 
+ function set_heat_order_list(heat_id){
+     var hol = $('.heat_order_list');
+     hol.empty();
+     var txt = '';
+     for (var idx=0; idx<heat_order.length; idx++){
+         var elem = $('<button class="btn btn-lg" onclick="set_heat_overview_panel(' + heat_order[idx] + ')">').text(heat_order_names[idx]);
+         if (heat_order[idx] == heat_id)
+             elem.addClass("btn-success");
+         else
+             elem.addClass('btn-default');
+
+         hol.append(elem);
+         //txt += heat_order[idx] + ' ';
+     }
+     //hol.text(txt);
+ }
+
  function set_heat_overview_panel(heat_id){
      $('#heat_overview_carousel .carousel-inner').empty();
      var idx = heat_order.indexOf(heat_id);
@@ -109,6 +129,7 @@
      add_heat_overview_panels(heat_ids, false, heat_id).done(function(){
          current_heat_order_idx = idx;
          refresh(heat_id);
+         set_heat_order_list(heat_id);
      });
  }
 
@@ -203,6 +224,7 @@
  $('#heat_overview_carousel').bind('slid.bs.carousel', function (e) {
      var heat_id = $('#heat_overview_carousel .active .container-fluid').data('heat_id');
      refresh(heat_id); // is defined in heat_overview_panel.html
+     set_heat_order_list(heat_id);
  });
  $('#heat_overview_carousel').bind('slide.bs.carousel', function (e) {
      var previous_heat_id = $('#heat_overview_carousel .active .container-fluid').data('heat_id');
