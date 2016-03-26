@@ -4,8 +4,10 @@ from ..lib.access_conditions import *
 
 from keys import *
 
+
 class CherrypyWebInterface(object):
     N_BEST_WAVES = 2
+    DEFAULT_NUMBER_OF_WAVES = 10
 
     def __init__(self, mount_location = '/'):
         self.mount_location = mount_location
@@ -71,6 +73,9 @@ class CherrypyWebInterface(object):
         else:
             print 'do_activate_heat: Error: heat_id not in DB'
             return None
+
+        if heat_info.get('number_of_waves') is None:
+            heat_info['number_of_waves'] = self.DEFAULT_NUMBER_OF_WAVES
 
         heat_info[KEY_HEAT_ID] = heat_id
         judges = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_JUDGES_FOR_HEAT, heat_id).pop()

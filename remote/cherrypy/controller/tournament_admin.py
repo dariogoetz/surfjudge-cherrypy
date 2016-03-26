@@ -11,9 +11,6 @@ T_FORMAT = '%H:%M'
 D_FORMAT = '%d.%m.%Y'
 DT_FORMAT = '%Y-%m-%dT%H:%M'
 
-DEFAULT_NUMBER_OF_WAVES = 10
-
-
 
 def dtstr2dstr_and_tstr(dt_str):
     if dt_str is None or len(dt_str) == 0:
@@ -192,7 +189,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             data['name'] = heat_name.encode()
             data['start_time'] = start_time.encode()
             data['date'] = date.encode()
-            data['number_of_waves'] = number_of_waves.encode() if number_of_waves.encode() else DEFAULT_NUMBER_OF_WAVES
+            data['number_of_waves'] = number_of_waves.encode() if number_of_waves.encode() else CherrypyWebInterface.DEFAULT_NUMBER_OF_WAVES
             data['additional_info'] = additional_info.encode()
 
         data['start_datetime'] = dstr_and_tstr2dtstr(data['date'], data['start_time'])
