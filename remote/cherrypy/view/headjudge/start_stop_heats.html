@@ -8,15 +8,15 @@
 {% block content %}
 
 
-<div class="dropdown">
+<div id="tournaments_select_dropdown" class="dropdown" data-url="/tournament_admin/do_get_tournaments" data-update_label=false data-remove_selected=true>
     <div class="btn-group">
         <button id="dropdown_label" class="btn btn-dropdown dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Add tournament <span class="caret"></span>
+            <span class="dropdown_label">Add tournament</span>&nbsp;<span class="caret"></span>
         </button>
 
         <br><br>
 
-        <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
+        <ul class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="dropdown_label">
         </ul>
     </div>
 </div>
@@ -24,9 +24,6 @@
 
 
 <div id="activity_panels" class="container-fluid">
-    {% for panel in panels %}
-    {{ panel }}
-    {% endfor %}
 </div>
 
 {% endblock content %}
@@ -34,61 +31,81 @@
 
 {% block javascript %}
 {{ super() }}
+<script src="/static/surfjudge/js/select_dropdown.js"></script>
+
+
 <script>
- // ***** DROPDOWN *****
  $(document).ready(function(){
-     refresh_tournaments_dropdown();
+     $.getJSON('/do_get_all_active_heats', function(active_heats){
+         var tournaments = new Set();
+         for (var idx=0; idx<active_heats.length; idx++){
+             tournaments.add(active_heats[idx]['tournament_id']);
+         }
+         for (tournament_id of tournaments)
+             add_panel(tournament_id);
+         $('#tournaments_select_dropdown').select_dropdown({'action_callback': on_tournament_select, 'remove_elements': function(elem){return tournaments.has(elem['id']);}});
+     });
  });
 
+</script>
+
+<script>
+  // ***** DROPDOWN *****
+
+ function on_tournament_select(selected_value){
+     add_panel(selected_value);
+ }
 
  function add_panel(tournament_id){
      $.get('{{ mount_loc }}/get_heat_activation_panel', {tournament_id: tournament_id}, function(data){
          $('#activity_panels').append(data);
-         $('#tournaments_dropdown_list .dropdown_'+tournament_id).remove();
+         //$('#tournaments_dropdown_list .dropdown_'+tournament_id).remove();
+         refresh_activity();
      });
  }
 
- function refresh_tournaments_dropdown(){
-     // fill dropdown with tournament names
-     $.get('/tournament_admin/do_get_tournaments', function(data){
-         var tournaments = JSON.parse(data);
-         // sort
-         function comp_func(a,b){
-             return (b['start_datetime'] < a['start_datetime']) ? 1 : -1;
-         }
-
-         tournaments.sort(comp_func);
-         // fill dropdown list with sorted tournament names
-         $('#tournaments_dropdown_list').empty();
-         for (i in tournaments){
-             $('#tournaments_dropdown_list').append('<li class="dropdown_' + tournaments[i]['id'] + '" ><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
-         };
-
-         // remove already active panels from dropdown
-         $('#activity_panels > .panel').each(function(index, value){
-             $('#tournaments_dropdown_list .dropdown_'+$(value).data('index')).remove();
+ function refresh_activity(){
+     $.getJSON('/do_get_all_active_heats', function(active_heats){
+         $('.heat_activity_btn').each(function(elem){
+             visualize_inactive($(elem));
          });
-     });
- };
 
- $('#tournaments_dropdown_list').on('click', '.select', function(e){
-     add_panel($(this).data('index'));
- });
+         for (heat of active_heats){
+             visualize_active($('#heat_activity_btn_'+heat['heat_id']));
+         }
+     });
+ }
 </script>
 
 <script>
 
- function activate(elem){
+ function visualize_active(elem){
      elem.addClass('btn-success');
      elem.removeClass('btn-default');
      elem.data('status', 'active');
-     $.get('{{ mount_loc }}/do_activate_heat', {heat_id: elem.data('index')});
- };
- function deactivate(elem){
+ }
+
+ function visualize_inactive(elem){
      elem.addClass('btn-default');
      elem.removeClass('btn-success');
      elem.data('status', 'inactive');
-     $.get('{{ mount_loc }}/do_deactivate_heat', {heat_id: elem.data('index')});
+ }
+
+
+ function activate(elem){
+     var jqxhr = $.post('/headjudge/do_activate_heat', {heat_id: elem.data('heat_id')});
+     console.log(elem.data());
+     jqxhr.success(function(){
+         visualize_active(elem);
+     });
+     return jqxhr;
+ };
+ function deactivate(elem){
+     var jqxhr = $.post('/headjudge/do_deactivate_heat', {heat_id: elem.data('heat_id')});
+     jqxhr.success(function(){
+         visualize_inactive(elem);
+     });
+     return jqxhr;
  };
 
  $('#activity_panels').on('click', '.heat_activity_btn', function(e){
@@ -99,24 +116,4 @@
  });
 </script>
 
-<script>
- $(document).ready(function(){
-     refresh_activity();
- });
-
- function refresh_activity(){
-     $.get('/do_get_all_active_heats', function(data){
-         var active_heats = JSON.parse(data);
-         $('.heat_activity_btn').addClass('btn-default');
-         $('.heat_activity_btn').removeClass('btn-success');
-         $('.heat_activity_btn').data('status', 'inactive');
-         for (id in active_heats){
-             var button_id = '#heat_activity_btn_'+active_heats[id]['heat_id'];
-             $(button_id).addClass('btn-success');
-             $(button_id).removeClass('btn-default');
-             $(button_id).data('status', 'active');
-         }
-     });
- };
-</script>
 {% endblock javascript %}

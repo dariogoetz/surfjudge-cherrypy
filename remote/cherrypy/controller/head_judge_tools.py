@@ -17,12 +17,12 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
     def start_stop_heats(self):
         context = self._standard_env()
         heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, None).pop()
-        tournaments = set()
-        for heat in heat_info.values():
-            tournaments.add(heat['tournament_id'])
-        for tournament_id in tournaments:
-            panel_html = self.render_html(context = self.get_heat_activation_panel(tournament_id), template = 'headjudge/heat_activation_panel.html')
-            context.setdefault('panels', []).append(panel_html)
+        #tournaments = set()
+        #for heat in heat_info.values():
+        #    tournaments.add(heat['tournament_id'])
+        #for tournament_id in tournaments:
+        #    panel_html = self.render_html(context = self.get_heat_activation_panel(tournament_id), template = 'headjudge/heat_activation_panel.html')
+        #    context.setdefault('panels', []).append(panel_html)
         return context
 
     @cherrypy.expose
