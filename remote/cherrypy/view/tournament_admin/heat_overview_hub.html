@@ -37,36 +37,80 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="heat_order_list">
+    <div class="dropdown select_dropdown" data-url="/tournament_admin/do_get_tournaments">
+        <button class="btn btn-dropdown dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span class="dropdown_label">Tournament</span>&nbsp;<span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu scrollable-menu" role="menu">
+        </ul>
+    </div>
+    <br>
+
+    <div id="data_section"  style="display:none">
+        <div class="heat_order_list">
+        </div>
+
+        <div id="heat_overview_carousel" class="carousel slide" data-ride="carousel" data-interval=false data-wrap=false>
+            <a class="left carousel-control" href="#heat_overview_carousel" role="button" data-slide="prev">
+                <span class="glyphicon glyphicon-chevron-left" style="color: black" aria-hidden="true"></span>
+                <span class="sr-only">Previous</span>
+            </a>
+            <div class="jumbotron">
+                <div class="carousel-inner" role="listbox">
+                </div>
+            </div>
+            <a class="right carousel-control" href="#heat_overview_carousel" role="button" data-slide="next">
+                <span class="glyphicon glyphicon-chevron-right" style="color: black" aria-hidden="true"></span>
+                <span class="sr-only">Next</span>
+            </a>
+        </div><!-- /.carousel -->
 
     </div>
-
-    <div id="heat_overview_carousel" class="carousel slide" data-ride="carousel" data-interval=false data-wrap=false>
-        <a class="left carousel-control" href="#heat_overview_carousel" role="button" data-slide="prev">
-            <span class="glyphicon glyphicon-chevron-left" style="color: black" aria-hidden="true"></span>
-            <span class="sr-only">Previous</span>
-        </a>
-        <div class="jumbotron">
-            <div class="carousel-inner" role="listbox">
-            </div>
-        </div>
-        <a class="right carousel-control" href="#heat_overview_carousel" role="button" data-slide="next">
-            <span class="glyphicon glyphicon-chevron-right" style="color: black" aria-hidden="true"></span>
-            <span class="sr-only">Next</span>
-        </a>
-    </div><!-- /.carousel -->
-
 </div>
-{% endblock content %}
+    {% endblock content %}
 
-{% block javascript %}
+    {% block javascript %}
 {{ super() }}
-
+<script src="/static/surfjudge/js/select_dropdown.js"></script>
 <script src="/static/surfjudge/js/judging_requests_table.js"></script>
 <script src="/static/surfjudge/js/heat.js"></script>
 
+<script>
+
+ $('.select_dropdown').select_dropdown({'action_callback': function(val){
+     $('#data_section').show();
+     refresh_data_section(val);
+ }
+ });
+</script>
 
 <script>
+
+ function refresh_data_section(tournament_id){
+     heat_order = [];
+     heat_order_names = [];
+     current_heat_order_idx = -1;
+     var ho_jqxhr = $.getJSON('/tournament_admin/do_get_heat_order', {tournament_id: tournament_id});
+
+     var chid_jqxhr = $.get('/tournament_admin/do_get_current_heat_id', {tournament_id:tournament_id});
+     $.when(ho_jqxhr, chid_jqxhr).done(function(ev_heat_order, ev_current_heat_id){
+         var heat_order_info = ev_heat_order[0];
+         heat_order = [];
+         heat_order_names = [];
+         for (var idx=0; idx<heat_order_info.length; idx++){
+             heat_order.push(heat_order_info[idx]['id']);
+             heat_order_names.push(heat_order_info[idx]['name']);
+         }
+         var current_heat_id = parseInt(ev_current_heat_id[0]);
+         current_heat_order_idx = heat_order.indexOf(current_heat_id);
+         if (current_heat_order_idx < 0){
+             console.log('current heat_id ' + current_heat_id + ' not in heat_order ' + heat_order);
+             return;
+         }
+         set_heat_overview_panel(current_heat_id);
+     });
+ }
+
  function add_heat_overview_panels(heat_ids, prepend, activate_hid){
      var deferreds = [];
      console.log('adding ' + heat_ids);
@@ -185,33 +229,6 @@
          current_heat_order_idx = new_heat_order_idx;
      }
  }
-
- heat_order = [];
- heat_order_names = [];
- current_heat_order_idx = -1;
- $(document).ready(function(){
-     var ho_jqxhr = $.getJSON('/tournament_admin/do_get_heat_order', {tournament_id: 0});
-
-     var chid_jqxhr = $.get('/tournament_admin/do_get_current_heat_id', {tournament_id:0});
-     $.when(ho_jqxhr, chid_jqxhr).done(function(ev_heat_order, ev_current_heat_id){
-         var heat_order_info = ev_heat_order[0];
-         heat_order = [];
-         heat_order_names = [];
-         for (var idx=0; idx<heat_order_info.length; idx++){
-             heat_order.push(heat_order_info[idx]['id']);
-             heat_order_names.push(heat_order_info[idx]['name']);
-         }
-         var current_heat_id = parseInt(ev_current_heat_id[0]);
-         current_heat_order_idx = heat_order.indexOf(current_heat_id);
-         if (current_heat_order_idx < 0){
-             console.log('current heat_id ' + current_heat_id + ' not in heat_order ' + heat_order);
-             return;
-         }
-         set_heat_overview_panel(current_heat_id);
-     });
- });
-
-
 
  $('#heat_overview_carousel .carousel-control.left').on('click', function(){
      shift_heat_overview_panels_back();

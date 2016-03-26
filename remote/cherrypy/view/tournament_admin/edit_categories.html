@@ -22,12 +22,12 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-2">
-            <div class="dropdown">
+            <div id="tournaments_select_dropdown" class="dropdown" data-url="/tournament_admin/do_get_tournaments">
                 <div class="btn-group">
-                <button id="tournaments_dropdown_select" class="btn btn-dropdown dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span id="tournaments_dropdown_label">Tournament</span>&nbsp;<span class="caret"></span>
+                <button class="btn btn-dropdown dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="dropdown_label">Tournament</span>&nbsp;<span class="caret"></span>
                 </button>
-                <ul id="tournaments_dropdown_list" class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="tournaments_dropdown_label">
+                <ul class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="tournaments_dropdown_label">
                 </ul>
                 </div>
             </div>
@@ -114,30 +114,39 @@
 {{ super() }}
 
 <script src="/static/duallistbox/dual-list-box.min.js"></script>
+<script src="/static/surfjudge/js/select_dropdown.js"></script>
+
+<script>
+ $(document).ready(function(){
+     $('#tournaments_select_dropdown').select_dropdown({'action_callback': on_tournament_select});
+ });
+</script>
+
+
 <!-- modal scripts -->
 <script>
  // ***** MODAL internals *****
  $('#modal_submit').on('click', function(){
-  var id = $('#modal_id').val();
-  var name = $('#modal_name').val();
-  var additional_info = $('#modal_additional_info').val();
-  var tournament_id = $('#tournaments_dropdown_select').data('select');
-  if (id == null && name.length == 0) {
-    alert('Empty field "Category Name"');
-    return
-  }
+     var id = $('#modal_id').val();
+     var name = $('#modal_name').val();
+     var additional_info = $('#modal_additional_info').val();
+     var tournament_id = $('#tournaments_select_dropdown').select_dropdown('get_selected_value');
+     if (id == null && name.length == 0) {
+         alert('Empty field "Category Name"');
+         return;
+     }
 
-  $.post('{{ mount_loc }}/do_edit_category', {id: id, name: name, tournament_id: tournament_id, additional_info: additional_info});
-    $('#edit_modal').modal('toggle');
-    $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
+     $.post('{{ mount_loc }}/do_edit_category', {id: id, name: name, tournament_id: tournament_id, additional_info: additional_info});
+     $('#edit_modal').modal('toggle');
+     $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
  });
 
-$('#modal_delete').on('click', function(){
-    var id = $('#modal_id').val();
-    var tournament_id = $('#tournaments_dropdown_select').data('select');
-    $.post('{{ mount_loc }}/do_delete_category', {id: id});
-    $('#edit_modal').modal('toggle');
-    $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
+ $('#modal_delete').on('click', function(){
+     var id = $('#modal_id').val();
+     var tournament_id = $('#tournaments_select_dropdown').select_dropdown('get_selected_value');
+     $.post('{{ mount_loc }}/do_delete_category', {id: id});
+     $('#edit_modal').modal('toggle');
+     $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
  });
 
 </script>
@@ -145,45 +154,15 @@ $('#modal_delete').on('click', function(){
 <script>
  // ***** DROPDOWN *****
 
- function refresh_tournaments_dropdown(){
-     // fill dropdown with tournament names
-     $.get('{{ mount_loc }}/do_get_tournaments', function(data){
-         var tournaments = JSON.parse(data);
-         // sort
-         function comp_func(a,b){
-             return (b['start_datetime'] < a['start_datetime']) ? 1 : -1;
-         }
+ function on_tournament_select(selected_value){
+     refresh_data_table(selected_value);
+ }
 
-         tournaments.sort(comp_func);
-
-         // fill dropdown list with sorted tournament names
-         $('#tournaments_dropdown_list').empty();
-         for (i in tournaments){
-             $('#tournaments_dropdown_list').append('<li><a class="select" href="#" data-name="' + tournaments[i]['name'] + '" data-index=' + tournaments[i]['id'] + '>' + tournaments[i]['name'] + '</a></li>');
-         };
-     });
-     $('#tournaments_dropdown_label').html('Tournament');
-     $('#tournaments_dropdown_select').data('select', null);
-     $('#data_section').hide();
- };
-
- $(document).ready(function(){
-     refresh_tournaments_dropdown();
- });
-
- $('#tournaments_dropdown_list').on('click', '.select', function(e){
-     tid =  $(this).data('index');
-     $('#tournaments_dropdown_label').html('Tournament <b>' + $(this).data('name') + '</b>');
-     $('#tournaments_dropdown_select').data('select', tid);
-
-     refresh_data_table();
- });
-
- function refresh_data_table(){
-     var tid = $('#tournaments_dropdown_select').data('select');
-     query = {}
-     if (typeof tid !== 'undefined')
-         query['tournament_id'] = tid;
+ function refresh_data_table(tournament_id){
+     query = {};
+     if (tournament_id == null)
+         return;
+     query['tournament_id'] = tournament_id;
      $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: query});
      $('#data_section').show();
  };
@@ -217,8 +196,4 @@ $('#modal_delete').on('click', function(){
      };
 });
 </script>
-
-
-
-
 {% endblock javascript %}
