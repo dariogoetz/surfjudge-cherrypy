@@ -282,7 +282,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
     def shutdown(self):
         if not self._thread.isAlive():
             return
-        print 'Stopping database thread'
+        print u'Stopping database thread'
         self.__access_queue.put( (KEY_SHUTDOWN, None, None), block=True)
         return
 
@@ -296,7 +296,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def _run(self):
         self._init_db()
-        print 'Starting database'
+        print u'Starting database'
         while True:
             #print 'waiting for db commands'
             task_processor, data, pipe_conn = self.__access_queue.get()
@@ -439,7 +439,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
             #check if surfer already exists
             existing_surfers = self._get_surfers({'first_name': surfer.get('first_name', ''), 'last_name': surfer.get('last_name', '')})
             if len(existing_surfers) > 0:
-                print 'database: Surfer "{} {}" already exists!'.format(surfer.get('first_name', ''), surfer.get('last_name', ''))
+                print u'database: Surfer "{} {}" already exists!'.format(surfer.get('first_name', ''), surfer.get('last_name', ''))
                 surfer['id'] = existing_surfers[0].get('id')
             else:
                 # generate new id
@@ -605,8 +605,8 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
 
     def _cols_str(self, table, col_names):
-        cols = ['{}.{}'.format(table, c) for c in col_names]
-        cols_str = ', '.join(cols)
+        cols = [u'{}.{}'.format(table, c) for c in col_names]
+        cols_str = u', '.join(cols)
         return cols_str
 
 
@@ -614,26 +614,26 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         conditions = []
         for c in col_names:
             if isinstance(val_dict[c], list) or isinstance(val_dict[c], set):
-                cond = '{}.{} IN ({})'.format(table, c, ','.join(map(str, val_dict[c])))
+                cond = u'{}.{} IN ({})'.format(table, c, ','.join(map(str, val_dict[c])))
             else:
-                cond = '{}.{} = "{}"'.format(table, c, val_dict[c])
+                cond = u'{}.{} = "{}"'.format(table, c, val_dict[c])
             conditions.append(cond)
-        #conditions = ['{}.{} = "{}"'.format(table, c, val_dict[c]) for c in col_names]
-        where_str = ' AND '.join(conditions)
+        #conditions = [u'{}.{} = "{}"'.format(table, c, val_dict[c]) for c in col_names]
+        where_str = u' AND '.join(conditions)
         return where_str
 
 
     def _update_str(self, table, col_names, val_dict):
-        updates = ['{} = "{}"'.format(c, val_dict[c]) for c in col_names]
-        update_str = ', '.join(updates)
+        updates = [u'{} = "{}"'.format(c, val_dict[c]) for c in col_names]
+        update_str = u', '.join(updates)
         return update_str
 
 
     def _query_db(self, query_info, target_table, cols = None):
-        print '** DB ** querying "{}" from "{}"'.format(query_info, target_table)
+        print u'** DB ** querying "{}" from "{}"'.format(query_info, target_table)
 
         if cols is None:
-            cols_str = '*'
+            cols_str = u'*'
         else:
             return_cols = cols
             cols_str = self._cols_str(target_table, return_cols)
@@ -644,15 +644,15 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         common_cols = set(query_info.keys()).intersection(set(col_info.keys()))
         where_str = self._where_str(target_table, common_cols, query_info)
 
-        sql_command = 'SELECT {cols} FROM {tables}'.format(cols = cols_str, tables = tables_str)
+        sql_command = u'SELECT {cols} FROM {tables}'.format(cols = cols_str, tables = tables_str)
         if len(where_str) > 0:
-            sql_command += ' WHERE {cond}'.format(cond = where_str)
+            sql_command += u' WHERE {cond}'.format(cond = where_str)
 
         cursor = self._db.cursor()
         try:
             res = [x for x in cursor.execute(sql_command)]
         except Exception as e:
-            print 'Error executing sql command "{}": {}'.format(sql_command, e)
+            print u'Error executing sql command "{}": {}'.format(sql_command, e)
             res = []
         return res
 
@@ -660,12 +660,12 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     # TODO: put table name in query_info
     def _query_join(self, query_info, *args, **kwargs):
-        print '** DB ** querying "{}" from join of multiple tables'.format(query_info)
+        print u'** DB ** querying "{}" from join of multiple tables'.format(query_info)
 
         join_type = kwargs.get('join_type', 'INNER JOIN')
 
         if len(args) % 3 != 1:
-            print 'Wrong number of arguments for multiple db join: {}, {}, {}'.format(query_info, cols, args)
+            print u'Wrong number of arguments for multiple db join: {}, {}, {}'.format(query_info, cols, args)
             return []
 
 
@@ -694,9 +694,9 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
         join_cols = set.union(*common_cols_list)
         if kwargs.get('cols') is None:
-            cols_str = '*'
+            cols_str = u'*'
         else:
-            cols_str = ", ".join(kwargs['cols'])
+            cols_str = u', '.join(kwargs['cols'])
 
         old_table = tables[0]
         join_str = str(old_table)
@@ -716,15 +716,15 @@ FROM {joins}
             if len(where_str) > 0:
                 where_conditions.append(where_str)
 
-        where_str = ' AND '.join(where_conditions)
+        where_str = u' AND '.join(where_conditions)
         if len(where_str) > 0:
-            sql_command += ' WHERE {cond}'.format(cond = where_str)
+            sql_command += u' WHERE {cond}'.format(cond = where_str)
 
         cursor = self._db.cursor()
         try:
             res = [x for x in cursor.execute(sql_command)]
         except Exception as e:
-            print 'Error executing sql command "{}": {}'.format(sql_command, e)
+            print u'Error executing sql command "{}": {}'.format(sql_command, e)
             res = []
 
 #        print '*********************************'
@@ -735,7 +735,7 @@ FROM {joins}
 
 
     def _modify_in_db(self, query_info, new_vals, target_table):
-        print '** DB ** modifying "{}" from "{}"'.format(query_info, target_table)
+        print u'** DB ** modifying "{}" from "{}"'.format(query_info, target_table)
 
         tables_str = target_table
 
@@ -747,21 +747,21 @@ FROM {joins}
         upd_cols = set(new_vals.keys()).intersection(set(col_info.keys()))
         upd_str = self._update_str(target_table, upd_cols, new_vals)
 
-        sql_command = 'UPDATE {tables} SET {upd}'.format(tables = tables_str, upd=upd_str)
+        sql_command = u'UPDATE {tables} SET {upd}'.format(tables = tables_str, upd=upd_str)
         if len(where_str) > 0:
-            sql_command += ' WHERE {cond}'.format(cond = where_str)
+            sql_command += u' WHERE {cond}'.format(cond = where_str)
 
         cursor = self._db.cursor()
         try:
             cursor.execute(sql_command)
         except Exception as e:
-            print 'Error executing sql command "{}": {}'.format(sql_command, e)
+            print u'Error executing sql command "{}": {}'.format(sql_command, e)
         return
 
 
 
     def _delete_from_db(self, query_info, target_table):
-        print '** DB ** deleting "{}" from "{}"'.format(query_info, target_table)
+        print u'** DB ** deleting "{}" from "{}"'.format(query_info, target_table)
 
         tables_str = target_table
 
@@ -769,21 +769,21 @@ FROM {joins}
         common_cols = set(query_info.keys()).intersection(set(col_info.keys()))
         where_str = self._where_str(target_table, common_cols, query_info)
 
-        sql_command = 'DELETE FROM {tables}'.format(tables = tables_str)
+        sql_command = u'DELETE FROM {tables}'.format(tables = tables_str)
         if len(where_str) > 0:
-            sql_command += ' WHERE {cond}'.format(cond = where_str)
+            sql_command += u' WHERE {cond}'.format(cond = where_str)
 
         cursor = self._db.cursor()
         try:
             cursor.execute(sql_command)
         except Exception as e:
-            print 'Error executing sql command "{}": {}'.format(sql_command, e)
+            print u'Error executing sql command "{}": {}'.format(sql_command, e)
         return
 
 
 
     def _insert_into_db(self, data, table):
-        print '** DB ** inserting "{}" into "{}"'.format(data, table)
+        print u'** DB ** inserting "{}" into "{}"'.format(data, table)
         col_info = self._table_info.get(table, {})
         values = []
 
@@ -791,14 +791,14 @@ FROM {joins}
             values.append( data.get(col['name'], None) )
 
         cursor = self._db.cursor()
-        values_str = ', '.join(['?']*len(values))
+        values_str = u', '.join(['?']*len(values))
 
-        sql_command = 'INSERT INTO {table} VALUES ({values})'.format(table = table, values = values_str)
+        sql_command = u'INSERT INTO {table} VALUES ({values})'.format(table = table, values = values_str)
 
         try:
             cursor.execute(sql_command, values)
         except Exception as e:
-            print 'Error executing sql command: {}'.format(e)
+            print u'Error executing sql command: {}'.format(e)
         self._db.commit()
         return
 
@@ -820,7 +820,7 @@ FROM {joins}
         cols = [table['name'] for table in table_data]
         res = dict(zip(cols, table_data))
         for col in res:
-            res[col]['python_type'] = _CONFIG['sqlite_db']['tables'].get(table_name, {}).get(col, 'unknown')
+            res[col]['python_type'] = _CONFIG['sqlite_db']['tables'].get(table_name, {}).get(col, u'unknown')
         return res
 
 
@@ -877,11 +877,11 @@ FROM {joins}
           fields - list of pairs (field name, field type)
         '''
 
-        cols_str = ', '.join( [' '.join([field, self._pysql_adapt.py2sql.get(typ, typ)]) for field, typ in fields] )
+        cols_str = u', '.join( [u' '.join([field, self._pysql_adapt.py2sql.get(typ, typ)]) for field, typ in fields] )
 
-        sql_command = 'CREATE TABLE {name} ({col_info})'.format(name=name, col_info = cols_str)
+        sql_command = u'CREATE TABLE {name} ({col_info})'.format(name=name, col_info = cols_str)
 
-        print('Creating table "{}" with columns {}.'.format(name, cols_str))
+        print u'Creating table "{}" with columns {}.'.format(name, cols_str)
 
         cursor = self._db.cursor()
         cursor.execute(sql_command)

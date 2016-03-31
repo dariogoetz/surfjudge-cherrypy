@@ -7,22 +7,17 @@ from . import CherrypyWebInterface
 from keys import *
 
 
-T_FORMAT = '%H:%M'
-D_FORMAT = '%d.%m.%Y'
-DT_FORMAT = '%Y-%m-%dT%H:%M'
-
-
 def dtstr2dstr_and_tstr(dt_str):
     if dt_str is None or len(dt_str) == 0:
         return (None, None)
-    dt = datetime.datetime.strptime(dt_str, DT_FORMAT)
-    return (dt.strftime(D_FORMAT), dt.strftime(T_FORMAT))
+    dt = datetime.datetime.strptime(dt_str, CherrypyWebInterface.DT_FORMAT)
+    return (dt.strftime(CherrypyWebInterface.D_FORMAT), dt.strftime(CherrypyWebInterface.T_FORMAT))
 
 def dstr_and_tstr2dtstr(d_str, t_str):
-    d = datetime.datetime.strptime(d_str, D_FORMAT)
-    t = datetime.datetime.strptime(t_str, T_FORMAT)
+    d = datetime.datetime.strptime(d_str, CherrypyWebInterface.D_FORMAT)
+    t = datetime.datetime.strptime(t_str, CherrypyWebInterface.T_FORMAT)
     dt = datetime.datetime.combine(d, t.time())
-    return dt.strftime(DT_FORMAT)
+    return dt.strftime(CherrypyWebInterface.DT_FORMAT)
 
 class TournamentAdminWebInterface(CherrypyWebInterface):
 
@@ -46,10 +41,11 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         else:
             data = {}
             data['id'] = int(id) if len(id) > 0 else None
-            data['name'] = name.encode()
-            data['start_date'] = start_date.encode()
-            data['end_date'] = end_date.encode()
-            data['additional_info'] = additional_info.encode()
+            data['name'] = name
+            print name, type(name)
+            data['start_date'] = start_date
+            data['end_date'] = end_date
+            data['additional_info'] = additional_info
 
         data['start_datetime'] = dstr_and_tstr2dtstr(data['start_date'], '00:00')
         data['end_datetime'] = dstr_and_tstr2dtstr(data['end_date'], '00:00')
@@ -111,8 +107,8 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             data = {}
             data['id'] = int(id) if len(id) > 0 else None
             data['tournament_id'] = tournament_id;
-            data['name'] = name.encode()
-            data['additional_info'] = additional_info.encode()
+            data['name'] = name#.encode()
+            data['additional_info'] = additional_info#.encode()
 
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_CATEGORY, data).pop(0)
         return str(res)
@@ -186,11 +182,11 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             data = {}
             data['id'] = int(heat_id) if len(heat_id)>0 else None
             data['category_id'] = category_id
-            data['name'] = heat_name.encode()
-            data['start_time'] = start_time.encode()
-            data['date'] = date.encode()
-            data['number_of_waves'] = number_of_waves.encode() if number_of_waves.encode() else CherrypyWebInterface.DEFAULT_NUMBER_OF_WAVES
-            data['additional_info'] = additional_info.encode()
+            data['name'] = heat_name#.encode()
+            data['start_time'] = start_time#.encode()
+            data['date'] = date#.encode()
+            data['number_of_waves'] = number_of_waves if number_of_waves else CherrypyWebInterface.DEFAULT_NUMBER_OF_WAVES
+            data['additional_info'] = additional_info
 
         data['start_datetime'] = dstr_and_tstr2dtstr(data['date'], data['start_time'])
 
@@ -240,7 +236,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             surfer_colors = json.loads(surfer_colors)
 
         if surfer_colors is None:
-            surfer_colors = [''] * len(surfer_ids)#'red', 'blue', 'green', 'yellow', 'white', 'orange'][:len(surfer_ids)]
+            surfer_colors = [u''] * len(surfer_ids)#'red', 'blue', 'green', 'yellow', 'white', 'orange'][:len(surfer_ids)]
 
         # TODO: get correct seed values
         seeds = range(len(surfer_ids))
@@ -261,14 +257,15 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         else:
             data = {}
             data['id'] = int(id) if len(id) > 0 else None
-            data['first_name'] = first_name.encode()
-            data['last_name'] = last_name.encode()
-            data['name'] = '{} {}'.format(first_name, last_name)
-            data['country'] = country.encode()
-            data['additional_info'] = additional_info.encode()
+            data['first_name'] = first_name
+            data['last_name'] = last_name
+            data['name'] = u'{} {}'.format(first_name, last_name)
+            data['country'] = country
+            data['additional_info'] = additional_info
+        print data
 
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, data).pop(0)
-        return res
+        return json.dumps(res)
 
 
 
@@ -290,9 +287,9 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             return
         else:
             print 'Loading file...'
-        surfers = utils.read_surfers(my_file.file)
+        surfers = utils.read_surfers(my_file.file, decode='utf-8')
         for sid, surfer in surfers.items():
-            print 'Trying to add surfer {}'.format(surfer)
+            print u'Trying to add surfer {}'.format(surfer)
             res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, surfer).pop(0)
         return
 
@@ -373,11 +370,11 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         else:
             data = {}
             data['id'] = int(id) if len(id) > 0 else None
-            data['first_name'] = first_name.encode()
-            data['last_name'] = last_name.encode()
-            data['name'] = '{} {}'.format(first_name, last_name)
-            data['username'] = username.encode()
-            data['additional_info'] = additional_info.encode()
+            data['first_name'] = first_name
+            data['last_name'] = last_name
+            data['name'] = u'{} {}'.format(first_name, last_name)
+            data['username'] = username
+            data['additional_info'] = additional_info
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_JUDGE, data)
         return json.dumps(res)
 
@@ -459,7 +456,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         colors_hex = [p.get('surfer_color_hex') for p in participants]
         data['heat_id'] = heat_id
         data['judge_ids'] = sorted(heat_info.get('judges', {}).keys())
-        data['judge_names'] = ['{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name']) for judge_id in data['judge_ids']]
+        data['judge_names'] = [u'{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name']) for judge_id in data['judge_ids']]
         data['surfers'] = dict(zip(ids, colors))
         data['surfer_color_names'] = colors
         data['surfer_color_colors'] = dict(zip(colors, colors_hex))

@@ -9,6 +9,12 @@ class CherrypyWebInterface(object):
     N_BEST_WAVES = 2
     DEFAULT_NUMBER_OF_WAVES = 10
 
+
+    T_FORMAT = '%H:%M'
+    D_FORMAT = '%d.%m.%Y'
+    DT_FORMAT = '%Y-%m-%dT%H:%M'
+    DTS_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
     def __init__(self, mount_location = '/'):
         self.mount_location = mount_location
         return
@@ -116,13 +122,13 @@ class CherrypyWebInterface(object):
                 for seed in fill_in_participant_seeds:
                     from_heat = advanced_participants.get(seed, {}).get('from_heat_id')
                     from_place = advanced_participants.get(seed, {}).get('from_place')
-                    print 'collecting participants: advancing surfer from Heat {}, {}. place'.format(from_heat, from_place)
+                    print u'collecting participants: advancing surfer from Heat {}, {}. place'.format(from_heat, from_place)
                     # get surfer_id from results table
                     heat_result = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_RESULTS, {'heat_id': from_heat, 'place': from_place}).pop()
                     if len(heat_result) > 0:
                         heat_result = heat_result[0]
                     if 'surfer_id' not in heat_result:
-                        print 'collecting participants: no placing (yet) for Heat {}, {}. place (starting from 1)'.format(from_heat, from_place+1)
+                        print u'collecting participants: no placing (yet) for Heat {}, {}. place (starting from 1)'.format(from_heat, from_place+1)
                         continue
                     surfer_id = heat_result.get('surfer_id')
                     if surfer_id in existing_surfer_ids:

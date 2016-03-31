@@ -61,7 +61,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         colors_hex = [p.get('surfer_color_hex') for p in participants]
         data['heat_id'] = heat_id
         data['judge_id'] = judge_id
-        data['judge_name'] = '{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name'])
+        data['judge_name'] = u'{} {}'.format(heat_info['judges'][judge_id]['judge_first_name'], heat_info['judges'][judge_id]['judge_last_name'])
         data['surfers'] = dict(zip(ids, colors))
         data['surfer_color_names'] = colors
         data['surfer_color_colors'] = dict(zip(colors, colors_hex))
@@ -151,7 +151,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             for jid in judges_with_scores:
                 if jid not in judges:
                     del out_scores[jid]
-                    print 'do_query_scores: filtered out scores for inactive judge {}'.format(jid)
+                    print u'do_query_scores: filtered out scores for inactive judge {}'.format(jid)
         return json.dumps(out_scores)
 
 
@@ -359,23 +359,23 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         export_data = self._collect_export_data(all_scores, average_scores, best_scores_by_judge, best_scores_average, sorted_total_scores, heat_info, id2color, n_best_waves)
 
 
-        heat_name = '{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
+        heat_name = u'{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
         directory = 'exports'
         if not os.path.exists(directory):
             os.makedirs(directory)
 
         filename = None
         if mode == 'judge_sheet':
-            filename = 'export_{}_heat_sheet.csv'.format(heat_name)
+            filename = u'export_{}_heat_sheet.csv'.format(heat_name)
         elif mode == 'best_waves':
-            filename = 'export_{}_best_judge_waves.csv'.format(heat_name)
+            filename = u'export_{}_best_judge_waves.csv'.format(heat_name)
         elif mode == 'averaged_scores':
-            filename = 'export_{}_best_average_waves.csv'.format(heat_name)
+            filename = u'export_{}_best_average_waves.csv'.format(heat_name)
 
         if filename is not None:
             utils.write_csv(os.path.join(directory, filename), export_data[mode]['data'], export_data[mode]['header'])
 
-        filename = os.path.abspath(os.path.join(directory, 'Auswertung_{}.xlsx'.format(heat_name)))
+        filename = os.path.abspath(os.path.join(directory, u'Auswertung_{}.xlsx'.format(heat_name)))
         utils.write_xlsx(filename, export_data)
         from cherrypy.lib.static import serve_file
         return serve_file(filename, "application/x-download", "attachment")
@@ -412,9 +412,9 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                     if len(best_waves) > 0 and wave_idx in best_waves[0]:
                         highlights.setdefault(res['Color'], {}).setdefault(judge_id, []).append( labels_scores[wave_idx] )
 
-                res['Name'] = '{}'.format(participant.get('name'))
+                res['Name'] = u'{}'.format(participant.get('name'))
                 csv_out_data.append(res)
-        export_data.setdefault('judge_sheet', {})['title_line'] = '{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
+        export_data.setdefault('judge_sheet', {})['title_line'] = u'{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
         export_data.setdefault('judge_sheet', {})['header'] = header
         export_data['judge_sheet']['data'] = csv_out_data
         export_data['judge_sheet']['highlights'] = highlights
@@ -445,11 +445,11 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
                 for label_index, label_score, index, score in zip(labels_index, labels_scores, indices, scores):
                     res[label_score] = '' if score is None else '{:.2f}'.format(score)
                     res[label_index] = '' if index is None else index + 1
-                res['Name'] = '{}'.format(participant.get('name'))
+                res['Name'] = u'{}'.format(participant.get('name'))
                 csv_out_data.append(res)
 
         export_data.setdefault('best_waves', {})['header'] = header
-        export_data['best_waves']['title_line'] = '{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
+        export_data['best_waves']['title_line'] = u'{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
         export_data['best_waves']['data'] = csv_out_data
 
 
@@ -475,13 +475,13 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
             for label_score, score in zip(labels_scores, scores):
                 res[label_score] = '' if score is None else '{:.2f}'.format(score)
             ranking, total_score = sorted_total_scores.get(surfer_id, (len(heat_info.get('participants', [])) - 1, total_score) )
-            res['Name'] = '{}'.format(participant.get('name'))
+            res['Name'] = u'{}'.format(participant.get('name'))
             res['Ranking'] = ranking
             res['Total Score'] = total_score
             csv_out_data.append( res )
 
         export_data.setdefault('averaged_scores', {})['header'] = header
-        export_data['averaged_scores']['title_line'] = '{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
+        export_data['averaged_scores']['title_line'] = u'{} {} {}'.format(heat_info['tournament_name'], heat_info['category_name'], heat_info['heat_name'])
         export_data['averaged_scores']['data'] = csv_out_data
 
         return export_data
@@ -508,6 +508,6 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         if heat_id is not None:
             heat_id = int(heat_id)
 
-        print 'do_register_judging_request: registering request for {} by Judge {} for 10 seconds'.format('Heat {}'.format(heat_id) if heat_id is not None else 'unspecified heat', judge_id)
+        print u'do_register_judging_request: registering request for {} by Judge {} for 10 seconds'.format('Heat {}'.format(heat_id) if heat_id is not None else 'unspecified heat', judge_id)
         res = cherrypy.engine.publish(KEY_ENGINE_JM_REGISTER_JUDGING_REQUEST, judge_id, heat_id, 10)
         return

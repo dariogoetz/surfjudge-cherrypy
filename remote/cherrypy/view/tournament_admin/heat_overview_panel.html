@@ -6,6 +6,8 @@
 <div class="container-fluid" data-heat_id={{ heat_id }} data-categoryid={{ category_id }} id="heat_overview_{{ heat_id }}">
     <h1>"{{ heat_name }}" in "{{ category_name }}"</h1>
 
+
+
     <!-- start/stop and publish/export -->
     <button class="btn btn-default btn-lg pull-right refresh_btn"><span class="glyphicon glyphicon-refresh">&nbsp;Refresh</span></button>
     <h3>Activities</h3>
@@ -23,6 +25,10 @@
         <div class="col-xs-4">
             <button class="btn btn-standard btn-lg export_btn pull-right">Export Excel</button>
         </div>
+        </div>
+        <div class="row">
+            <!-- Heat Timer -->
+            <h1 class="heat_time">00:00</h1>
         </div>
     </div>
 
@@ -180,6 +186,7 @@
      refresh_published(heat_id);
      refresh_heat_info(heat_id);
      refresh_judging_requests(heat_id);
+     set_heat_time(heat_id);
  }
 
  function refresh_judging_requests(heat_id){
@@ -257,4 +264,41 @@
      return jqxhr;
  };
 
+</script>
+
+
+<script>
+ if (typeof heat_end_time == 'undefined')
+     heat_end_time = {};
+
+ // init timer
+ function set_heat_time(heat_id){
+     $('.heat_time').text('00:00');
+     if (typeof timer != 'undefined')
+         clearInterval(timer);
+
+     $.getJSON('/headjudge/do_get_remaining_heat_time', {heat_id: heat_id}, function(remaining_heat_time_s){
+         var now = new Date();
+
+         if (remaining_heat_time_s == null){
+             heat_end_time[heat_id] = now;
+         } else {
+             heat_end_time[heat_id] = new Date(now.getTime() + remaining_heat_time_s * 1000);
+             update_heat_time(heat_id);
+             timer = setInterval(function(){update_heat_time(heat_id);}, 1000);
+         }
+     });
+ }
+
+ function update_heat_time(heat_id){
+     var now = new Date();
+     var heat_time = Math.ceil((heat_end_time[heat_id].getTime() - now.getTime())/1000);
+     if (heat_time < 0)
+         heat_time = 0;
+     var minutes = '' + parseInt(heat_time / 60);
+     var seconds = '' + parseInt(heat_time % 60);
+     while (seconds.length < 2) seconds = '0' + seconds;
+     while (minutes.length < 2) minutes = '0' + minutes;
+     $('.heat_time').text(minutes + ':' + seconds);
+ }
 </script>

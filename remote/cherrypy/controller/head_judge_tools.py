@@ -1,4 +1,5 @@
 import cherrypy
+import datetime
 import json
 from ..lib.access_conditions import *
 from . import CherrypyWebInterface
@@ -47,6 +48,10 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
             return
         heat_id = int(heat_id)
         heat_info = self.collect_heat_info(heat_id)
+        import datetime
+        t = datetime.datetime.now()
+        heat_info['actual_start_time'] = t.strftime(CherrypyWebInterface.DTS_FORMAT)
+        heat_info['actual_end_time'] = (t + datetime.timedelta(minutes=15)).strftime(CherrypyWebInterface.DTS_FORMAT)
 
         res = cherrypy.engine.publish(KEY_ENGINE_SM_ACTIVATE_HEAT, heat_id, heat_info).pop()
         return res
@@ -61,6 +66,20 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
         res = cherrypy.engine.publish(KEY_ENGINE_SM_DEACTIVATE_HEAT, heat_id).pop()
         return res
 
+
+    @cherrypy.expose
+    @require(has_one_role(KEY_ROLE_HEADJUDGE))
+    def do_get_remaining_heat_time(self, heat_id=None, **kwargs):
+        if heat_id is None:
+            return
+        heat_id = int(heat_id)
+        heat_info = cherrypy.engine.publish(KEY_ENGINE_SM_GET_ACTIVE_HEAT_INFO, heat_id).pop()
+        if heat_info is None:
+            return
+        end_time = datetime.datetime.strptime(heat_info.get('actual_end_time'), CherrypyWebInterface.DTS_FORMAT)
+        remaining = (end_time - datetime.datetime.now()).total_seconds()
+        remaining = max(0, remaining)
+        return json.dumps(remaining)
 
     @cherrypy.expose
     @cherrypy.tools.render(template='headjudge/heat_activation_panel.html')
@@ -109,7 +128,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
         data['surfer_color_names'] = colors
         data['number_of_waves'] = int(heat_info['number_of_waves'])
         data['judge_ids']= judge_ids
-        data['judge_names'] = ['{}'.format(heat_info['judges'][judge_id]['judge_first_name']) for judge_id in data['judge_ids']]
+        data['judge_names'] = [u'{}'.format(heat_info['judges'][judge_id]['judge_first_name']) for judge_id in data['judge_ids']]
         data['surfer_color_colors'] = dict(zip(colors, colors_hex))
         return data
 
@@ -194,7 +213,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
                 # fill in heat_id
                 judge_info['heat_id'] = heat_id
             judge_info['expires'] = str(expires)
-            judge_info['name'] = '{} {}'.format(judge_info['first_name'], judge_info['last_name'])
+            judge_info['name'] = u'{} {}'.format(judge_info['first_name'], judge_info['last_name'])
             res.append(judge_info)
             #res.append({'judge_id': judge_id, 'expires': str(expires)})
 
@@ -203,7 +222,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
             judge_info = judges[judge_id]
             judge_info['judge_id'] = judge_id
             judge_info['status'] = 'missing'
-            judge_info['name'] = '{} {}'.format(judge_info['judge_first_name'], judge_info['judge_last_name'])
+            judge_info['name'] = u'{} {}'.format(judge_info['judge_first_name'], judge_info['judge_last_name'])
             res.append(judge_info)
 
         return json.dumps(res)

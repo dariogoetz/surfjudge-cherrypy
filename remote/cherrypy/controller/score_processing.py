@@ -5,7 +5,7 @@ def compute_average_scores(scores_by_surfer_wave, judges):
     for surfer_id, data in scores_by_surfer_wave.items():
         for wave, judge_data in data.items():
             if set(judge_data.keys()) != judges:
-                print 'score_processing: not all judges gave score for wave {} of surfer {} --> ignoring'.format(wave, surfer_id)
+                print u'score_processing: not all judges gave score for wave {} of surfer {} --> ignoring'.format(wave, surfer_id)
                 continue
 
             s = []

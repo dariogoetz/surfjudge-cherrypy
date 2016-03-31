@@ -107,12 +107,12 @@ class AuthenticationController(CherrypyWebInterface):
 
         logged_in = env['global_logged_in']
 
-        message = ''
+        message = u''
         if cherrypy.request.method == 'POST':
             roles = []
             successful = self.do_register(username, password, roles)
             if successful:
-                msg = 'User "{}" registered successfully!'.format(username)
+                msg = u'User "{}" registered successfully!'.format(username)
                 raise cherrypy.HTTPRedirect('/simple_message?msg={}'.format(msg) )
             else:
                 message = 'Register unsuccessful!'
@@ -126,7 +126,7 @@ class AuthenticationController(CherrypyWebInterface):
     @cherrypy.expose
     @cherrypy.tools.render(template = 'authentication/logged_out.html')
     def logout(self):
-        message = ''
+        message = u''
         successful = self.do_logout()
         if successful:
             message = 'Logout successful!'

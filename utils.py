@@ -8,12 +8,20 @@ def utf_8_encoder(unicode_csv_data):
         res = line.encode('utf-8').rstrip('\n')
         yield res
 
+def UnicodeDictReader(utf8data, **kwargs):
+    csv_reader = csv.DictReader(utf8data, **kwargs)
+    for row in csv_reader:
+        yield {key: value.decode('utf-8') for key, value in row.iteritems()}
 
-def read_surfers(f):
+def read_surfers(f, decode=None):
     res = {}
-    surfer_reader = csv.DictReader(f, delimiter=';')
+    if decode=='utf-8':
+        surfer_reader = UnicodeDictReader(f, delimiter=';')
+    else:
+        surfer_reader = csv.DictReader(f, delimiter=';')
     for row in surfer_reader:
-        key = '{} {}'.format(row['first_name'], row['last_name'])
+        print row
+        key = u'{} {}'.format(row['first_name'], row['last_name'])
         row['name'] = key
         row['country'] = 'Germany'
         res.setdefault(key, row)

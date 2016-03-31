@@ -33,5 +33,5 @@ class JinjaRenderTool(cherrypy.Tool):
 
         # Render the template into the response body
         if template and isinstance(context, dict):
-            cherrypy.response.body = template.render(**context)
+            cherrypy.response.body = template.render(**context).encode('utf-8')
         return
