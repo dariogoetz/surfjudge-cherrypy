@@ -166,10 +166,10 @@
      var idx = heat_order.indexOf(heat_id);
      var heat_ids = [];
      if (idx > 0)
-         heat_ids.push(idx-1);
-     heat_ids.push(idx);
+         heat_ids.push(heat_order[idx-1]);
+     heat_ids.push(heat_order[idx]);
      if (idx < heat_order.length -1)
-         heat_ids.push(idx+1);
+         heat_ids.push(heat_order[idx+1]);
      add_heat_overview_panels(heat_ids, false, heat_id).done(function(){
          current_heat_order_idx = idx;
          refresh(heat_id);

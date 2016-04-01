@@ -8,6 +8,7 @@ from keys import *
 class CherrypyWebInterface(object):
     N_BEST_WAVES = 2
     DEFAULT_NUMBER_OF_WAVES = 10
+    DEFAULT_DURATION = 15
 
 
     T_FORMAT = '%H:%M'

@@ -538,6 +538,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
                 'heats.name AS heat_name',
                 'heats.start_datetime AS heat_start_datetime',
                 'heats.number_of_waves AS number_of_waves',
+                'heats.duration AS duration',
                 'heats.additional_info AS heat_additional_info',
                 'categories.id AS category_id',
                 'categories.name AS category_name',

@@ -220,6 +220,26 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
                   </div>
 
                   <div class="form-group">
+                      <label class="col-xs-2 control-label">Duration [min]</label>
+                      <div class="col-xs-10">
+
+                          <div class="input-group plusminusinput">
+                              <span class="input-group-btn">
+                                  <button type="button" class="btn btn-danger btn-number"  data-type="minus" data-field="duration">
+                                      <span class="glyphicon glyphicon-minus"></span>
+                                  </button>
+                              </span>
+                              <input type="text" name="duration" class="form-control input-number heat_input" data-key="duration" placeholder="15" min="1" max="120" value = "10"">
+                              <span class="input-group-btn">
+                                  <button type="button" class="btn btn-success btn-number" data-type="plus" data-field="duration">
+                                      <span class="glyphicon glyphicon-plus"></span>
+                                  </button>
+                              </span>
+                          </div>
+                      </div>
+                  </div>
+
+                  <div class="form-group">
                       <label class="col-xs-2 control-label">Additional Info</label>
                       <div class="col-xs-10">
                         <input type="text" name="input_additional_info" class="form-control heat_input" data-key="additional_info" placeholder="Additional Info">

@@ -48,10 +48,13 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
             return
         heat_id = int(heat_id)
         heat_info = self.collect_heat_info(heat_id)
+
+        heat_duration_m = heat_info.get('duration', 15)
+
         import datetime
         t = datetime.datetime.now()
         heat_info['actual_start_time'] = t.strftime(CherrypyWebInterface.DTS_FORMAT)
-        heat_info['actual_end_time'] = (t + datetime.timedelta(minutes=15)).strftime(CherrypyWebInterface.DTS_FORMAT)
+        heat_info['actual_end_time'] = (t + datetime.timedelta(minutes=heat_duration_m)).strftime(CherrypyWebInterface.DTS_FORMAT)
 
         res = cherrypy.engine.publish(KEY_ENGINE_SM_ACTIVATE_HEAT, heat_id, heat_info).pop()
         return res

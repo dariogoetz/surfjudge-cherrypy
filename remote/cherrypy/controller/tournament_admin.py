@@ -174,7 +174,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     # TODO: as POST action
     @cherrypy.expose
     @require(has_all_roles(KEY_ROLE_ADMIN))
-    def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, category_id=None, date=None, start_time=None, number_of_waves=None, additional_info=None, **kwargs):
+    def do_edit_heat(self, json_data=None, heat_id=None, heat_name=None, category_id=None, date=None, start_time=None, number_of_waves=None, duration=None, additional_info=None, **kwargs):
         # data is a json with the fields?
         if json_data is not None:
             data = json.loads(json_data)
@@ -186,6 +186,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             data['start_time'] = start_time#.encode()
             data['date'] = date#.encode()
             data['number_of_waves'] = number_of_waves if number_of_waves else CherrypyWebInterface.DEFAULT_NUMBER_OF_WAVES
+            data['duration'] = duration if duration else CherrypyWebInterface.DEFAULT_DURATION
             data['additional_info'] = additional_info
 
         data['start_datetime'] = dstr_and_tstr2dtstr(data['date'], data['start_time'])
