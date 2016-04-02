@@ -615,6 +615,8 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
         conditions = []
         for c in col_names:
             if isinstance(val_dict[c], list) or isinstance(val_dict[c], set):
+                if len(val_dict[c]) == 0:
+                    continue
                 cond = u'{}.{} IN ({})'.format(table, c, ','.join(map(str, val_dict[c])))
             else:
                 cond = u'{}.{} = "{}"'.format(table, c, val_dict[c])
