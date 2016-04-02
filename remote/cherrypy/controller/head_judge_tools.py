@@ -139,11 +139,11 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
-    def do_get_participating_surfers(self, heat_id=None, fill_advance=False):
+    def do_get_participating_surfers(self, heat_id=None):
         if heat_id == '' or heat_id is None:
             return json.dumps([])
         heat_id = int(heat_id)
-        data = self.collect_participants(heat_id, fill_advance=fill_advance)
+        data = self.collect_participants(heat_id, fill_proposal=False)
         return json.dumps(data)
 
 

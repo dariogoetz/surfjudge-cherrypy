@@ -20,7 +20,6 @@ def read_surfers(f, decode=None):
     else:
         surfer_reader = csv.DictReader(f, delimiter=';')
     for row in surfer_reader:
-        print row
         key = u'{} {}'.format(row['first_name'], row['last_name'])
         row['name'] = key
         row['country'] = 'Germany'

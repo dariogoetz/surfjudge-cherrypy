@@ -18,8 +18,10 @@ var Heat = function(element, options){
     this.heat_data['heat_name'] = options['name'];
 
     this.surfers = [];
-    this.participants = [];
-    this.advanced_participants = [];
+
+    this.participants = {};
+    this.proposed_participants = {};
+    this.advancement_rules = {};
     this.init();
 }
 
@@ -28,11 +30,14 @@ Heat.prototype.constructor = Heat;
 Heat.prototype.init = function(){
     if (this.heat_data['number_of_waves'] == '')
         this.heat_data['number_of_waves'] = 10;
-
+    if (this.heat_data['duration'] == '')
+        this.heat_data['duration'] = 15;
     this.element.find('.participants_table').bootstrapTable({'rowStyle': function rowStyle(row, index){
         var res = {};
-        if (row['advanced'])
-            res['classes'] = 'advanced';
+        if (row['type'] == 'proposal')
+            res['classes'] = 'proposal';
+        else if (row['type'] == 'rule')
+            res['classes'] = 'rule';
         return res;
     }});
     this.surfers_modal.find('.surfers_table').bootstrapTable();
@@ -124,43 +129,92 @@ Heat.prototype.refresh_from_server = function(){
 }
 
 Heat.prototype.get_data_from_server = function(){
-    this.surfers = [];
+    this.surfers = {};
     this.participants = {};
-    this.advanced_participants = [];
+    this.proposed_participants = {};
+    this.advancement_rules = {};
     this.colors = {};
+    var deferred_rules = $.getJSON('/tournament_admin/do_get_advancement_rules', {heat_id: this.heat_id});
     var deferred_surfers = $.getJSON('/tournament_admin/do_get_surfers');
-    var deferred_participants = $.getJSON('/headjudge/do_get_participating_surfers', {heat_id: this.heat_id, fill_advance: true});
-    var deferred_advanced = $.getJSON('/tournament_admin/do_get_advancing_surfers', {heat_id: this.heat_id});
+    var deferred_participants = $.getJSON('/headjudge/do_get_participating_surfers', {heat_id: this.heat_id});
+    var deferred_proposals = $.getJSON('/tournament_admin/do_get_advancing_surfers', {heat_id: this.heat_id});
     var deferred_colors = $.getJSON('/tournament_admin/do_get_lycra_colors');
 
     var _this = this;
 
-    return $.when(deferred_surfers, deferred_participants, deferred_advanced, deferred_colors).done(function(ev_surfers, ev_participants, ev_advanced, ev_colors){
+    return $.when(deferred_surfers, deferred_participants, deferred_proposals, deferred_colors, deferred_rules).done(function(ev_surfers, ev_participants, ev_proposals, ev_colors, ev_rules){
         _this.surfers = ev_surfers[0];
-        for (idx=0; idx < ev_participants[0].length; idx++)
+        for (var idx=0; idx < ev_participants[0].length; idx++)
             _this.participants[ev_participants[0][idx]['seed']] = ev_participants[0][idx];
-        _this.advanced_participants = ev_advanced[0];
+        for (var idx=0; idx < ev_proposals[0].length; idx++)
+            _this.proposed_participants[ev_proposals[0][idx]['seed']] = ev_proposals[0][idx];
+        _this.advancement_rules = ev_rules[0];
         _this.colors = ev_colors[0];
     });
 }
 
 Heat.prototype.refresh_surfers_table = function(){
-    this.surfers_modal.data('participant', {});
+    this.surfers_modal.data('participant', null);
     this.surfers_modal.find('.surfers_table').bootstrapTable('load', this.get_nonparticipating_surfers());
 }
 
+Heat.prototype._get_combined_participants = function(){
+    var participants = {};
+    for (idx in this.advancement_rules){
+        var participant = this.advancement_rules[idx];
+        var p = {};
+        $.extend(p, participant);
+        p['type'] = 'rule';
+        p['surfer_color'] = this.colors[p['seed'] % this.colors.length];
+        participants[participant['seed']] = p;
+    }
+    for (idx in this.proposed_participants){
+        var participant = this.proposed_participants[idx];
+        var p = {};
+        $.extend(p, participant);
+        p['type'] = 'proposal';
+        p['surfer_color'] = this.colors[p['seed'] % this.colors.length];
+        participants[participant['seed']] = p;
+    }
+    for (idx in this.participants){
+        var participant = this.participants[idx];
+        var p = {};
+        $.extend(p, participant);
+        p['type'] = 'participant';
+        participants[participant['seed']] = p;
+    }
+    return participants;
+}
 
 Heat.prototype.refresh_participants_table = function(){
     var res = [];
-    for (seed in this.participants){
-        // fill table in edit_heat modal
-        if (this.participants[seed])
-            res.push(this._add_interactive_fields(this.participants[seed]));
+    var max_seed = -1;
+    var participants = this._get_combined_participants();
+    for (idx in participants){
+        var participant = participants[idx];
+        if (participant['seed'] > max_seed){
+            max_seed = participant['seed'];
+        }
+    }
+
+    for (var seed = 0; seed <= max_seed; seed++){
+        var type = 'empty';
+        var p = {};
+        if (participants[seed] == null){
+            p['name'] = '-- empty slot --';
+            p['seed'] = seed;
+            p['surfer_color'] = null;
+        } else
+        {
+            p = participants[seed];
+            type = p['type'];
+        }
+        res.push(this._add_interactive_fields(p, type));
     }
     this.element.find('.participants_table').bootstrapTable('load', res);
 }
 
-Heat.prototype._add_interactive_fields = function(participant){
+Heat.prototype._add_interactive_fields = function(participant, type){
     var s = '<select class="form-control"  data-seed="' + participant['seed'] + '">';
     for (var val in this.colors) {
         var sel = '';
@@ -171,10 +225,14 @@ Heat.prototype._add_interactive_fields = function(participant){
     s = s + '</select>';
 
     var action_field = '';
-    if (participant['advanced']){
+    if (type == 'proposal'){
         action_field = '<button data-seed=' + participant['seed'] + ' class="btn btn-success remove_pending_btn"><span class="glyphicon glyphicon-ok"></span></button>';
-    } else {
+    } else if (type == 'participant') {
         action_field = '<button data-seed=' + participant['seed'] + ' class="btn btn-danger remove_participant_btn"><span class="glyphicon glyphicon-remove"></span></button>';
+    } else if (type == 'rule') {
+        action_field = '';
+    } else {
+        action_field = '';
     }
     var edit_field = '&nbsp; <button data-seed=' + participant['seed'] + ' class="btn btn-info edit_participant_btn"><span class="glyphicon glyphicon-edit"></span></button>';
 
@@ -184,23 +242,11 @@ Heat.prototype._add_interactive_fields = function(participant){
     return res;
 }
 
-
-Heat.prototype.get_confirmed_participants = function(){
-    var res = [];
-    for (seed in this.participants){
-        if (!this.participants[seed]['advanced']){
-            res.push(this.participants[seed]);
-        }
-    }
-    return res;
-}
-
 Heat.prototype.get_nonparticipating_surfers = function(){
     var surfers = [];
-    var p = this.get_confirmed_participants();
     var p_set = new Set();
-    for (idx=0; idx < p.length; idx++){
-        p_set.add(p[idx]['surfer_id']);
+    for (var idx in this.participants){
+        p_set.add(this.participants[idx]['surfer_id']);
     }
     for (idx=0; idx < this.surfers.length; idx++){
         if (!p_set.has(this.surfers[idx]['id']))
@@ -210,25 +256,23 @@ Heat.prototype.get_nonparticipating_surfers = function(){
 }
 
 Heat.prototype.remove_participant = function(seed){
-    if (seed >= this.advanced_participants.length)
-        delete this.participants[seed];
-    else
-        this.participants[seed] = $.extend({}, this.advanced_participants[seed]);
+    delete this.participants[seed];
     this.refresh_participants_table();
     this.refresh_surfers_table();
 }
 
 Heat.prototype.confirm_participant = function(seed){
-    if (seed in this.participants)
-        this.participants[seed]['advanced'] = false;
+    this.participants[seed] = $.extend({}, this.proposed_participants[seed])
+    delete this.participants[seed]['proposal'];
 }
 
 Heat.prototype.set_participant = function(seed, data){
+    var participants = this._get_combined_participants();
     var new_seed = -1;
     if (seed == 'new'){
         var max_existing_seed = -1;
-        for (seed in this.participants)
-            max_existing_seed = Math.max(max_existing_seed, this.participants[seed]['seed']);
+        for (seed in participants)
+            max_existing_seed = Math.max(max_existing_seed, participants[seed]['seed']);
         new_seed = max_existing_seed + 1;
     }
     else
@@ -240,7 +284,7 @@ Heat.prototype.set_participant = function(seed, data){
         this.participants[new_seed]['surfer_color'] = existing_participant['surfer_color'];
     }
     else {
-        var color = this.get_available_color();
+        var color = this.colors[new_seed % this.colors.length];
         if (color)
             this.participants[new_seed]['surfer_color'] = color;
     }
@@ -270,15 +314,21 @@ Heat.prototype.check_data = function(){
     };
 
     var colors = new Set();
+    var ids = new Set();
     for (seed in this.participants){
-        if (!this.participants[seed]['advanced']){
-            var color = this.participants[seed]['surfer_color'];
-            if (colors.has(color)){
-                alert('Double entries for "Surfer Color"');
-                return false;
-            }
-            colors.add(color);
+        var color = this.participants[seed]['surfer_color'];
+        if (colors.has(color)){
+            alert('Double entries for "Surfer Color"');
+            return false;
         }
+        colors.add(color);
+
+        var id = this.participants[seed]['surfer_id'];
+        if (ids.has(id)){
+            alert('Surfer entered twice');
+            return false;
+        }
+        ids.add(id);
     }
     return true;
 }
@@ -288,7 +338,7 @@ Heat.prototype.fetch_surfer_colors = function(){
 
     this.element.find('.participants_table select option:selected').each(function(){
         var seed = parseInt($(this).parent().data('seed'));
-        if (!_this.participants[seed]['advanced']){
+        if (_this.participants[seed]){
             _this.participants[seed]['surfer_color'] = $(this).val();
         }
     });
@@ -298,10 +348,8 @@ Heat.prototype.get_available_color = function(){
     this.fetch_surfer_colors();
     var taken_colors = new Set();
     for (seed in this.participants){
-        if (!this.participants[seed]['advanced']){
-            var color = this.participants[seed]['surfer_color'];
-            taken_colors.add(color);
-        }
+        var color = this.participants[seed]['surfer_color'];
+        taken_colors.add(color);
     }
     for (idx = 0; idx < this.colors.length; idx++){
         var color = this.colors[idx];
@@ -321,7 +369,11 @@ Heat.prototype.upload_data = function(){
     }
 
     var heat_data = this.heat_data;
-    var participants = JSON.stringify(this.get_confirmed_participants());
+    var plist = [];
+    for (var idx in this.participants){
+        plist.push(this.participants[idx]);
+    }
+    var participants = JSON.stringify(plist);
 
     console.log('uploading');
 

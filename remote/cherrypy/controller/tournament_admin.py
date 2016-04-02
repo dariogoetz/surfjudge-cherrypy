@@ -215,6 +215,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
     @require(has_all_roles(KEY_ROLE_ADMIN))
     def do_set_participating_surfers(self, heat_id=None, participants=None):
         participants = json.loads(participants)
+
         # fill missing fields
         old_participants = {p['surfer_id']: p for p in self.collect_participants(heat_id=heat_id)}
         all_participants = []
@@ -489,6 +490,14 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         return json.dumps(res)
 
 
+    def _get_heat_ids_for_tournament(self, tournament_id):
+        heats = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, {'tournament_id': tournament_id}).pop()
+        if heats is None or len(heats) == 0:
+            return []
+        hids = sorted([h['heat_id'] for h in heats])
+        return hids
+
+
     @cherrypy.expose
     def do_get_heat_order(self, tournament_id=None, **kwargs):
         if tournament_id is None:
@@ -496,8 +505,14 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         tournament_id = int(tournament_id)
 
         hids = cherrypy.engine.publish(KEY_ENGINE_TM_GET_HEAT_ORDER, tournament_id).pop(0)
+        if hids is None or len(hids) == 0:
+            hids = self._get_heat_ids_for_tournament(tournament_id)
+        if len(hids) == 0:
+            return '[]'
+
         res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, {'id': hids}).pop(0)
         return json.dumps(res)
+
 
     @cherrypy.expose
     def do_set_heat_order(self, tournament_id=None, list_of_heat_ids=None, **kwargs):
@@ -516,6 +531,12 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
         tournament_id = int(tournament_id)
         res = cherrypy.engine.publish(KEY_ENGINE_TM_GET_CURRENT_HEAT_ID, tournament_id).pop()
+        if res is None:
+            hids = self._get_heat_ids_for_tournament(tournament_id)
+            if len(hids) == 0:
+                return None
+            res = hids[0]
+
         return str(res)
 
     @cherrypy.expose
@@ -531,12 +552,25 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
 
     @cherrypy.expose
+    def do_get_advancement_rules(self, heat_id=None, **kwargs):
+        if heat_id is None:
+            return
+        heat_id = int(heat_id)
+        rules = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop()
+        res = []
+        for seed, p in rules.items():
+            p['seed'] = seed
+            p['name'] = 'To advance from heat {} place {}'.format(p['from_heat_id'], p['from_place'])
+            res.append(p)
+        return json.dumps(res)
+
+    @cherrypy.expose
     def do_get_advancing_surfers(self, heat_id=None, **kwargs):
         if heat_id is None:
             return
         heat_id = int(heat_id)
         #res = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop()
-        res = self.collect_participants(heat_id, fill_advance=True, confirmed_participants=[])
+        res = self.collect_participants(heat_id, fill_proposal=True, confirmed_participants=[])
         return json.dumps(res)
 
     @cherrypy.expose

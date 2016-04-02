@@ -12,6 +12,7 @@
 
 <link href="/static/bootstrap-timepicker/css/bootstrap-timepicker.min.css" rel="stylesheet">
 <link href="/static/bootstrap_duallistbox/bootstrap-duallistbox.min.css" rel="stylesheet">
+<link href="/static/surfjudge/css/heat.css" rel="stylesheet">
 
 <style>
 .datepicker{z-index:1151 !important;}
@@ -95,6 +96,8 @@
      var chid_jqxhr = $.get('/tournament_admin/do_get_current_heat_id', {tournament_id:tournament_id});
      $.when(ho_jqxhr, chid_jqxhr).done(function(ev_heat_order, ev_current_heat_id){
          var heat_order_info = ev_heat_order[0];
+         if (heat_order_info.length == 0)
+             alert('No heat order provided for tournament ' + tournament_id);
          heat_order = [];
          heat_order_names = [];
          for (var idx=0; idx<heat_order_info.length; idx++){
@@ -162,19 +165,33 @@
  }
 
  function set_heat_overview_panel(heat_id){
-     $('#heat_overview_carousel .carousel-inner').empty();
-     var idx = heat_order.indexOf(heat_id);
-     var heat_ids = [];
-     if (idx > 0)
-         heat_ids.push(heat_order[idx-1]);
-     heat_ids.push(heat_order[idx]);
-     if (idx < heat_order.length -1)
-         heat_ids.push(heat_order[idx+1]);
-     add_heat_overview_panels(heat_ids, false, heat_id).done(function(){
-         current_heat_order_idx = idx;
-         refresh(heat_id);
-         set_heat_order_list(heat_id);
-     });
+
+     function doit(){
+         $('#heat_overview_carousel .carousel-inner').empty();
+         var idx = heat_order.indexOf(heat_id);
+         var heat_ids = [];
+         if (idx > 0)
+             heat_ids.push(heat_order[idx-1]);
+         heat_ids.push(heat_order[idx]);
+         if (idx < heat_order.length -1)
+             heat_ids.push(heat_order[idx+1]);
+         add_heat_overview_panels(heat_ids, false, heat_id).done(function(){
+             current_heat_order_idx = idx;
+             refresh(heat_id);
+             set_heat_order_list(heat_id);
+         });
+     }
+
+     var previous_heat_id = $('#heat_overview_carousel .active .container-fluid').data('heat_id');
+     if (previous_heat_id != null){
+         $('#heat_overview_' + previous_heat_id).heat('upload_data').done(function(){
+             $('#heat_overview_' + previous_heat_id).heat('destroy');
+             $('#heat_overview_' + previous_heat_id).judging_requests('destroy');
+             doit();
+         });
+     }
+     else
+         doit();
  }
 
 
@@ -191,7 +208,7 @@
          return;
      }
 
-     if (current_heat_order_idx < heat_order.length -1)
+     if (current_heat_order_idx < heat_order.length - 1)
          elem.remove();
 
      if (current_heat_order_idx > 1){

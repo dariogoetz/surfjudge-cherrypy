@@ -103,26 +103,26 @@ class CherrypyWebInterface(object):
         return heat_info
 
 
-    def collect_participants(self, heat_id, fill_advance=False, confirmed_participants=None):
+    def collect_participants(self, heat_id, fill_proposal=False, confirmed_participants=None):
         if confirmed_participants is None:
             participants = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_PARTICIPANTS, heat_id).pop()
         else:
             participants = confirmed_participants
 
-        # set 'advanced' to False
+        # set 'proposal' to False
         for p in participants:
-            p.setdefault('advanced', False)
+            p.setdefault('proposal', False)
 
-        if fill_advance:
+        if fill_proposal:
             existing_surfer_ids = set([p['surfer_id'] for p in participants])
-            advanced_participants = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop()
+            proposed_participants = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop()
 
             db_seeds = [int(p.get('seed')) for p in participants if p.get('seed') is not None]
-            fill_in_participant_seeds = set(advanced_participants.keys()) - set(db_seeds)
+            fill_in_participant_seeds = set(proposed_participants.keys()) - set(db_seeds)
             if len(fill_in_participant_seeds) > 0:
                 for seed in fill_in_participant_seeds:
-                    from_heat = advanced_participants.get(seed, {}).get('from_heat_id')
-                    from_place = advanced_participants.get(seed, {}).get('from_place')
+                    from_heat = proposed_participants.get(seed, {}).get('from_heat_id')
+                    from_place = proposed_participants.get(seed, {}).get('from_place')
                     print u'collecting participants: advancing surfer from Heat {}, {}. place'.format(from_heat, from_place)
                     # get surfer_id from results table
                     heat_result = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_RESULTS, {'heat_id': from_heat, 'place': from_place}).pop()
@@ -138,7 +138,7 @@ class CherrypyWebInterface(object):
                     surfer_info = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_SURFERS, {'id': surfer_id}).pop()
                     new_participant = {}
                     new_participant.update(surfer_info[0])
-                    new_participant['advanced'] = True
+                    new_participant['proposal'] = True
                     new_participant['surfer_id'] = surfer_id
                     new_participant['heat_id'] = heat_id
                     new_participant['seed'] = seed
@@ -173,8 +173,8 @@ class CherrypyWebInterface(object):
     def _complete_participants(self, participants):
         import utils
 
-        confirmed_participants = [p for p in participants if not p.get('advanced')]
-        advanced_participants = [p for p in participants if p.get('advanced')]
+        confirmed_participants = [p for p in participants if not p.get('proposed')]
+        proposed_participants = [p for p in participants if p.get('proposed')]
 
         colors = utils.read_lycra_colors('lycra_colors.csv')
         seed2color = {int(c['SEEDING']): c for c in colors.values()}
@@ -185,19 +185,19 @@ class CherrypyWebInterface(object):
         all_seeds = set(range(max(taken_seeds)+2)) if len(taken_seeds)>0 else set([0])
         available_seeds = all_seeds - taken_seeds
 
-        for p in confirmed_participants + advanced_participants:
+        for p in confirmed_participants + proposed_participants:
             if 'seed' not in p:
                 p['seed'] = sorted(available_seeds).pop(0)
 
 
         confirmed_participants = sorted(confirmed_participants, key=lambda x: x['seed'])
-        advanced_participants = sorted(advanced_participants, key=lambda x: x['seed'])
+        proposed_participants = sorted(proposed_participants, key=lambda x: x['seed'])
 
         # color
         taken_colors = set([p['surfer_color'] for p in participants if 'surfer_color' in p])
         available_colors = [seed2color[s]['COLOR'] for s in sorted(seed2color) if seed2color[s]['COLOR'] not in taken_colors]
 
-        for p in confirmed_participants + advanced_participants:
+        for p in confirmed_participants + proposed_participants:
             if 'surfer_color' not in p:
                 pref_c = seed2color[p['seed']]['COLOR']
                 if pref_c not in taken_colors:
