@@ -40,7 +40,6 @@ Heat.prototype.init = function(){
             res['classes'] = 'rule';
         return res;
     }});
-    this.surfers_modal.find('.surfers_table').bootstrapTable();
 
     this.element.find('.plusminusinput').plusminusinput();
 
@@ -71,14 +70,12 @@ Heat.prototype.register_events = function(){
 
 
     this.element.on('click', '.participants_table .edit_participant_btn', function(){
-        _this.refresh_surfers_table();
         _this.surfers_modal.data('seed', $(this).data('seed'));
         _this.surfers_modal.modal('toggle');
     });
 
 
     this.element.on('click', '.add_participant_btn', function(){
-        _this.refresh_surfers_table();
         _this.surfers_modal.data('seed', 'new');
         _this.surfers_modal.modal('toggle');
     });
@@ -106,6 +103,15 @@ Heat.prototype.register_events = function(){
             console.log('nothing to submit');
     });
 
+
+    this.surfers_modal.on('show.bs.modal', function(){
+        _this.surfers_modal.find('.surfers_table').bootstrapTable();
+        _this.refresh_surfers_table();
+    });
+
+    this.surfers_modal.on('hidden.bs.modal', function(){
+        _this.surfers_modal.find('.surfers_table').bootstrapTable('destroy');
+    });
 }
 
 Heat.prototype.unregister_events = function(){
