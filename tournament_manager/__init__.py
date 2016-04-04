@@ -43,6 +43,8 @@ class TournamentManager(object):
                     json.dump({}, open(HEAT_ORDERS_FILENAME, 'wb'))
                 except:
                     print 'TournamentManager: could not read/initialize heat order file'
+
+            self.heat_orders = {}
             if tmp is not None:
                 self.heat_orders = {int(key): val for key, val in tmp.items()}
         return
