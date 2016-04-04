@@ -1,5 +1,6 @@
 import os
 import cherrypy
+import json
 
 from ..lib.access_conditions import *
 from . import CherrypyWebInterface
@@ -73,10 +74,51 @@ class AuthenticationController(CherrypyWebInterface):
 
 
 
+    @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
+    def do_get_logins(self, **kwargs):
+        logins = cherrypy.engine.publish(KEY_ENGINE_USER_GET_USERS).pop()
+        res = []
+        for login, data in logins.items():
+            d = {}
+            d.update(data)
+            d['username'] = login
+            del d['password']
+            res.append(d)
+        return json.dumps(res)
+
+
+    @cherrypy.expose
+    @require(is_admin())
+    def do_modify_login(self, old_username=None, new_username=None, username=None, roles=None, **kwargs):
+        if username is not None and roles is not None:
+            roles = json.loads(roles)
+            res = cherrypy.engine.publish(KEY_ENGINE_USER_SET_ROLES, username, roles).pop()
+        if old_username is not None and new_username is not None:
+            res = cherrypy.engine.publish(KEY_ENGINE_USER_RENAME, old_username, new_username).pop()
+        return
+
+    @cherrypy.expose
+    @require(is_admin())
+    def do_delete_login(self, username=None, **kwargs):
+        if username is None:
+            return
+        res = cherrypy.engine.publish(KEY_ENGINE_USER_DELETE, username).pop()
+        return
 
     #######################################################################
     #### HTML resources #########
     #######################################################################
+
+
+
+    @cherrypy.expose
+    @require(has_all_roles(KEY_ROLE_ADMIN))
+    @cherrypy.tools.render(template='/tournament_admin/edit_logins.html')
+    @cherrypy.tools.relocate()
+    def logins(self, **kwargs):
+        data = self._standard_env()
+        return data
 
 
     # functions as website as well as POST request leading to website, if unsuccessful

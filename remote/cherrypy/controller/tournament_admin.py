@@ -466,30 +466,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         return data
 
 
-
-    @cherrypy.expose
-    @require(has_all_roles(KEY_ROLE_ADMIN))
-    @cherrypy.tools.render(template='/tournament_admin/edit_logins.html')
-    @cherrypy.tools.relocate()
-    def logins(self, **kwargs):
-        data = self._standard_env()
-        return data
-
-
-    @cherrypy.expose
-    @require(has_all_roles(KEY_ROLE_ADMIN))
-    def do_get_logins(self, **kwargs):
-        logins = cherrypy.engine.publish(KEY_ENGINE_USER_GET_USERS).pop()
-        res = []
-        for login, data in logins.items():
-            d = {}
-            d.update(data)
-            d['login'] = login
-            del d['password']
-            res.append(d)
-        return json.dumps(res)
-
-
     def _get_heat_ids_for_tournament(self, tournament_id):
         heats = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, {'tournament_id': tournament_id}).pop()
         if heats is None or len(heats) == 0:
@@ -557,10 +533,15 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             return
         heat_id = int(heat_id)
         rules = cherrypy.engine.publish(KEY_ENGINE_TM_GET_ADVANCING_SURFERS, heat_id).pop()
+
+        hids = [r['from_heat_id'] for r in rules.values()]
+        heat_infos = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, {'id': hids}).pop(0)
+        heat_infos = {h['id']: h for h in heat_infos}
         res = []
         for seed, p in rules.items():
             p['seed'] = seed
-            p['name'] = 'To advance from heat {} place {}'.format(p['from_heat_id'], p['from_place'])
+            heat_name = heat_infos.get(p['from_heat_id'], {}).get('name', p['from_heat_id'])
+            p['name'] = 'To advance from place {} of "{}"'.format(p['from_place'], heat_name)
             res.append(p)
         return json.dumps(res)
 

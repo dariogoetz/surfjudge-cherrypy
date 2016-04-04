@@ -204,6 +204,45 @@ class UserManager(object):
         return
 
 
+    def rename_user(self, old_username, new_username):
+        if not old_username in self.__registered_users:
+            print 'user manager: user "{}" should be registered as judge but there is no such user'.format(old_username)
+            return False
+
+        with self._lock:
+            old_user = self.__registered_users.get(old_username, {})
+            del self.__registered_users[old_username]
+            self.__registered_users[new_username] = old_user
+            self._write_to_disk()
+        return True
+
+
+    def delete_user(self, username):
+        if not username in self.__registered_users:
+            print 'user manager: user "{}" should be registered as judge but there is no such user'.format(username)
+            return False
+
+        with self._lock:
+            del self.__registered_users[username]
+            self._write_to_disk()
+        return True
+
+
+    def set_roles_for_user(self, username, roles=None):
+        if not username in self.__registered_users:
+            print 'user manager: user "{}" should be registered as judge but there is no such user'.format(username)
+            return False
+
+        if roles is None:
+            print 'user manager: no roles given to set for user "{}"'.format(username)
+            return False
+
+        with self._lock:
+            self.__registered_users.setdefault(username, {})[KEY_ROLES] = roles
+            self._write_to_disk()
+        return True
+
+
     def add_role_to_user(self, username, role):
         if not username in self.__registered_users:
             print 'user manager: user "{}" should be registered as judge but there is no such user'.format(username)

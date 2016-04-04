@@ -21,6 +21,9 @@ class UserAuthenticationPlugin(plugins.SimplePlugin):
         self.bus.subscribe(KEY_ENGINE_USER_LOGIN,  self.login_user)
         self.bus.subscribe(KEY_ENGINE_USER_LOGOUT, self.logout_user)
         self.bus.subscribe(KEY_ENGINE_USER_REGISTER, self.register_user)
+        self.bus.subscribe(KEY_ENGINE_USER_RENAME, self.rename_user)
+        self.bus.subscribe(KEY_ENGINE_USER_DELETE, self.delete_user)
+        self.bus.subscribe(KEY_ENGINE_USER_SET_ROLES, self.set_roles_for_user)
         self.bus.subscribe(KEY_ENGINE_USER_ADD_ROLE, self.add_role_to_user)
         self.bus.subscribe(KEY_ENGINE_USER_REMOVE_ROLE, self.remove_role_from_user)
         self.bus.subscribe(KEY_ENGINE_USER_GET_USERS, self.get_users)
@@ -32,6 +35,9 @@ class UserAuthenticationPlugin(plugins.SimplePlugin):
         self.bus.unsubscribe(KEY_ENGINE_USER_LOGIN,  self.login_user)
         self.bus.unsubscribe(KEY_ENGINE_USER_LOGOUT, self.logout_user)
         self.bus.unsubscribe(KEY_ENGINE_USER_REGISTER, self.register_user)
+        self.bus.unsubscribe(KEY_ENGINE_USER_RENAME, self.rename_user)
+        self.bus.unsubscribe(KEY_ENGINE_USER_DELETE, self.delete_user)
+        self.bus.unsubscribe(KEY_ENGINE_USER_SET_ROLES, self.set_roles_for_user)
         self.bus.unsubscribe(KEY_ENGINE_USER_ADD_ROLE, self.add_role_to_user)
         self.bus.unsubscribe(KEY_ENGINE_USER_REMOVE_ROLE, self.remove_role_from_user)
         self.bus.unsubscribe(KEY_ENGINE_USER_GET_USERS, self.get_users)
@@ -50,6 +56,15 @@ class UserAuthenticationPlugin(plugins.SimplePlugin):
 
     def register_user(self, username, password, roles):
         return self.user_manager.register_user(username, password, roles)
+
+    def rename_user(self, old_username, new_username):
+        return self.user_manager.rename_user(old_username, new_username)
+
+    def delete_user(self, username):
+        return self.user_manager.delete_user(username)
+
+    def set_roles_for_user(self, username, roles):
+        return self.user_manager.set_roles_for_user(username, roles)
 
     def add_role_to_user(self, username, role):
         return self.user_manager.add_role_to_user(username, role)

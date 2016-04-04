@@ -31,12 +31,12 @@
     <table class="table table-striped"
            id="logins_table"
            data-toggle="table"
-           data-url="{{ mount_loc }}/do_get_logins"
+           data-url="/auth/do_get_logins"
            data-sort-name="name"
            date-sort-order="asc">
         <thead>
             <tr>
-                <th data-field="login">Login</th>
+                <th data-field="username">Username</th>
                 <th data-field="roles" data-sortable="true">Roles</th>
             </tr>
         </thead>
@@ -60,12 +60,32 @@
 
           <div class="modal-body">
               <div class="well">
-                  asdf
+                  <div class="form-horizontal">
+                      <div class="form-group">
+                          <label class="col-sm-2 control-label">Username</label>
+                          <div class="col-sm-10">
+                              <input type="text" class="form-control login_input" data-key="username" placeholder="Username">
+                          </div>
+                      </div>
+
+                      <div class="form-group">
+                          <label class="col-sm-2 control-label">Roles</label>
+                          <div class="col-sm-10">
+                              {% for role in [('Admin', 'ac_admin'), ('Judge', 'ac_judge'), ('Headjudge', 'ac_headjudge'), ('Commentator', 'ac_commentator')] %}
+                              <div class="checkbox">
+                                  <label class="control-label">
+                                      <input class="login_input" type="checkbox" data-key="{{ role[1] }}">{{ role[0] }}
+                                  </label>
+                              </div>
+                              {% endfor %}
+                          </div>
+                      </div>
+                  </div>
               </div>
           </div><!-- /.modal-body -->
           <div class="modal-footer">
               <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-              <button id="login_delete" class="btn btn-danger pull-left">Delete</button>
+              <button id="login_delete" class="btn btn-danger pull-left" data-dismiss="modal">Delete</button>
               <button id="login_submit" class="btn btn-primary" data-dismiss="modal">Save changes</button>
           </div>
       </div><!-- /.modal-content -->
@@ -79,16 +99,29 @@
 {{ super() }}
 
 <script>
- function fill_edit_login_modal(login, roles){
+ function fill_edit_login_modal(data){
+     $('#edit_login_modal').find('.login_input').each(function(idx, elem){
+         var key = $(this).data('key');
+         if ($(this).attr('type') == 'checkbox'){
+             if (data['roles'].indexOf(key) >= 0)
+                 $(this).prop('checked', true);
+             else
+                 $(this).prop('checked', false);
+         }
+         else
+             $(this).val(data[key]);
+     });
 }
 
 // register functionality for selecting judge from table
-$('#logins_table').on('click-row.bs.table', function (e, row, $element) {
-    if (typeof(row) !== 'undefined'){
-        fill_edit_login_modal(row['login'], row['rows']);
-        $('#edit_login_modal').modal('toggle');
-    };
-});
+ $('#logins_table').on('click-row.bs.table', function (e, row, $element) {
+     $('#edit_login_modal').data('old_username', row['username']);
+     if (row != null){
+         console.log(row);
+         fill_edit_login_modal(row);
+         $('#edit_login_modal').modal('toggle');
+     };
+ });
 </script>
 
 {% endblock javascript %}
@@ -100,26 +133,39 @@ $('#logins_table').on('click-row.bs.table', function (e, row, $element) {
 
 <script>
 
+ function fetch_modal_input_data(){
+     var _this = this;
+     var data = {};
+     var roles = [];
+     $('#edit_login_modal').find('.login_input').each(function(idx, elem){
+         var key = $(this).data('key');
+         if ($(this).attr('type') == 'checkbox'){
+             if ($(this).prop('checked'))
+                 roles.push(key);
+         }
+         else
+             data[key] = $(this).val();
+     });
+     data['roles'] = JSON.stringify(roles);
+     var old_username = $('#edit_login_modal').data('old_username');
+     if (data['username'] != old_username){
+         data['old_username'] = old_username;
+         data['new_username'] = new_username;
+     }
+     return data;
+ }
  // ***** MODAL internals *****
-$('#login_submit').on('click', function(){
-    var judge_id = $('#modal_judge_id').val();
-    var judge_first_name = $('#modal_judge_first_name').val();
-    var judge_last_name = $('#modal_judge_last_name').val();
-    var judge_login = $('#modal_judge_login').val();
-    var additional_info = $('#modal_additional_info').val();
-
-
-    $.post('{{ mount_loc }}/do_edit_judge', {id: judge_id, first_name: judge_first_name, last_name: judge_last_name, username: judge_login, additional_info: additional_info});
-    $('#judges_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_judges'});
+ $('#login_submit').on('click', function(){
+     data = fetch_modal_input_data();
+     $.post('/auth/do_modify_login', data);
+     $('#logins_table').bootstrapTable('refresh');
   });
 
-  $('#judge_delete').on('click', function(){
-      var judge_id = $('#modal_judge_id').val();
-      var judge_login = $('#modal_judge_login').val();
+ $('#login_delete').on('click', function(){
+     data = fetch_modal_input_data();
 
-      $.post('{{ mount_loc }}/do_delete_judge', {id: judge_id, username: judge_login});
-      $('#edit_judge_modal').modal('toggle');
-      $('#judges_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_judges'});
+      $.post('/auth/do_delete_login', {username: data['username']});
+      $('#logins_table').bootstrapTable('refresh');
  });
 
 
