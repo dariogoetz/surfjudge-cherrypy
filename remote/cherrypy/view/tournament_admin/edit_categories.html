@@ -14,6 +14,29 @@
 
 <link href="/static/bootstrap_duallistbox/bootstrap-duallistbox.min.css" rel="stylesheet">
 
+<style type="text/css">
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+ }
+</style>
+
 {% endblock css %}
 
 
@@ -68,44 +91,48 @@
 <!-- Edit heats modal -->
 <div class="modal fade" id="edit_modal">
     <div class="modal-dialog">
-      <div class="modal-content">
+        <div class="modal-content">
 
-          <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-              <h4 class="modal-title">Edit Category</h4>
-          </div> <!-- /.modal-header -->
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Edit Category</h4>
+            </div> <!-- /.modal-header -->
 
-          <div class="modal-body">
-
-
-          <div class="well">
-              <div class="form-horizontal">
-                  <div class="form-group">
-                      <label class="col-sm-2 control-label">Category name</label>
-                      <div class="col-sm-10">
-                          <input type="hidden" id="modal_id">
-                          <input type="text" id="modal_name" name="name" class="form-control" placeholder="Category Name">
-                      </div>
-                  </div>
-
-                  <div class="form-group">
-                      <label class="col-sm-2 control-label">Additional Info</label>
-                      <div class="col-sm-10">
-                        <input type="text" id ="modal_additional_info" name="modal_additional_info" class="form-control" placeholder="Additional Info">
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div><!-- /.modal-body -->
+            <div class="modal-body">
 
 
-      <div class="modal-footer">
-        <button type="button" id="modal_delete" class="btn btn-danger pull-left">Delete</button>
-        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <button type="button" id="modal_submit" class="btn btn-primary">Save changes</button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
+                <div class="well">
+
+                    <div class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Category name</label>
+                            <div class="col-sm-10">
+                                <input type="hidden" id="modal_id">
+                                <input type="text" id="modal_name" name="name" class="form-control" placeholder="Category Name">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Additional Info</label>
+                            <div class="col-sm-10">
+                                <input type="text" id ="modal_additional_info" name="modal_additional_info" class="form-control" placeholder="Additional Info">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <button type="button" class="btn btn-standard btn-lg btn-file pull-right"><span class="glyphicon glyphicon-upload">&nbsp;</span>Generate new heats from CSV<input type="file"></button>
+                    </div>
+                </div>
+            </div><!-- /.modal-body -->
+
+
+            <div class="modal-footer">
+                <button type="button" id="modal_delete" class="btn btn-danger pull-left">Delete</button>
+                <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" id="modal_submit" class="btn btn-primary">Save changes</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
 {% endblock modals %}
@@ -127,18 +154,13 @@
 <script>
  // ***** MODAL internals *****
  $('#modal_submit').on('click', function(){
-     var id = $('#modal_id').val();
-     var name = $('#modal_name').val();
-     var additional_info = $('#modal_additional_info').val();
-     var tournament_id = $('#tournaments_select_dropdown').select_dropdown('get_selected_value');
-     if (id == null && name.length == 0) {
-         alert('Empty field "Category Name"');
-         return;
-     }
+     upload_data().done(function(){
+         $('#edit_modal').modal('toggle');
+         var tournament_id = $('#tournaments_select_dropdown').select_dropdown('get_selected_value');
+         $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
+     });
 
-     $.post('{{ mount_loc }}/do_edit_category', {id: id, name: name, tournament_id: tournament_id, additional_info: additional_info});
-     $('#edit_modal').modal('toggle');
-     $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
+
  });
 
  $('#modal_delete').on('click', function(){
@@ -153,6 +175,19 @@
 
 <script>
  // ***** DROPDOWN *****
+ function upload_data(){
+     var id = $('#modal_id').val();
+     var name = $('#modal_name').val();
+     var additional_info = $('#modal_additional_info').val();
+     var tournament_id = $('#tournaments_select_dropdown').select_dropdown('get_selected_value');
+     if (id == null && name.length == 0) {
+         alert('Empty field "Category Name"');
+         return;
+     }
+
+     return $.post('{{ mount_loc }}/do_edit_category', {id: id, name: name, tournament_id: tournament_id, additional_info: additional_info}, function(data){$('#modal_id').val(parseInt(data));});
+ }
+
 
  function on_tournament_select(selected_value){
      refresh_data_table(selected_value);
@@ -196,4 +231,38 @@
      };
 });
 </script>
+
+<script>
+ $(document).on('change', '.btn-file :file', function() {
+     var _this = this;
+     upload_data().done(function(){
+         var input = $(_this);
+         var category_id = $('#modal_id').val();
+         var tournament_id = $('#tournaments_select_dropdown').select_dropdown('get_selected_value');
+
+         var formData = new FormData();
+         formData.append('csv_document', _this.files[0]);
+         formData.append('tournament_id', tournament_id);
+         formData.append('category_id', category_id);
+         var num_files = input.get(0).files ? input.get(0).files.length : 1;
+         if (num_files > 0){
+             $.ajax({
+                 type: "POST",
+                 url: '/tournament_admin/do_generate_heats',
+                 data: formData,
+                 processData: false,
+                 contentType: false,
+                 cache: false,
+                 encType: 'multipart/form-data',
+                 success: function(){
+                     $('#data_table').bootstrapTable('refresh', {url:'{{ mount_loc }}/do_get_categories', query: {tournament_id: tournament_id}});
+                     $('#edit_modal').modal('toggle');
+                 }
+             });
+         }
+     });
+ });
+</script>
+
+
 {% endblock javascript %}
