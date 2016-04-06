@@ -486,11 +486,6 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
 
         return export_data
 
-    @cherrypy.expose
-    def test_gen_heats(self):
-        res = cherrypy.engine.publish(KEY_ENGINE_TM_GENERATE_HEATS, 32, 0, 0, 'standard').pop()
-        print str(res)
-
 
     @cherrypy.expose
     def do_register_judging_request(self, judge_id=None, heat_id=None):

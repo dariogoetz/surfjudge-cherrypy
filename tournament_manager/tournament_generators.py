@@ -2,7 +2,7 @@ class HeatStructureGenerator(object):
     def __init__(self):
         pass
 
-    def generate_heat_structure(self):
+    def generate_heat_structure(self, nparticipants):
         pass
 
     def get_name(self, round, heat, nrounds):

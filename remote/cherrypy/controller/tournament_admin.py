@@ -42,7 +42,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             data = {}
             data['id'] = int(id) if len(id) > 0 else None
             data['name'] = name
-            print name, type(name)
             data['start_date'] = start_date
             data['end_date'] = end_date
             data['additional_info'] = additional_info
@@ -86,7 +85,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     def do_get_categories(self, tournament_id = None, **kwargs):
-        print 'get categories', tournament_id
         if tournament_id is None:
             res = []
         else:
@@ -230,23 +228,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         res = cherrypy.engine.publish(KEY_ENGINE_DB_SET_PARTICIPANTS, {'heat_id': heat_id, 'participants': all_participants})
         return
 
-    @cherrypy.expose
-    @require(has_all_roles(KEY_ROLE_ADMIN))
-    def do_set_participating_surfers_depr(self, heat_id=None, surfer_ids=None, surfer_colors=None):
-        surfer_ids = json.loads(surfer_ids)
-        if surfer_colors is not None:
-            surfer_colors = json.loads(surfer_colors)
-
-        if surfer_colors is None:
-            surfer_colors = [u''] * len(surfer_ids)#'red', 'blue', 'green', 'yellow', 'white', 'orange'][:len(surfer_ids)]
-
-        # TODO: get correct seed values
-        seeds = range(len(surfer_ids))
-        surfers = zip(surfer_ids, surfer_colors, seeds)
-        data = {'heat_id': heat_id, 'surfers': surfers}
-        res = cherrypy.engine.publish(KEY_ENGINE_DB_SET_PARTICIPANTS, data)
-        return
-
 
     # TODO: as POST action
     @cherrypy.expose
@@ -264,7 +245,6 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             data['name'] = u'{} {}'.format(first_name, last_name)
             data['country'] = country
             data['additional_info'] = additional_info
-        print data
 
         res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, data).pop(0)
         return json.dumps(res)
@@ -294,6 +274,53 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
             print u'Trying to add surfer {}'.format(surfer)
             res = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, surfer).pop(0)
         return
+
+
+
+
+    @cherrypy.expose
+    def do_generate_heats(self, tournament_id=None, category_id=None, csv_document=None):
+        if tournament_id is None or category_id is None:
+            return
+        tournament_id = int(tournament_id)
+        category_id = int(category_id)
+
+        import utils
+        surfers = utils.read_surfers(csv_document.file, decode='utf-8')
+        surfers = sorted(surfers.values(), key=lambda x: int(x['seeding']))
+
+        res = cherrypy.engine.publish(KEY_ENGINE_TM_GENERATE_HEATS, len(surfers), tournament_id, category_id, 'standard').pop()
+
+        if len(res) == 2:
+            advancing_surfers, seeding_info = res
+        else:
+            print 'generate_heats: Did not get advancing surfers AND seeding info'
+            return
+
+        def rueck(i, n):
+            return (i/n) % 2
+        def hin(i, n):
+            return ( (i/n) +1 ) %2
+        def idx2heat(i, n):
+            return i%n * hin(i,n) + (n - i%n - 1) * rueck(i,n)
+        def idx2seed(i, n):
+            return i/n
+
+        participants = {}
+        n_heats = len(seeding_info)
+        for idx, surfer in enumerate(surfers):
+            heat_id = seeding_info[idx2heat(idx, n_heats)]
+            seed = idx2seed(idx, n_heats)
+            surfer_id = cherrypy.engine.publish(KEY_ENGINE_DB_INSERT_SURFER, surfer).pop()
+            p = {}
+            p['surfer_id'] = surfer_id
+            p['seed'] = seed
+            p['was_seeded_at'] = idx
+            participants.setdefault(heat_id, []).append(p)
+
+        for heat_id, ps in participants.items():
+            self.do_set_participating_surfers(heat_id=heat_id, participants=json.dumps(ps))
+
 
 
 

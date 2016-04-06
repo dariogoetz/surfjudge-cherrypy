@@ -3,6 +3,7 @@ import threading
 
 HEAT_ORDERS_FILENAME = 'heat_orders.json'
 ADVANCING_SURFERS_FILENAME = 'advancing_surfers.json'
+SEEDING_INFO_FILENAME = 'seeding_info.json'
 CURRENT_HEAT_ID_FILENAME = 'current_heat_ids.json'
 
 # tournament_data is a dictionary
@@ -14,6 +15,10 @@ import tournament_generators
 
 class TournamentManager(object):
     def __init__(self, surfjudge):
+
+        # TODO: as weakref
+        self._surfjudge = surfjudge
+
         self._lock = threading.RLock()
 
         self.heat_orders = None
@@ -21,15 +26,81 @@ class TournamentManager(object):
         self.current_heat_id = None
         self._load_heat_orders()
         self._load_advancing_surfers()
+        self._load_seeding_info()
         self._load_current_heat()
+
+        self._clean_data()
 
 
         self.tournament_generators = {}
         self.tournament_generators['standard'] = tournament_generators.StandardHeatStructureGenerator()
 
-        # TODO: as weakref
-        self._surfjudge = surfjudge
+    def _clean_data(self):
+        heats = self._surfjudge.database.get_heats({})
+        tournaments = self._surfjudge.database.get_tournaments({})
+        heat_ids = set([h['id'] for h in heats])
+        tournament_ids = set([t['id'] for t in tournaments])
 
+        self._clean_heat_orders(tournament_ids, heat_ids)
+        self._clean_advancing_surfers(tournament_ids, heat_ids)
+        self._clean_seeding_info(tournament_ids, heat_ids)
+        self._clean_current_heat_id(tournament_ids, heat_ids)
+
+
+    def _clean_heat_orders(self, tournament_ids, heat_ids):
+        heat_order_tids = self.heat_orders.keys()
+        for tid in heat_order_tids:
+            if tid not in tournament_ids:
+                print 'tournament_manager: cleaning heat_order -> tournament {}'.format(tid)
+                del self.heat_orders[tid]
+
+                continue
+            for hid in self.heat_orders[hid]:
+                if hid not in heat_ids:
+                    print 'tournament_manager: cleaning heat_order -> heat {} in tournament {}'.format(hid, tid)
+                    self.heat_orders[tid].remove(hid)
+        with self._lock:
+            self._write_heat_orders()
+
+
+    def _clean_advancing_surfers(self, tournament_ids, heat_ids):
+        advancing_surfer_hids = self.advancing_surfers.keys()
+        for hid in advancing_surfer_hids:
+            if hid not in heat_ids:
+                print 'tournament_manager: cleaning advancing_surfers -> heat {}'.format(hid)
+                del self.advancing_surfers[hid]
+                continue
+            for seed in self.advancing_surfers[hid]:
+                if self.advancing_surfers[hid][seed]['from_heat_id'] not in heat_ids:
+                    print 'tournament_manager: cleaning advancing_surfers -> seed {} in heat {}'.format(seed, hid)
+                    del self.advancing_surfers[hid][seed]
+        with self._lock:
+            self._write_advancing_surfers()
+
+
+    def _clean_seeding_info(self, tournament_ids, heat_ids):
+        seeding_info_tids = self.seeding_info.keys()
+        for tid in seeding_info_tids:
+            if tid not in tournament_ids:
+                print 'tournament_manager: cleaning seeding_info -> tournament {}'.format(tid)
+                del self.seeding_info[tid]
+                continue
+            for hid in self.seeding_info[tid]:
+                if hid not in heat_ids:
+                    print 'tournament_manager: cleaning seeding_info -> heat {} in tournament {}'.format(hid, tid)
+                    self.seeding_info[tid].remove(hid)
+        with self._lock:
+            self._write_seeding_info()
+
+
+    def _clean_current_heat_id(self, tournament_ids, heat_ids):
+        current_heat_tids = self.current_heat_id.keys()
+        for tid in current_heat_tids:
+            if tid not in tournament_ids or self.current_heat_id[tid] not in heat_ids:
+                print 'tournament_manager: cleaning current_heat_id -> tournament {}'.format(tid)
+                del self.current_heat_id[tid]
+        with self._lock:
+            self._write_current_heat_id()
 
     def _load_heat_orders(self):
         with self._lock:
@@ -74,6 +145,24 @@ class TournamentManager(object):
                         self.advancing_surfers.setdefault(int(hid), {})[int(place)] = from_data
         return
 
+    def _load_seeding_info(self):
+        with self._lock:
+            tmp = None
+            try:
+                with open(SEEDING_INFO_FILENAME, 'rb') as fp:
+                    tmp = json.load(fp)
+            except IOError as e:
+                try:
+                    print 'TournamentManager: initializing seeding info file'
+                    json.dump({}, open(SEEDING_INFO_FILENAME, 'wb'))
+                except:
+                    print 'TournamentManager: could not read/initialize seeding info file'
+            self.seeding_info = {}
+            if tmp is not None:
+                for tid, heat_ids in tmp.items():
+                    self.seeding_info[int(tid)] = heat_ids
+        return
+
     def _load_current_heat(self):
         with self._lock:
             tmp = None
@@ -98,6 +187,13 @@ class TournamentManager(object):
         with self._lock:
             with open(ADVANCING_SURFERS_FILENAME, 'wb') as fp:
                 json.dump(self.advancing_surfers, fp, indent=4)
+        return
+
+
+    def _write_seeding_info(self):
+        with self._lock:
+            with open(SEEDING_INFO_FILENAME, 'wb') as fp:
+                json.dump(self.seeding_info, fp, indent=4)
         return
 
 
@@ -227,12 +323,28 @@ class TournamentManager(object):
                 for p, (from_round, from_heat, from_place) in participants.items():
                     new_heats.add( (from_round, from_heat) )
 
+
+        # determine heat order such that they are inserted in correct order
+        tmp = {}
         for (r, h) in new_heats:
+            tmp.setdefault(r, []).append( (r, h) )
+        new_heats_with_idx = []
+        idx = 0
+        for r in sorted(tmp, reverse=True):
+            for rh in sorted(tmp[r]):
+                new_heats_with_idx.append( (idx, rh) )
+
+
+        seeding_round = max(new_heats, key=lambda x: x[0])[0]
+        seeding_info = []
+        for idx, (r, h) in sorted(new_heats_with_idx, key=lambda x: x[0]):
             name = self.tournament_generators[tournament_generator].get_name(r,h, max(tree.keys()) + 1)
 
             # call database
             hid = self._surfjudge.database.insert_heat({'name': name, 'tournament_id': tournament_id, 'category_id': category_id})
             treeid2heatid[(r,h)] = hid
+            if r == seeding_round:
+                seeding_info.append(hid)
 
         advancing_surfers = {}
         for r, heats in tree.items():
@@ -241,7 +353,8 @@ class TournamentManager(object):
                     advancing_surfers.setdefault(treeid2heatid[(r,h)], {})[seed] = {'from_heat_id': treeid2heatid[(from_round, from_heat)], 'from_place':  from_place}
 
         with self._lock:
+            self.seeding_info[tournament_id] = seeding_info
+            self._write_seeding_info()
             self.advancing_surfers.update(advancing_surfers)
-        self._write_advancing_surfers()
-        return advancing_surfers
-
+            self._write_advancing_surfers()
+        return advancing_surfers, seeding_info
