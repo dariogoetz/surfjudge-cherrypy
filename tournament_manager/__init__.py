@@ -48,14 +48,15 @@ class TournamentManager(object):
 
 
     def _clean_heat_orders(self, tournament_ids, heat_ids):
+        import copy
         heat_order_tids = self.heat_orders.keys()
         for tid in heat_order_tids:
             if tid not in tournament_ids:
                 print 'tournament_manager: cleaning heat_order -> tournament {}'.format(tid)
                 del self.heat_orders[tid]
-
                 continue
-            for hid in self.heat_orders[hid]:
+            hids = copy.copy(self.heat_orders[tid])
+            for hid in hids:
                 if hid not in heat_ids:
                     print 'tournament_manager: cleaning heat_order -> heat {} in tournament {}'.format(hid, tid)
                     self.heat_orders[tid].remove(hid)
@@ -70,7 +71,8 @@ class TournamentManager(object):
                 print 'tournament_manager: cleaning advancing_surfers -> heat {}'.format(hid)
                 del self.advancing_surfers[hid]
                 continue
-            for seed in self.advancing_surfers[hid]:
+            seeds = self.advancing_surfers[hid].keys()
+            for seed in seeds:
                 if self.advancing_surfers[hid][seed]['from_heat_id'] not in heat_ids:
                     print 'tournament_manager: cleaning advancing_surfers -> seed {} in heat {}'.format(seed, hid)
                     del self.advancing_surfers[hid][seed]
@@ -79,13 +81,15 @@ class TournamentManager(object):
 
 
     def _clean_seeding_info(self, tournament_ids, heat_ids):
+        import copy
         seeding_info_tids = self.seeding_info.keys()
         for tid in seeding_info_tids:
             if tid not in tournament_ids:
                 print 'tournament_manager: cleaning seeding_info -> tournament {}'.format(tid)
                 del self.seeding_info[tid]
                 continue
-            for hid in self.seeding_info[tid]:
+            hids = copy.copy(self.seeding_info[tid])
+            for hid in hids:
                 if hid not in heat_ids:
                     print 'tournament_manager: cleaning seeding_info -> heat {} in tournament {}'.format(hid, tid)
                     self.seeding_info[tid].remove(hid)
@@ -101,6 +105,7 @@ class TournamentManager(object):
                 del self.current_heat_id[tid]
         with self._lock:
             self._write_current_heat_id()
+
 
     def _load_heat_orders(self):
         with self._lock:
