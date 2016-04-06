@@ -199,7 +199,8 @@ class CherrypyWebInterface(object):
 
         for p in confirmed_participants + proposed_participants:
             if 'surfer_color' not in p:
-                pref_c = seed2color[p['seed']]['COLOR']
+                color = seed2color.keys()[0] # default color is some color
+                pref_c = seed2color[p['seed']%len(seed2color)]['COLOR']
                 if pref_c not in taken_colors:
                     color = pref_c
                 if pref_c in available_colors:
