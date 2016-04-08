@@ -260,7 +260,7 @@
              $('#heat_overview_' + heat_id).heat('destroy');
          var heat = $('#heat_overview_' + heat_id).heat(options);//heat = new Heat(heat_info, '#heat_overview_' + heat_id);
          $('#heat_overview_' + heat_id).heat('fill_heat_inputs');
-         heat_durations[heat_id] = heat_info['duration'];
+         heat_durations[heat_id] = heat.get_heat_data()['duration'];
          set_heat_time(heat_id);
      });
  }

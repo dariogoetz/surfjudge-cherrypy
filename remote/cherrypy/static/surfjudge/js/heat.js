@@ -28,10 +28,12 @@ var Heat = function(element, options){
 Heat.prototype.constructor = Heat;
 
 Heat.prototype.init = function(){
-    if (this.heat_data['number_of_waves'] == '')
+    if (this.heat_data['number_of_waves'] == null || this.heat_data['number_of_waves'] == '')
         this.heat_data['number_of_waves'] = 10;
-    if (this.heat_data['duration'] == '')
+
+    if (this.heat_data['duration'] == null || this.heat_data['duration'] == '')
         this.heat_data['duration'] = 15;
+
     this.element.find('.participants_table').bootstrapTable({'rowStyle': function rowStyle(row, index){
         var res = {};
         if (row['type'] == 'proposal')
@@ -350,6 +352,10 @@ Heat.prototype.fetch_surfer_colors = function(){
     });
 }
 
+Heat.prototype.get_heat_data = function(){
+    return $.extend({}, this.heat_data);
+}
+
 Heat.prototype.get_available_color = function(){
     this.fetch_surfer_colors();
     var taken_colors = new Set();
@@ -433,7 +439,7 @@ $.fn.heat = function(option, val){
     var options = typeof option === 'object' && option;
     if (!data){
         $this.data('heat', new Heat(this, $.extend({}, options)));
-        return;
+        return $this.data('heat');
     }
 
     if (option == 'destroy'){

@@ -513,7 +513,7 @@ class TournamentAdminWebInterface(CherrypyWebInterface):
         if len(hids) == 0:
             return '[]'
 
-        res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEATS, {'id': hids}).pop(0)
+        res = cherrypy.engine.publish(KEY_ENGINE_DB_RETRIEVE_HEAT_INFO, {'heats': {'id': hids}}).pop(0)
         return json.dumps(res)
 
 
