@@ -88,11 +88,11 @@ class TournamentManager(object):
                 print 'tournament_manager: cleaning seeding_info -> tournament {}'.format(tid)
                 del self.seeding_info[tid]
                 continue
-            hids = copy.copy(self.seeding_info[tid])
+            hids = copy.copy(self.seeding_info[tid].get('seeding_info', []))
             for hid in hids:
                 if hid not in heat_ids:
                     print 'tournament_manager: cleaning seeding_info -> heat {} in tournament {}'.format(hid, tid)
-                    self.seeding_info[tid].remove(hid)
+                    self.seeding_info[tid]['seeding_info'].remove(hid)
         with self._lock:
             self._write_seeding_info()
 
@@ -164,8 +164,8 @@ class TournamentManager(object):
                     print 'TournamentManager: could not read/initialize seeding info file'
             self.seeding_info = {}
             if tmp is not None:
-                for tid, heat_ids in tmp.items():
-                    self.seeding_info[int(tid)] = heat_ids
+                for tid, data in tmp.items():
+                    self.seeding_info[int(tid)] = data
         return
 
     def _load_current_heat(self):
@@ -358,7 +358,7 @@ class TournamentManager(object):
                     advancing_surfers.setdefault(treeid2heatid[(r,h)], {})[seed] = {'from_heat_id': treeid2heatid[(from_round, from_heat)], 'from_place':  from_place}
 
         with self._lock:
-            self.seeding_info[tournament_id] = seeding_info
+            self.seeding_info[tournament_id] = {'seeding_info': seeding_info}
             self._write_seeding_info()
             self.advancing_surfers.update(advancing_surfers)
             self._write_advancing_surfers()
