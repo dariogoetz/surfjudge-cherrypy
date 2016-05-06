@@ -55,11 +55,11 @@ class TournamentManager(object):
                 print 'tournament_manager: cleaning heat_order -> tournament {}'.format(tid)
                 del self.heat_orders[tid]
                 continue
-            hids = copy.copy(self.heat_orders[tid])
+            hids = copy.copy(self.heat_orders[tid].get('heat_order', []))
             for hid in hids:
                 if hid not in heat_ids:
                     print 'tournament_manager: cleaning heat_order -> heat {} in tournament {}'.format(hid, tid)
-                    self.heat_orders[tid].remove(hid)
+                    self.heat_orders[tid]['heat_order'].remove(hid)
         with self._lock:
             self._write_heat_orders()
 
