@@ -396,7 +396,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         for idx, participant in enumerate(heat_info.get('participants', [])):
             surfer_id = participant.get('surfer_id')
             data = all_scores.get(surfer_id, {})
-            for judge_id in heat_info['judges']:
+            for judge_id in heat_info.get('judges', []):
                 vals = data.get(judge_id, [])
                 res = {}
                 res['Judge Id'] = judge_id
@@ -432,7 +432,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         for idx, participant in enumerate(heat_info.get('participants', [])):
             surfer_id = participant.get('surfer_id')
             data = base_data.get(surfer_id, {})
-            for judge_id in heat_info['judges']:
+            for judge_id in heat_info.get('judges', []):
                 vals = data.get(judge_id, [])
                 res = {}
                 res['Judge Id'] = judge_id
