@@ -160,7 +160,7 @@ class SurfJudgeWebInterface(CherrypyWebInterface):
         if judge_id is not None:
             # check if correct judge_id was given or user is admin, else he is not allowed to set a judge_id
             roles = cherrypy.session.get(KEY_USER_INFO, {}).get(KEY_ROLES, [])
-            if int(judge_id) != int(cherrypy.session.get(KEY_JUDGE_ID)):
+            if cherrypy.session.get(KEY_JUDGE_ID) is None or int(judge_id) != int(cherrypy.session.get(KEY_JUDGE_ID)):
                 if KEY_ROLE_ADMIN not in roles:
                     judge_id = None
                     print 'do_insert_score: Provided wrong judge_id and is not admin'
