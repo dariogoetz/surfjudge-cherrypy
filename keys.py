@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+    Copyright (c) Dario Götz and Jörg Christian Reiher.
+    All rights reserved.
+"""
 
 VAL_MISSED = -1
 VAL_INTERFERENCE = -2

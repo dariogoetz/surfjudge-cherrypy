@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+    Copyright (c) Dario Götz and Jörg Christian Reiher.
+    All rights reserved.
+"""
 import os
 import cherrypy
 import json

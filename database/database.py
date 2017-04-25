@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+    Copyright (c) Dario Götz and Jörg Christian Reiher.
+    All rights reserved.
+"""
 from config import Config #path relative to main path
 from .sql_adapter import PythonSQLAdapter
 
