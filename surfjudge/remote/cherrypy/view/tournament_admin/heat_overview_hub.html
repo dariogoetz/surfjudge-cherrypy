@@ -50,6 +50,8 @@
     <div id="data_section"  style="display:none">
         <div class="heat_order_list">
         </div>
+        <div class="heat_order_test">
+        </div>
 
         <div id="heat_overview_carousel" class="carousel slide" data-ride="carousel" data-interval=false data-wrap=false>
             <a class="left carousel-control" href="#heat_overview_carousel" role="button" data-slide="prev">
@@ -68,13 +70,14 @@
 
     </div>
 </div>
-    {% endblock content %}
+{% endblock content %}
 
-    {% block javascript %}
+{% block javascript %}
 {{ super() }}
 <script src="/static/surfjudge/js/select_dropdown.js"></script>
 <script src="/static/surfjudge/js/judging_requests_table.js"></script>
 <script src="/static/surfjudge/js/heat.js"></script>
+<script src="/static/surfjudge/js/heat_order.js"></script>
 
 <script>
 
@@ -269,10 +272,13 @@
          $('#heat_overview_' + previous_heat_id).heat('destroy');
          $('#heat_overview_' + previous_heat_id).judging_requests('destroy');
      });
-});
+ });
 
 </script>
 
+<script>
+ $('.heat_order_test').heat_order({'id': 0});
+</script>
 
 {% endblock javascript%}
 
