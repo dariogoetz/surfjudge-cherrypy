@@ -237,6 +237,7 @@ class HeadJudgeWebInterface(CherrypyWebInterface):
 
     @cherrypy.expose
     @cherrypy.tools.render(template='tournament_admin/heat_overview_hub.html')
+    @require(has_one_role(KEY_ROLE_HEADJUDGE, KEY_ROLE_ADMIN))
     @cherrypy.tools.relocate()
     def heat_overview(self):
         context = self._standard_env()
