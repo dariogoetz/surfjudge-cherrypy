@@ -532,6 +532,7 @@ class SQLiteDatabaseHandler(_DatabaseHandler):
 
     def _get_heat_info(self, query_info):
         qinfo = {}
+        qinfo.update(query_info)
         if query_info.get('heat_id') is not None:
             qinfo['heats'] = {'id': query_info['heat_id']}
         if query_info.get('category_id') is not None:
