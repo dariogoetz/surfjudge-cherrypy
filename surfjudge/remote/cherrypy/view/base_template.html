@@ -41,7 +41,7 @@
                     <span class="icon-bar"></span>
                 </button>
                 {% endblock navbar_header %}
-                <a class="navbar-brand" href="/"><img src="/static/img/SurfjudgeLogo.png" style="width: 50px;height:auto"></a>
+                <a class="navbar-brand" href="/" style="padding:0;"><img src="/static/img/SurfjudgeLogo.png" style="width: auto;height:100%; padding:0;"></a>
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
@@ -59,23 +59,19 @@
                     <li id='nav_item_commentator_panel'><a href="/commentator_hub"><span class="glyphicon glyphicon-eye-open">&nbsp;</span>Commentator</a></li>
                     {% endif %}
                     {% if global_is_headjudge %}
-                    <li class="dropdown" id='nav_item_headjudge'>
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-info-sign">&nbsp;</span>Headjudge<span class="caret"></span></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/headjudge/heat_overview">Heat Overview</a></li>
-                            <li role="separator" class="divider"></li>
-                            <li><a href="/headjudge/start_stop_heats">Start/Stop Heats</a></li>
-                            <li><a href="/headjudge/judge_activities">Judge Activities</a></li>
-                        </ul>
-                    </li>
+                    <!--
+                    <li id='nav_item_judge_activities'><a href="/headjudge/judge_activities"><span class="glyphicon glyphicon-list-alt">&nbsp;</span>Judge Activities</a></li>                    
+                     -->
                     {% endif %}
                     {% if global_is_admin %}
+                    <li id='nav_item_heat_overview'><a href="/headjudge/heat_overview"><span class="glyphicon glyphicon-home">&nbsp;</span>Heat Overview</a></li>                    
+                    <li id='nav_item_edit_scores'><a href="/tournament_admin/edit_scores"><span class="glyphicon glyphicon-pencil">&nbsp;</span>Edit Scores</a></li>                    
                     <li class="dropdown" id='nav_item_admin'>
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-cog">&nbsp;</span>Admin<span class="caret"></span></a>
                         <ul class="dropdown-menu">
-
                             <li><a href="/tournament_admin/tournaments">Tournament Admin</a></li>
-                            <li><a href="/tournament_admin/edit_scores">Edit Scores</a></li>
+                            <li><a href="/headjudge/judge_activities">Judge Activities</a></li>
+                            <li><a href="/headjudge/start_stop_heats">Start/Stop Heats</a></li>
                             <li role="separator" class="divider"></li>
                             <li><a href="/auth/logins">Administrate Logins</a></li>
                         </ul>
