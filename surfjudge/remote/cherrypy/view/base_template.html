@@ -44,14 +44,18 @@
                 <a class="navbar-brand" href="/" style="padding:0;"><img src="/static/img/SurfjudgeLogo.png" style="width: auto;height:100%; padding:0;"></a>
             </div>
             <div class="collapse navbar-collapse">
-                <ul class="nav navbar-nav">
-                    {% if not global_logged_in %}
-                    <li id='nav_item_login'><a href="/auth/login"><span class="glyphicon glyphicon-play-circle">&nbsp;</span>Login</a></li>
-                    {% endif %}
-                    {% if False %} <!-- This is commented out because we decided to hide the login button. -->
+                {% if not global_logged_in %}
+                    <ul class="nav navbar-nav navbar-right">
+                        <li id='nav_item_login'><a href="/auth/login"><span class="glyphicon glyphicon-play-circle">&nbsp;</span>Login</a></li>
+                        <!-- LINE BELOW PROVIDES DWV LOGO IF REQUESTED-->
+                        <li><a class="navbar-brand" href="/" style="padding:0;"><img src="/static/img/logo-dwv.png" style="width: auto;height:100%; padding:0;"></a></li>
+                    </ul>
+                {% endif %}
+                {% if False %} <!-- This is commented out because we decided to hide the login button. -->
                     <li id='nav_item_login'><a href="/auth/login"><span class="glyphicon glyphicon-play-circle">&nbsp;</span>Login</a></li>
                     <li id='nav_item_register'><a href="/auth/register"><span class="glyphicon glyphicon-user">&nbsp;</span>Register</a></li>
-                    {% endif %}
+                {% endif %}
+                <ul class="nav navbar-nav">
                     {% if global_is_judge %}
                     <li id='nav_item_judge_tools'><a href="/judge_hub"><span class="glyphicon glyphicon-list-alt">&nbsp;</span>Judge Sheet</a></li>
                     {% endif %}
@@ -59,7 +63,7 @@
                     <li id='nav_item_commentator_panel'><a href="/commentator_hub"><span class="glyphicon glyphicon-eye-open">&nbsp;</span>Commentator</a></li>
                     {% endif %}
                     {% if global_is_headjudge %}
-                    <!--
+                    <!-- HERE WE HAVE REMOVED HEAD JUDGE OPTIONS, MAYBE USEFULL LATER!
                     <li id='nav_item_judge_activities'><a href="/headjudge/judge_activities"><span class="glyphicon glyphicon-list-alt">&nbsp;</span>Judge Activities</a></li>                    
                      -->
                     {% endif %}
@@ -70,7 +74,7 @@
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-cog">&nbsp;</span>Admin<span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             <li><a href="/tournament_admin/tournaments">Tournament Admin</a></li>
-                            <li><a href="/headjudge/judge_activities">Judge Activities</a></li>
+                            <!--<li><a href="/headjudge/judge_activities">Judge Activities</a></li> -->
                             <li><a href="/headjudge/start_stop_heats">Start/Stop Heats</a></li>
                             <li role="separator" class="divider"></li>
                             <li><a href="/auth/logins">Administrate Logins</a></li>
@@ -79,11 +83,18 @@
                     {% endif %}
                 </ul>
                 {% if global_logged_in %}
-                <ul class="nav navbar-nav navbar-right">
-                    <li><a><span class="glyphicon glyphicon-user">&nbsp;</span>{{ global_username }}</a></li>
-                    <li id='nav_item_logout'><a href="/auth/logout"><span class="glyphicon glyphicon-off">&nbsp;</span>Logout</a></li>
-                </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a><span class="glyphicon glyphicon-user">&nbsp;</span>{{ global_username }}</a></li>
+                        <li id='nav_item_logout'><a href="/auth/logout"><span class="glyphicon glyphicon-off">&nbsp;</span>Logout</a></li>
+                            {% if global_is_commentator %}
+                            <!-- LINE BELOW PROVIDES DWV LOGO IF REQUESTED -->
+                            <!--
+                                <li><a class="navbar-brand" href="/" style="padding:0;"><img src="/static/img/logo-dwv.png" style="width: auto;height:100%; padding:0;"></a></li>
+                            -->
+                            {% endif %}
+                    </ul>
                 {% endif %}
+                
             </div>
         </div>
     </nav>
