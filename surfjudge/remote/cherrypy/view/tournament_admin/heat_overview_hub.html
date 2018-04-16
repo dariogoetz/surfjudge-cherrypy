@@ -50,8 +50,8 @@
     <div id="data_section"  style="display:none">
         <div class="heat_order_list">
         </div>
-        <div class="heat_order_test">
-        </div>
+ 
+
 
         <div id="heat_overview_carousel" class="carousel slide" data-ride="carousel" data-interval=false data-wrap=false>
             <a class="left carousel-control" href="#heat_overview_carousel" role="button" data-slide="prev">
@@ -156,7 +156,7 @@
      hol.empty();
      var txt = '';
      for (var idx=0; idx<heat_order.length; idx++){
-         var elem = $('<button class="btn btn-lg" onclick="set_heat_overview_panel(' + heat_order[idx] + ')">').text(heat_order_names[idx]['category_name'] + ': ' + heat_order_names[idx]['heat_name']);
+         var elem = $('<button class="btn btn-sm" onclick="set_heat_overview_panel(' + heat_order[idx] + ')">').text(heat_order_names[idx]['category_name'] + ': ' + heat_order_names[idx]['heat_name']);
          if (heat_order[idx] == heat_id)
              elem.addClass("btn-success");
          else

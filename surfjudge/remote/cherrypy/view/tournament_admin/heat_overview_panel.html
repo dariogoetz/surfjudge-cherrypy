@@ -4,36 +4,52 @@
 
 
 <div class="container-fluid" data-heat_id={{ heat_id }} data-categoryid={{ category_id }} id="heat_overview_{{ heat_id }}">
-    <h1>"{{ heat_name }}" in "{{ category_name }}"</h1>
-
-
+    <button class="btn btn-default btn-lg pull-right refresh_btn"><span class="glyphicon glyphicon-refresh">&nbsp;Refresh</span></button>
+    <div class="row text-left">
+        <font size="6"><b>{{ heat_name }}</b> in <b>{{ category_name }}</b></font>
+    </div>
 
     <!-- start/stop and publish/export -->
     <div class="row">
-        <div class="col-xs-4">
+        <div class="col-xs-5">
         </div>
-        <div class="col-xs-4">
-            <div class="well">
-                <!-- Heat Timer -->
-                <h1 class="heat_time text-center">00:00</h1>
+        <div class="col-xs-2">
+            
+            <div class="well well-sm text-center">
+                <span class="align-middle">
+                    <font size="4" ><span class="glyphicon glyphicon-hourglass"></span></font>
+                </span>
+                <!-- Heat Timer in this row--> <font size="5" class="heat_time">00:00</font>
             </div>
+        </div>
+        <div class="col-xs-5">
         </div>
     </div>
-        <button class="btn btn-default btn-lg pull-right refresh_btn"><span class="glyphicon glyphicon-refresh">&nbsp;Refresh</span></button>
-    <h3>Activities</h3>
-    <div class="well">
+    
+    
+    <!--<h3>Activities</h3>-->
+    <div class="well well-sm" >
         <div class="row">
             <div class="col-xs-4">
-                <button class="btn btn-default btn-lg heat_activity_btn" data-heat_id={{ heat_id }} data-status="inactive">Start/Stop Heat</button>
-            </div>
-            <div class="col-xs-4">
                 <div class="btn-group">
-                    <button class="btn btn-default btn-lg publish_btn" data-heat_id="{{ heat_id }}">Publish</button>
-                    <button class="btn btn-danger btn-lg unpublish_btn" data-heat_id="{{ heat_id }}"><span class="glyphicon glyphicon-remove"></span></button>
+                    <button class="btn btn-default btn-md publish_btn" data-heat_id="{{ heat_id }}">Publish</button>
+                    <button class="btn btn-danger btn-md unpublish_btn" data-heat_id="{{ heat_id }}"><span class="glyphicon glyphicon-remove"></span></button>
                 </div>
             </div>
             <div class="col-xs-4">
-                <button class="btn btn-standard btn-lg export_btn pull-right">Export Excel</button>
+                <div class="row">
+                    <div class="col-xs-4">
+                    </div>
+                    <div class="col-xs-4">
+                        <button class="btn btn-default btn-md heat_activity_btn" data-heat_id={{ heat_id }} data-status="inactive">Start/Stop Heat</button>
+                    </div>
+                    <div class="col-xs-4">
+                    </div>
+               </div> 
+                
+            </div>
+            <div class="col-xs-4">
+                <button class="btn btn-standard btn-md export_btn pull-right">Export Excel</button>
             </div>
         </div>
     </div>
@@ -74,10 +90,10 @@
             </tbody>
         </table>
         <a class="btn btn-standard add_participant_btn"><span class="glyphicon glyphicon-plus">&nbsp;</span>Add Participant</a>
-
+        <button class="btn btn-primary btn-md pull-right submit_heat_changes">Save changes</button>
         <br><br>
 
-        <a data-toggle="collapse" data-target="#edit_additional_heat_info_{{ heat_id }}"><h4>Edit additional heat info</h4></a>
+        <a data-toggle="collapse" data-target="#edit_additional_heat_info_{{ heat_id }}"><h4><span class="glyphicon glyphicon-triangle-bottom"></span>Edit additional heat info</h4></a>
         <div id="edit_additional_heat_info_{{ heat_id }}" class="collapse">
             <div class="form-horizontal">
                 <div class="form-group">
@@ -149,14 +165,11 @@
                     <label class="col-xs-2 control-label">Additional Info</label>
                     <div class="col-xs-10">
                         <input type="text" id ="input_additional_info" name="input_additional_info" class="form-control heat_input" data-key="additional_info" placeholder="Additional Info">
-                    </div>
+                        <button class="btn btn-primary btn-md pull-right submit_heat_changes">Save changes</button>                   
+                   </div>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <button class="btn btn-primary btn-lg pull-right submit_heat_changes">Save changes</button>
-        </div>
-
     </div>
 </div>
 
