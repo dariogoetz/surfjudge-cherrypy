@@ -95,6 +95,9 @@
 <script src="/static/surfjudge/js/heat.js"></script>
 <script src="/static/surfjudge/js/select_dropdown.js"></script>
 
+<script src="/static/bootstrap_duallistbox/jquery.bootstrap-duallistbox.min.js"></script>
+<script src="/static/surfjudge/js/judge_assignment.js"></script>
+
 
 <script>
  $(document).ready(function(){
@@ -146,6 +149,8 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
         var heat = $('#edit_heat_modal').heat(options);
         $('#edit_heat_modal').heat('fill_heat_inputs');
         $('#edit_heat_modal').modal('toggle');
+        $("#judge_assignment").judge_assignment('destroy');
+        $("#judge_assignment").judge_assignment({"id": row['id']});
     };
  });
 
@@ -184,14 +189,13 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
                   <div class="form-group">
                       <label class="col-xs-2 control-label">Date</label>
                       <div class="row">
-                        <div class="col-xs-5">
-
+                        <div class="col-xs-2">
 			              <div class="input-group date" id="input_date_picker" data-date="" data-date-format="dd.mm.yyyy">
 				              <input class="form-control heat_input" data-key="date" size="16" type="text" placeholder="Date start" readonly>
 				              <span class="input-group-addon add-on"><i class="glyphicon glyphicon-calendar"></i></span>
 			              </div>
                         </div>
-                        <div class="col-xs-4">
+                        <div class="col-xs-2">
                             <div class="input-group bootstrap-timepicker timepicker">
                                 <input id="input_time_picker" data-minute-step="15" data-show-meridian="false" class="form-control heat_input" data-key="start_time" type="text">
 				              <span class="input-group-addon add-on"><i class="glyphicon glyphicon-time"></i></span>
@@ -262,7 +266,6 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
               </table>
               <a class="btn btn-standard add_participant_btn"><span class="glyphicon glyphicon-plus">&nbsp;</span>Add Participant</a>
           </div>
-
       </div><!-- /.modal-body -->
 
 
