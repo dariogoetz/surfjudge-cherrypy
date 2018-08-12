@@ -95,9 +95,6 @@
 <script src="/static/surfjudge/js/heat.js"></script>
 <script src="/static/surfjudge/js/select_dropdown.js"></script>
 
-<script src="/static/bootstrap_duallistbox/jquery.bootstrap-duallistbox.min.js"></script>
-<script src="/static/surfjudge/js/judge_assignment.js"></script>
-
 
 <script>
  $(document).ready(function(){
@@ -149,8 +146,6 @@ $('#heats_table').on('click-row.bs.table', function (e, row, $element) {
         var heat = $('#edit_heat_modal').heat(options);
         $('#edit_heat_modal').heat('fill_heat_inputs');
         $('#edit_heat_modal').modal('toggle');
-        $("#judge_assignment").judge_assignment('destroy');
-        $("#judge_assignment").judge_assignment({"id": row['id']});
     };
  });
 
