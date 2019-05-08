@@ -8,5 +8,5 @@ setup(name='Surfjudge',
       author='Dario Goetz',
       author_email='dario.goetz@googlemail.com',
       packages=['surfjudge'],
-      install_requires=['cherrypy', 'bcrypt', 'jinja2', 'configobj', 'sqlalchemy', 'xlswriter'],
+      install_requires=['cherrypy', 'bcrypt', 'jinja2', 'configobj', 'sqlalchemy', 'xlsxwriter'],
      )
